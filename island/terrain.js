@@ -72,12 +72,38 @@
       h += plateau * 26 * W[0];
     }
     // 교토: 히가시야마 언덕, 이나리 산
-    if (W[4] > .01) h += W[4] * inland * (ridge(x * .01, z * .01 + 4, 4) * 28 - 6 + 52 * gauss(x, z, 515, 320, 65) + 30 * gauss(x, z, 560, 420, 70));
+    if (W[4] > .01) h += W[4] * inland * (ridge(x * .01, z * .01 + 4, 4) * 28 - 6 + 52 * gauss(x, z, 515, 320, 65) + 30 * gauss(x, z, 560, 420, 70) + 26 * gauss(x, z, 532, 238, 50));
     // 포르투갈: 신트라 산, 리스본 언덕
-    if (W[3] > .01) h += W[3] * inland * (fbm(x * .008 + 2, z * .008, 4) * 14 + 46 * gauss(x, z, -485, 330, 55) + 20 * gauss(x, z, -330, 455, 65));
+    if (W[3] > .01) h += W[3] * inland * (fbm(x * .008 + 2, z * .008, 4) * 14 + 46 * gauss(x, z, -485, 330, 55) + 20 * gauss(x, z, -330, 455, 65) + 34 * gauss(x, z, -255, 335, 55));
     // 프랑스: 완만한 평야
     if (W[2] > .01) h -= W[2] * fbm(x * .006, z * .006, 3) * 2;
-    return h * land + (1 - land) * (-28 + fbm(x * .01, z * .01, 2) * 3);
+    let out = h * land + (1 - land) * (-28 + fbm(x * .01, z * .01, 2) * 3);
+    // 해안 절벽: 포르투갈 알가르브(황금빛 석회암), 프랑스 에트르타(하얀 백악)
+    if (d > .8 && (W[2] > .05 || W[3] > .05)) {
+      const ck = cliffK(x, z, W);
+      if (ck > .01) {
+        const a = Math.atan2(z, x);
+        const plateau = 14 + fbm(x * .012, z * .012, 3) * 5 + ck * 4;
+        const dd = d + noise(Math.cos(a) * 40, Math.sin(a) * 40) * .004;
+        const edge = sstep(.994, .975, dd);
+        const hc = edge * plateau + (1 - edge) * (-12);
+        out = mix(out, hc, ck * sstep(.84, .92, d));
+      }
+    }
+    return out;
+  }
+  const A_ET = Math.atan2(-330, -560);
+  const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
+  function cliffK(x, z, W) {
+    W = W || weights(x, z);
+    const a = Math.atan2(z, x); let k = 0;
+    if (W[3] > .05) {
+      const cove = sstep(-.12, .2, noise(Math.cos(a) * 7 + 11, Math.sin(a) * 7 - 3));
+      const excl = 1 - Math.exp(-(angDiff(a, 2.31) ** 2) / (.17 ** 2));
+      k = Math.max(k, Math.min(1, W[3] * 1.6) * cove * excl);
+    }
+    if (W[2] > .05) k = Math.max(k, Math.min(1, W[2] * 1.4) * Math.exp(-(angDiff(a, A_ET) ** 2) / (.085 ** 2)));
+    return k;
   }
 
   function coastPoint(tx, tz, offset) {
@@ -121,6 +147,9 @@
       } else if (f.t === 'causeway') {
         const d = segDist(x, z, f.ax, f.az, f.bx, f.bz).d;
         if (d < f.w * 2) h = Math.max(h, mix(f.h, h, sstep(f.w, f.w * 2, d)));
+      } else if (f.t === 'terrace') {
+        const d = Math.hypot(x - f.x, z - f.z);
+        if (d < f.r2) { const q = h / f.step, fl = Math.floor(q), fr = q - fl; const hs = (fl + sstep(.72, 1, fr)) * f.step; h = mix(h, hs, sstep(f.r2, f.r, d)); }
       } else if (f.t === 'islet') {
         const d = Math.hypot(x - f.x, z - f.z);
         if (d < f.r) h = Math.max(h, f.h * Math.pow(1 - d / f.r, 0.6));
@@ -256,13 +285,27 @@
     addFlat('lagoonArea', -255, -545, 45, 65);
     addLake('lagoon', -255, -545, 26, 30, P.lagoonArea.y - 0.4, 1.6, 'lagoon');
     // 스위스
-    addFlat('lakeArea', 330, 40, 66, 105, 0);
+    addFlat('lakeArea', 330, 40, 64, 88, 0);
     addLake('swissLake', 330, 40, 58, 62, P.lakeArea.y - 1.2, 6);
     P.chillon = { x: 330 + 50, z: 40 + 14 };
     features.push({ t: 'islet', x: P.chillon.x, z: P.chillon.z, r: 11, h: P.swissLake.y + 3.2 });
     P.chillon.y = P.swissLake.y + 3.2;
     addFlat('chalets', 260, -10, 30, 50);
     addFlat('lucerne', 182, -32, 34, 72, 0, 18);
+    // 계단식 풍경
+    features.push({ t: 'terrace', x: 330, z: -58, r: 26, r2: 40, step: 3 }); P.lavaux = { x: 330, z: -58 };
+    features.push({ t: 'terrace', x: -255, z: 335, r: 40, r2: 56, step: 2.6 }); P.douro = { x: -255, z: 335 };
+    features.push({ t: 'terrace', x: 532, z: 238, r: 40, r2: 56, step: 2.2 }); P.tanada = { x: 532, z: 238 };
+    // 해안 명소
+    P.etretat = coastPoint(-560, -330, 0);
+    let best = null;
+    for (let a = 1.97; a < 2.04; a += .005) {
+      const c = coastPoint(Math.cos(a) * 600, Math.sin(a) * 600, 0), k = cliffK(c.x - c.dirx * 12, c.z - c.dirz * 12);
+      if (!best || k > best.k) best = { ...c, k };
+    }
+    P.algarve = best;
+    P.jokul = coastPoint(95, -720, -32);
+    addLake('jokulLake', P.jokul.x, P.jokul.z, 30, 40, 0.7, 4, 'glacier');
 
     // 강
     makeRiver('센-론 강', [[420, -95], [360, -78], [290, -62], [230, -46], [180, -32], [110, -12], [40, 6], [-30, 24], [-80, 38], [-135, 40], [-190, 24], [-260, 0], [-340, -36], [-420, -70], [-500, -88], [-570, -84], [-640, -66], [-800, -40]], 3.5, 11);
@@ -280,6 +323,6 @@
     grid = g;
   }
 
-  Object.assign(ISL, { mulberry32, clamp, sstep, mix, noise, fbm, ridge, REGIONS, weights, regionAt, H, Hexact, normalAt, slopeAt,
+  Object.assign(ISL, { cliffK, mulberry32, clamp, sstep, mix, noise, fbm, ridge, REGIONS, weights, regionAt, H, Hexact, normalAt, slopeAt,
     waterAt, riverNearest, segDist, catmull, init, P, features, lakes, walkables, getGrid: () => grid, get rivers() { return rivers; }, E, STEP, N, baseH, coastRadius });
 })(typeof window !== 'undefined' ? window : globalThis);

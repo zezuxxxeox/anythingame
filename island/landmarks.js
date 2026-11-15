@@ -27,7 +27,16 @@
     o = Object.assign({ wall: '#e8dcc4', win: '#3b4a5a', frame: '#ffffff', cols: 3, rows: 3, shutter: null, balcony: null, tiles: null, lit: .7 }, o);
     const draw = (x, w, h, night) => {
       x.fillStyle = night ? '#000' : o.wall; x.fillRect(0, 0, w, h);
+      if (!night && o.lattice) { x.fillStyle = o.lattice; for (let i = 0; i < w; i += 5) x.fillRect(i, 0, 2, h); }
       if (!night && o.tiles) { x.fillStyle = o.tiles; for (let i = 0; i < w; i += 8) for (let j = 0; j < h; j += 8) if ((i + j) % 16 === 0) { x.fillRect(i + 1, j + 1, 6, 6); } }
+      if (!night && o.corrugated) { for (let i = 0; i < w; i += 4) { x.fillStyle = 'rgba(0,0,0,.10)'; x.fillRect(i, 0, 2, h); } }
+      if (!night && o.planks) { x.fillStyle = o.planks; for (let j = 0; j < h; j += 9) x.fillRect(0, j, w, 1.6); }
+      if (!night && o.timber) {
+        x.fillStyle = o.timber; const t = 5;
+        x.fillRect(0, 0, w, t); x.fillRect(0, h - t, w, t); x.fillRect(0, h / 2 - t / 2, w, t); x.fillRect(0, 0, t, h); x.fillRect(w - t, 0, t, h);
+        for (const vx of [w / 3, 2 * w / 3]) x.fillRect(vx - t / 2, 0, t, h);
+        x.strokeStyle = o.timber; x.lineWidth = 4; x.beginPath(); x.moveTo(0, h); x.lineTo(w / 3, h / 2); x.moveTo(w, h); x.lineTo(2 * w / 3, h / 2); x.moveTo(w / 3, 0); x.lineTo(0, h / 2); x.moveTo(2 * w / 3, 0); x.lineTo(w, h / 2); x.stroke();
+      }
       const cw = w / o.cols, ch = h / o.rows;
       for (let i = 0; i < o.cols; i++) for (let j = 0; j < o.rows; j++) {
         const wx = i * cw + cw * .28, wy = j * ch + ch * .2, ww = cw * .44, wh = ch * .55;
@@ -36,6 +45,7 @@
         x.fillStyle = o.frame; x.fillRect(wx - 2, wy - 2, ww + 4, wh + 4);
         x.fillStyle = o.win; x.fillRect(wx, wy, ww, wh);
         x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(wx, wy, ww * .45, wh);
+        if (o.lattice) { x.fillStyle = o.lattice; for (let k = 0; k <= 6; k++) x.fillRect(wx + k * ww / 6 - 1, wy, 2, wh); }
         if (o.balcony && (j === 1 || j === o.rows - 2)) { x.fillStyle = o.balcony; x.fillRect(i * cw + 2, wy + wh, cw - 4, 3); for (let k = 0; k < 5; k++) x.fillRect(i * cw + 3 + k * (cw - 6) / 4, wy + wh - 6, 1.5, 6); }
       }
     };
@@ -125,7 +135,7 @@
     // 프랑스
     NT.push({ x: P.eiffel.x, z: P.eiffel.z, r: 46 });
     NS.push({ ax: P.eiffel.x, az: P.eiffel.z, bx: P.eiffel.x, bz: P.eiffel.z + 96, w: 11 });
-    T.push((x, z) => { const dx = x - P.eiffel.x, dz = z - P.eiffel.z - 50; return Math.abs(dx) < 14 && Math.abs(dz) < 42 ? [new THREE.Color(Math.abs(dx) < 9 ? '#86b84e' : '#cbb994'), .85] : null; });
+    T.push((x, z) => { const dx = x - P.eiffel.x, dz = z - P.eiffel.z - 50; return Math.abs(dx) < 14 && Math.abs(dz) < 42 ? [new THREE.Color(Math.abs(dx) < 9 ? '#86b84e' : '#cbb994'), .85, Math.abs(dx) < 9 ? .3 : 0] : null; });
     T.push((x, z) => { const dx = x - P.lavender.x, dz = z - P.lavender.z; return Math.abs(dx) < 56 && Math.abs(dz) < 38 ? [new THREE.Color('#8b7558'), .8] : null; });
     NT.push({ x: P.lavender.x, z: P.lavender.z, r: 70 });
     NT.push({ x: P.msm.x, z: P.msm.z, r: 45 });
@@ -158,6 +168,14 @@
     const bc = P.blackCoast; plan.basalt = { x: bc.x - bc.dirx * 16, z: bc.z - bc.dirz * 16, dx: bc.dirx, dz: bc.dirz };
     NT.push({ x: plan.basalt.x, z: plan.basalt.z, r: 60 });
     T.push((x, z) => { const d = Math.hypot(x - plan.basalt.x, z - plan.basalt.z); if (d > 110) return null; const h = ISL.H(x, z); return h < 5 ? [new THREE.Color('#232327'), .9 * ISL.sstep(110, 70, d)] : null; });
+    // 계단밭: 포도(라보·도우루), 계단식 논(다나다)
+    const terr = (cx, cz, r, col, g) => (x, z) => Math.hypot(x - cx, z - cz) < r && ISL.slopeAt(x, z) < .2 ? [new THREE.Color(col), .8, g] : null;
+    T.push(terr(P.lavaux.x, P.lavaux.z, 36, '#8a7352', .05), terr(P.douro.x, P.douro.z, 52, '#9a7a52', .05), terr(P.tanada.x, P.tanada.z, 54, '#7fb84a', .65));
+    NT.push({ x: P.lavaux.x, z: P.lavaux.z, r: 40 }, { x: P.douro.x, z: P.douro.z, r: 55 }, { x: P.tanada.x, z: P.tanada.z, r: 56 });
+    // 요쿨살론: 빙하 혀가 호수까지 내려옴
+    const J = P.jokul, gx = 60 - J.x, gz = -585 - J.z, gl = Math.hypot(gx, gz);
+    T.push((x, z) => { const dx = x - J.x, dz = z - J.z, d = Math.hypot(dx, dz); if (d > 95 || d < 30) return null; const along = (dx * gx + dz * gz) / gl; const side = Math.abs((dx * gz - dz * gx) / gl); return along > 10 && side < 26 + along * .25 ? [new THREE.Color('#dbe9f3'), .9 * ISL.sstep(95, 70, d), 0] : null; });
+    NT.push({ x: J.x, z: J.z, r: 60 }, { x: P.etretat.x, z: P.etretat.z, r: 40 }, { x: P.algarve.x, z: P.algarve.z, r: 50 });
     plan.fossbridge = addBridge('스코가 강', -176, -390, { width: 3, extra: 3, clear: 1.5 });
     // 스위스
     NT.push({ x: P.chillon.x, z: P.chillon.z, r: 16 }, { x: 182, z: -32, r: 42 });
@@ -701,6 +719,89 @@
   }
 
   // ============================================================
+  // 바위 재질 (지층 무늬)
+  function rockMat(color) {
+    const m = new THREE.MeshStandardMaterial({ color, roughness: .92, flatShading: true });
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = 'varying vec3 vWPr;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vWPr = (modelMatrix * vec4(transformed,1.0)).xyz;');
+      sh.fragmentShader = 'varying vec3 vWPr;\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        float st = sin(vWPr.y*2.1 + sin(vWPr.x*.13+vWPr.z*.11)*2.0)*.5+.5; float st2 = sin(vWPr.y*7.0+vWPr.x*.3)*.5+.5;
+        diffuseColor.rgb *= .8 + .16*st + .08*st2;`);
+    };
+    return m;
+  }
+  ISL.rockMat = rockMat;
+  function rockGeo(geo, amp, seed) {
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i); const n = ISL.noise(x * .35 + seed, y * .25 + z * .35) * amp; const l = Math.hypot(x, z) || 1; p.setXYZ(i, x + x / l * n, y, z + z / l * n); }
+    geo.computeVertexNormals(); return geo;
+  }
+  function archGeo(R, tube, seed) { const g = new THREE.TorusGeometry(R, tube, 7, 18, Math.PI); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const n = 1 + ISL.noise(p.getX(i) * .3 + seed, p.getY(i) * .3) * .18; p.setXYZ(i, p.getX(i) * n, p.getY(i) * n, p.getZ(i) * (1 + ISL.noise(p.getY(i) * .4, seed) * .3)); } g.computeVertexNormals(); return g; }
+
+  function buildAlgarve() {
+    const A = P.algarve, tx = -A.dirz, tz = A.dirx, gold = rockMat('#d9a45e'), cap = mat('#6e8f45', { flatShading: true });
+    const put = (geo, m, x, y, z, ry = 0) => { const me = mesh(scene, geo, m, x, y, z, ry); return me; };
+    const spots = [[-48, 14, 18], [-30, 28, 24], [-8, 22, 14], [12, 34, 20], [30, 16, 12], [52, 26, 22], [70, 12, 16], [-66, 20, 15]];
+    for (const [t, o, h] of spots) {
+      const x = A.x + tx * t + A.dirx * o, z = A.z + tz * t + A.dirz * o;
+      const r = 3 + rng() * 3, geo = rockGeo(new THREE.CylinderGeometry(r * .75, r * 1.15, h + 12, 9, 6), 1.4, t);
+      put(geo, gold, x, h / 2 - 6, z, rng() * 3);
+      const c = mesh(scene, new THREE.SphereGeometry(r * .8, 9, 5, 0, Math.PI * 2, 0, Math.PI / 2), cap, x, h, z); c.scale.y = .35;
+    }
+    for (const [t, o] of [[-20, 9], [42, 8]]) {
+      const x = A.x + tx * t + A.dirx * o, z = A.z + tz * t + A.dirz * o, ry = Math.atan2(A.dirx, A.dirz) + Math.PI / 2;
+      put(archGeo(7, 2.8, t), gold, x, 2, z, ry);
+      for (const s of [-1, 1]) put(rockGeo(new THREE.CylinderGeometry(2.6, 3.4, 10, 8, 3), .8, s + t), gold, x + Math.cos(ry) * s * 7, -3, z - Math.sin(ry) * s * 7);
+    }
+    landmark('algarve', '알가르브 해안 절벽', 'portugal', A.x - A.dirx * 15, A.z - A.dirz * 15, 60, '포르투갈 남쪽 끝의 황금빛 석회암 절벽. 파도가 깎아 만든 바다 아치와 바위기둥 사이로 작은 모래 해변이 숨어 있어요 (폰타 다 피에다드, 베나질 동굴).');
+  }
+  function buildEtretat() {
+    const E = P.etretat, tx = -E.dirz, tz = E.dirx, chalk = rockMat('#eeebe3'), grass = mat('#7aa648', { flatShading: true });
+    const ry = Math.atan2(tx, tz) + Math.PI / 2;
+    const ax = E.x + E.dirx * 9 + tx * 6, az = E.z + E.dirz * 9 + tz * 6;
+    mesh(scene, archGeo(8.5, 3.6, 5), chalk, ax, 6.5, az, Math.atan2(E.dirx, E.dirz) + Math.PI / 2);
+    mesh(scene, rockGeo(new THREE.CylinderGeometry(3.4, 4.2, 16, 8, 4), .8, 3), chalk, ax + E.dirx * 8.5, -2, az + E.dirz * 8.5);
+    const nx = E.x + E.dirx * 34 + tx * 14, nz = E.z + E.dirz * 34 + tz * 14;
+    mesh(scene, rockGeo(new THREE.CylinderGeometry(.5, 4.5, 38, 9, 8), .7, 9), chalk, nx, 9, nz);
+    landmark('etretat', '에트르타 코끼리 절벽', 'france', E.x - E.dirx * 12, E.z - E.dirz * 12, 55, '노르망디 해안의 하얀 백악 절벽. 바다로 코를 담근 코끼리 같은 아치(포르트 다발)와 뾰족한 바위 "바늘(에귀유)"은 모네가 여러 번 그린 풍경이에요.');
+  }
+  function buildJokul() {
+    const J = P.jokul, L = P.jokulLake;
+    const geo = ISL.merge([[new THREE.IcosahedronGeometry(1.4, 0), '#ffffff']]);
+    const list = [], cols = ['#e9f6fb', '#bfe6f5', '#8fd0ee', '#d7eef7'];
+    for (let i = 0; i < 46; i++) { const a = rng() * 6.28, r = Math.sqrt(rng()) * 25, s = .6 + rng() * 2.2; list.push({ x: J.x + Math.cos(a) * r, y: L.y - .4 * s, z: J.z + Math.sin(a) * r, s, sx: 1 + rng(), sy: .7 + rng() * .8, rx: rng(), rz: rng(), color: new THREE.Color(cols[i % 4]) }); }
+    for (let i = 0; i < 24; i++) { const t = (rng() - .5) * 90, x = J.x + J.dirx * 40 - J.dirz * t, z = J.z + J.dirz * 40 + J.dirx * t; const h = H(x, z); if (h < -1.5) continue; const s = .3 + rng() * .7; list.push({ x, y: h + .2, z, s, rx: rng(), rz: rng(), color: new THREE.Color(cols[i % 4]) }); }
+    ISL.placeInstances(scene, geo, list, { material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .12, metalness: 0, emissive: '#3c8fc0', emissiveIntensity: .12, flatShading: true }) });
+    landmark('jokul', '요쿨살론 빙하 호수', 'iceland', J.x, J.z, 50, '빙하에서 떨어져 나온 푸른 얼음덩이들이 천천히 바다로 흘러가는 호수. 바닷가 검은 모래 위에 얼음이 보석처럼 흩어져 "다이아몬드 해변"이라 불려요.');
+  }
+  function terraceVines(cx, cz, r, color) {
+    const geo = ISL.merge([[new THREE.IcosahedronGeometry(.6, 0).scale(2.2, 1.1, .75).translate(0, .85, 0), '#ffffff']]), list = [];
+    for (let x = cx - r; x < cx + r; x += 1.35) for (let z = cz - r; z < cz + r; z += 1.35) {
+      if (Math.hypot(x - cx, z - cz) > r) continue;
+      const h = H(x, z); if (ISL.slopeAt(x, z) > .16 || h < 3) continue;
+      const hx = H(x + 2, z) - H(x - 2, z), hz = H(x, z + 2) - H(x, z - 2);
+      if (Math.hypot(hx, hz) < .01 && rng() < .5) continue;
+      list.push({ x, y: h - .05, z, s: .9, ry: Math.atan2(hz, -hx) + (rng() - .5) * .1, color: new THREE.Color(color).multiplyScalar(.8 + rng() * .4) });
+    }
+    ISL.placeInstances(scene, geo, list, { material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 }), lod: 420, tile: 80 });
+  }
+  function buildTerraces() {
+    terraceVines(P.lavaux.x, P.lavaux.z, 36, '#557a30');
+    landmark('lavaux', '라보 포도밭 테라스', 'swiss', P.lavaux.x, P.lavaux.z, 45, '호수를 내려다보는 가파른 비탈에 돌담을 쌓아 만든 계단식 포도밭. 천 년 가까이 이어진 풍경으로 유네스코 세계유산이에요.');
+    terraceVines(P.douro.x, P.douro.z, 52, '#5f7a2c');
+    landmark('douro', '도우루 와인 계단밭', 'portugal', P.douro.x, P.douro.z, 55, '강을 따라 굽이굽이 이어지는 계단식 포도밭. 여기서 난 포도로 달콤한 포트와인을 만들어요.');
+    landmark('tanada', '교토 산골 계단식 논', 'kyoto', P.tanada.x, P.tanada.z, 55, '산비탈을 따라 층층이 일군 논(다나다). 초여름엔 물을 대어 하늘이 비치고, 가을엔 황금빛 벼가 고개를 숙여요.');
+    // 계단식 논에 물 대기: 평평한 칸마다 얇은 물판
+    const water = new THREE.MeshStandardMaterial({ color: '#7fb0b8', roughness: .08, metalness: .1, transparent: true, opacity: .55 });
+    const seen = new Set();
+    for (let x = P.tanada.x - 46; x < P.tanada.x + 46; x += 6) for (let z = P.tanada.z - 46; z < P.tanada.z + 46; z += 6) {
+      if (Math.hypot(x - P.tanada.x, z - P.tanada.z) > 46 || ISL.slopeAt(x, z) > .05 || rng() < .45) continue;
+      const h = H(x, z), key = Math.round(h * 2) + ':' + Math.round(x / 12) + ':' + Math.round(z / 12); if (seen.has(key)) continue; seen.add(key);
+      const pl = mesh(scene, new THREE.CircleGeometry(3.2 + rng() * 1.5, 10), water, x, h + .12, z); pl.rotation.x = -Math.PI / 2; pl.castShadow = false;
+    }
+  }
+
+  // ============================================================
   function build(sc) {
     scene = sc;
     buildEiffel(); for (const p of plan.paris) haussmann(p.x, p.z);
@@ -709,7 +810,7 @@
     buildKinkaku(); buildInari(); buildPagoda(); buildBamboo();
     buildHallgrim(); buildIcelandNature();
     buildSwiss();
-    mergeStatic();
+    buildAlgarve(); buildEtretat(); buildJokul(); buildTerraces();
   }
   // 움직이지 않는 명소 부품을 재질·구역별로 합쳐 드로우콜을 줄임
   function mergeStatic() {
@@ -742,5 +843,6 @@
   }
   function update(dt, player) { for (const f of dyn) f(dt, player); }
 
-  ISL.Landmarks = { plan: planAll, build, update, planData: plan, mat, box, cyl, cone, sphere, mesh, group: (...a) => group(...a) };
+  ISL.LH = { mat, mesh, box, cyl, cone, sphere, gableGeo, hipGeo, jRoofGeo, facade, boxMats, canvasTex, frustumGeo };
+  ISL.Landmarks = { mergeStatic: () => mergeStatic(), plan: planAll, build, update, planData: plan, mat, box, cyl, cone, sphere, mesh, group: (...a) => group(...a) };
 })();

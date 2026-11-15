@@ -372,20 +372,18 @@
   // 지도
   let mapImg = null;
   function buildMapImage() {
-    const S2 = 300, c = document.createElement('canvas'); c.width = c.height = S2; const x = c.getContext('2d'), img = x.createImageData(S2, S2);
-    const col = new THREE.Color(), out = { r: 0, g: 0, b: 0 };
+    const S2 = 400, c = document.createElement('canvas'); c.width = c.height = S2; const x = c.getContext('2d'), img = x.createImageData(S2, S2);
+    const N = ISL.N, G = ISL.groundColors, LUg = ISL.groundLU, grid = ISL.getGrid();
+    const sr = v => 255 * Math.min(1, v <= .0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - .055);
     for (let j = 0; j < S2; j++) for (let i = 0; i < S2; i++) {
-      const wx = -ISL.E + (i + .5) * 2 * ISL.E / S2, wz = -ISL.E + (j + .5) * 2 * ISL.E / S2, h = ISL.H(wx, wz);
-      const w = ISL.waterAt(wx, wz);
-      if (h < 0) { const d = Math.min(1, -h / 25); col.setRGB(.35 - d * .2, .62 - d * .25, .78 - d * .15, THREE.SRGBColorSpace); }
-      else if (w.kind !== 'sea' && w.level > h + .2) col.setRGB(.36, .64, .8, THREE.SRGBColorSpace);
+      const gi = Math.min(N - 2, Math.floor(i / S2 * (N - 1))), gj = Math.min(N - 2, Math.floor(j / S2 * (N - 1))), k = gj * N + gi, h = grid[k];
+      let r, g, b;
+      if (h < 0 || LUg[k] === 4) { const d = Math.min(1, Math.max(0, -h) / 25); r = 90 - d * 50; g = 165 - d * 60; b = 200 - d * 40; }
       else {
-        ISL.Nature.terrainColor(wx, wz, h, ISL.slopeAt(wx, wz), col);
-        const n = ISL.normalAt(wx, wz), sh = .75 + .5 * Math.max(0, n[0] * -.5 + n[1] * .6 + n[2] * -.5);
-        col.multiplyScalar(sh);
+        const sh = Math.max(.6, Math.min(1.3, 1 + (grid[k] - grid[k + N + 1]) * .06));
+        r = sr(G[k * 3]) * sh; g = sr(G[k * 3 + 1]) * sh; b = sr(G[k * 3 + 2]) * sh;
       }
-      col.getRGB(out, THREE.SRGBColorSpace); const k = (j * S2 + i) * 4;
-      img.data[k] = out.r * 255; img.data[k + 1] = out.g * 255; img.data[k + 2] = out.b * 255; img.data[k + 3] = 255;
+      const o = (j * S2 + i) * 4; img.data[o] = r; img.data[o + 1] = g; img.data[o + 2] = b; img.data[o + 3] = 255;
     }
     x.putImageData(img, 0, 0); mapImg = c.toDataURL();
   }
@@ -427,22 +425,23 @@
   }
 
   // ---------- 장면 ----------
-  let envDirty = true, envT = 0;
+  let envDirty = true, envT = 0, post = null; const LQ = /lq/.test(location.search);
   function initScene() {
     renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: false });
-    const LQ = /lq/.test(location.search); renderer.setPixelRatio(LQ ? .5 : Math.min(devicePixelRatio || 1, 1.75)); renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(LQ ? .5 : Math.min(devicePixelRatio || 1, 1.75)); renderer.setSize(innerWidth, innerHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .95;
     renderer.shadowMap.enabled = !LQ; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     $('app').appendChild(renderer.domElement);
-    scene = new THREE.Scene(); scene.fog = new THREE.Fog('#bcd3e6', 300, 1700);
+    scene = new THREE.Scene(); scene.fog = new THREE.FogExp2('#bcd3e6', .00078);
     camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .3, 12000);
-    addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+    addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); if (post) post.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
     sunLight = new THREE.DirectionalLight('#fff4e0', 2.6); sunLight.castShadow = true;
     sunLight.shadow.mapSize.set(2048, 2048); const sc = sunLight.shadow.camera; sc.left = sc.bottom = -95; sc.right = sc.top = 95; sc.near = 1; sc.far = 900;
     sunLight.shadow.bias = -.0004; sunLight.shadow.normalBias = .6;
     scene.add(sunLight, sunLight.target);
     hemi = new THREE.HemisphereLight('#cfe3ff', '#5d6b45', .9); scene.add(hemi);
     pmrem = new THREE.PMREMGenerator(renderer);
+    if (!LQ && renderer.capabilities.isWebGL2) { post = new ISL.Post(renderer); post.setSize(innerWidth, innerHeight); }
   }
   function updateEnv() {
     if (!envScene) { envScene = new THREE.Scene(); envScene.add(new THREE.Mesh(sky.geometry, sky.material)); }
@@ -467,6 +466,12 @@
     sunLight.color.copy(lightC);
     hemi.intensity = .25 + .8 * day; hemi.color.setRGB(.55 + .25 * day, .62 + .25 * day, .9); hemi.groundColor.setRGB(.25 * day + .05, .3 * day + .05, .2 * day + .08);
     renderer.toneMappingExposure = .95 + night * .25;
+    if (post) post.exposure = .92 + night * .35 + low * .05;
+    if (ISL.grass) {
+      const gu = ISL.grass.uniforms; gu.uCenter.value.set(player.x, player.z);
+      gu.uL.value.copy(L); gu.uLC.value.copy(lightC).multiplyScalar(sunLight.intensity);
+      gu.uSkyC.value.copy(hemi.color).multiplyScalar(hemi.intensity * 1.9); gu.uGndC.value.copy(hemi.groundColor).multiplyScalar(hemi.intensity * 1.6);
+    }
     camera.getWorldDirection(tmpV); tmpV.y = .02; tmpV.normalize();
     ISL.skyColJS(tmpV, sun, fogC); scene.fog.color.copy(fogC);
     for (const m of ISL.waterMats) m.uniforms.uSunCol.value.copy(lightC).multiplyScalar(isSun ? 1 : .4);
@@ -585,18 +590,23 @@
     initScene();
     await step('지형을 빚는 중… 🏔️', 5);
     ISL.init();
-    await step('명소 자리를 고르는 중… 📍', 30);
+    await step('마을과 길을 그리는 중… 🏘️', 25);
     ISL.Landmarks.plan();
-    await step('하늘과 바다를 칠하는 중… 🌊', 38);
+    ISL.Land.plan();
+    await step('하늘과 땅과 바다를 칠하는 중… 🌊', 35);
     sky = ISL.Nature.makeSky(); scene.add(sky);
     ISL.Nature.makeTerrain(scene);
     ISL.Nature.makeWater(scene);
     ISL.Nature.makeClouds(scene);
     ISL.Nature.makeAurora(scene);
-    await step('나무를 심는 중… 🌲', 55);
-    ISL.Nature.makeVegetation(scene);
-    await step('에펠탑과 금각사를 세우는 중… 🗼', 72);
+    await step('마을을 짓고 밭을 가꾸는 중… 🌻', 55);
+    ISL.Land.build(scene);
+    await step('에펠탑과 금각사를 세우는 중… 🗼', 68);
     ISL.Landmarks.build(scene);
+    ISL.Landmarks.mergeStatic();
+    await step('숲과 풀밭을 키우는 중… 🌿', 80);
+    ISL.Nature.makeTrees(scene);
+    ISL.Nature.makeGrass(scene, LQ ? 12000 : matchMedia('(pointer:coarse)').matches ? 22000 : 42000);
     await step('친구들을 부르는 중… 👋', 86);
     pm = person({ top: '#4a90d9', bottom: '#34495e', hat: 'cap', hatColor: '#f4a261', backpack: '#e07a3a', hair: '#2b1d14' });
     glider = new THREE.Group();
@@ -635,7 +645,7 @@
       if (state.freeCam) { const f = state.freeCam; camera.position.set(f[0], f[1], f[2]); camera.lookAt(f[3], f[4], f[5]); }
       if (state.dlg) { const d = state.dlg, txt = d.choices ? d.menuText : d.pages[d.i]; if (d.shown < txt.length) { d.shown = Math.min(txt.length, d.shown + dt * 45); renderDlg(); } }
     }
-    renderer.render(scene, camera);
+    if (post) post.render(scene, camera, ISL.U.uNight.value, ISL.U.uTime.value); else renderer.render(scene, camera);
   }
 
   // 버튼

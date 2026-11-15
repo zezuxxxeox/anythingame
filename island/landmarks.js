@@ -68,6 +68,7 @@
       for (let i = 0; i < o.cols; i++) for (let j = 0; j < o.rows; j++) {
         const wx = i * cw + cw * .28, wy = j * ch + ch * .2, ww = cw * .44, wh = ch * .55;
         if (night) { if (Math.random() < o.lit) { x.fillStyle = Math.random() < .5 ? '#ffd38a' : '#ffbf66'; x.fillRect(wx, wy, ww, wh); } continue; }
+        if (o.doorGap && j === o.rows - 1 && Math.abs((i + .5) * cw - w / 2) < cw * .55) continue; // 문 자리는 비워 둠
         if (o.shutter) { x.fillStyle = o.shutter; x.fillRect(wx - ww * .45, wy, ww * .4, wh); x.fillRect(wx + ww * 1.05, wy, ww * .4, wh); }
         x.fillStyle = o.frame; x.fillRect(wx - 2, wy - 2, ww + 4, wh + 4);
         x.fillStyle = o.win; x.fillRect(wx, wy, ww, wh);
@@ -160,9 +161,9 @@
   function planAll() {
     const T = ISL.groundTints, NT = ISL.noTree, NS = ISL.noTreeSeg;
     // 프랑스
-    NT.push({ x: P.eiffel.x, z: P.eiffel.z, r: 46 });
-    NS.push({ ax: P.eiffel.x, az: P.eiffel.z, bx: P.eiffel.x, bz: P.eiffel.z + 96, w: 11 });
-    T.push((x, z) => { const dx = x - P.eiffel.x, dz = z - P.eiffel.z - 50; return Math.abs(dx) < 14 && Math.abs(dz) < 42 ? [new THREE.Color(Math.abs(dx) < 9 ? '#86b84e' : '#cbb994'), .85, Math.abs(dx) < 9 ? .3 : 0] : null; });
+    NT.push({ x: P.eiffel.x, z: P.eiffel.z, r: 118 });
+    NS.push({ ax: P.eiffel.x, az: P.eiffel.z, bx: P.eiffel.x, bz: P.eiffel.z + 170, w: 34 });
+    T.push((x, z) => { const dx = x - P.eiffel.x; let dz = z - P.eiffel.z; if (Math.abs(dx) < 66 && Math.abs(dz) < 66) return [new THREE.Color('#cbb994'), .85, 0]; dz -= 118; return Math.abs(dx) < 32 && Math.abs(dz) < 52 ? [new THREE.Color(Math.abs(dx) < 22 && Math.abs(dz) < 46 ? '#86b84e' : '#cbb994'), .85, Math.abs(dx) < 22 && Math.abs(dz) < 46 ? .3 : 0] : null; });
     T.push((x, z) => { const dx = x - P.lavender.x, dz = z - P.lavender.z; return Math.abs(dx) < 56 && Math.abs(dz) < 38 ? [new THREE.Color('#8b7558'), .8] : null; });
     NT.push({ x: P.lavender.x, z: P.lavender.z, r: 70 });
     NT.push({ x: P.msm.x, z: P.msm.z, r: 45 });
@@ -178,9 +179,9 @@
     NT.push({ x: P.kinkaku.x, z: P.kinkaku.z, r: 52 });
     T.push((x, z) => { const d = Math.hypot(x - P.kinkaku.x, z - P.kinkaku.z); return d < 50 ? [new THREE.Color('#5d8a3e'), .5] : null; });
     const ip = [[436, 420], [452, 404], [446, 384], [466, 370], [482, 352], [498, 344], [510, 328], [508, 310]];
-    plan.inari = ISL.catmull(ip, 1.2);
+    plan.inari = ISL.catmull(ip, .62); // 실제처럼 거의 맞닿게 촘촘히
     for (let i = 0; i < ip.length - 1; i++) NS.push({ ax: ip[i][0], az: ip[i][1], bx: ip[i + 1][0], bz: ip[i + 1][1], w: 4 });
-    T.push((x, z) => { for (let i = 0; i < ip.length - 1; i++) if (ISL.segDist(x, z, ip[i][0], ip[i][1], ip[i + 1][0], ip[i + 1][1]).d < 2.4) return [new THREE.Color('#9c8466'), .85]; return null; });
+    T.push((x, z) => { for (let i = 0; i < ip.length - 1; i++) if (ISL.segDist(x, z, ip[i][0], ip[i][1], ip[i + 1][0], ip[i + 1][1]).d < 1.7) return [new THREE.Color('#9c8466'), .85, 0]; return null; });
     NT.push({ x: P.pagoda.x, z: P.pagoda.z, r: 18 });
     NS.push({ ax: 222, az: 512, bx: 222, bz: 575, w: 13 });
     T.push((x, z) => Math.abs(x - 222) < 3.2 && z > 508 && z < 575 ? [new THREE.Color('#a49a8a'), .9] : null);
@@ -207,7 +208,7 @@
     // 스위스
     NT.push({ x: P.chillon.x, z: P.chillon.z, r: 16 }, { x: 182, z: -32, r: 42 });
     plan.kapell = addBridge('센-론 강', 182, -32, { width: 3.6, extra: 6, clear: 2.2, skew: .5 });
-    plan.iena = addBridge('센-론 강', -110, 40, { width: 7, extra: 6, clear: 3 });
+    plan.iena = addBridge('센-론 강', -150, 40, { width: 9, extra: 6, clear: 3 });
     plan.chalets = [];
     for (let k = 0; k < 400 && plan.chalets.length < 16; k++) {
       const a = rng() * Math.PI * 2, r = 20 + rng() * 120, x = 300 + Math.cos(a) * r, z = -40 + Math.sin(a) * r;
@@ -220,9 +221,9 @@
     // 파리 건물 위치
     plan.paris = [];
     for (let i = -6; i <= 6; i++) for (let j = -5; j <= 4; j++) {
-      const x = -110 + i * 17 + (rng() - .5) * 3, z = 40 + j * 17 + (rng() - .5) * 3;
-      if (Math.hypot(x - P.eiffel.x, z - P.eiffel.z) < 46) continue;
-      if (Math.abs(x - P.eiffel.x) < 18 && z > P.eiffel.z && z < P.eiffel.z + 95) continue;
+      const x = -110 + i * 17 + (rng() - .5) * 1.2, z = 40 + j * 17 + (rng() - .5) * 1.2;
+      if (Math.abs(x - P.eiffel.x) < 82 && Math.abs(z - P.eiffel.z) < 82) continue;
+      if (Math.abs(x - P.eiffel.x) < 42 && z > P.eiffel.z && z < P.eiffel.z + 180) continue;
       const q = ISL.riverNearest(ISL.rivers[0], x, z); if (q && q.d < q.w + 12) continue;
       if (rng() < .25) continue;
       if (Math.hypot(x - -110, z - 40) > 105) continue;
@@ -242,7 +243,7 @@
   // 프랑스
   // ============================================================
   function buildEiffel() {
-    const { x, z } = P.eiffel; const g = group(x, z);
+    const { x, z } = P.eiffel; const g = group(x, z); const S = ISL.EIFFEL_S = 4.6; g.scale.setScalar(S); // 모델 72 → 실제 330m
     const latTex = canvasTex(64, 64, (c, w, h) => {
       c.clearRect(0, 0, w, h); c.strokeStyle = '#fff'; c.lineWidth = 7; c.strokeRect(3, 3, w - 6, h - 6);
       c.lineWidth = 4; c.beginPath(); c.moveTo(0, 0); c.lineTo(w, h); c.moveTo(w, 0); c.lineTo(0, h); c.stroke();
@@ -254,7 +255,7 @@
     const add = geo => mesh(g, geo, lat);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
       add(slantGeo([sx * 14.5, 0, sz * 14.5], 5.6, [sx * 8.4, 13, sz * 8.4], 3.4, 1.6));
-      box(g, 7, 1.2, 7, '#c9bfae', sx * 14.5, 0, sz * 14.5); ISL.colCircle(x + sx * 13.5, z + sz * 13.5, 3.2);
+      box(g, 6.2, .32, 6.2, ISL.blockMat('#c9bfae', .5, .3), sx * 14.5, -.1, sz * 14.5); ISL.colCircle(x + sx * 14.5 * S, z + sz * 14.5 * S, 3.6 * S, -1e9, H(x, z) + 30);
       add(slantGeo([sx * 7.8, 14.4, sz * 7.8], 3.1, [sx * 4.6, 27.2, sz * 4.6], 2.1, 1.4));
     }
     // 1층 아치
@@ -271,15 +272,21 @@
     box(g, 4, 1.6, 4, solid, 0, 61, 0); box(g, 2.6, 2.6, 2.6, solid, 0, 62.6, 0);
     cyl(g, .35, .55, 5, 8, solid, 0, 65.2, 0); cyl(g, .1, .2, 3.5, 6, solid, 0, 70.2, 0);
     // 밤의 반짝이는 조명
-    const lamp = new THREE.MeshStandardMaterial({ color: '#000', emissive: '#ffcf70', emissiveIntensity: 0 }); ISL.nightMats.push(lamp);
-    const lampGeo = new THREE.SphereGeometry(.18, 6, 4);
-    for (let i = 0; i < 260; i++) {
-      const y = Math.pow(rng(), 1.3) * 62, half = y < 13 ? 14.5 - y * .47 : y < 28 ? 8 - (y - 13) * .23 : 4.8 - (y - 28) * .07;
-      const side = Math.floor(rng() * 4), t = (rng() * 2 - 1) * half, m = new THREE.Mesh(lampGeo, lamp);
-      m.position.set(side < 2 ? t : (side === 2 ? 1 : -1) * (half + .2), y + 1, side < 2 ? (side ? 1 : -1) * (half + .2) : t); g.add(m);
+    // 밤 조명: 금빛 조명(밤 내내) + 반짝이(정각마다). 낮에는 아예 보이지 않음
+    const lamp = new THREE.MeshBasicMaterial({ color: '#ffcf70', transparent: true, opacity: 1, depthWrite: false });
+    const sparkle = new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const lampGeo = new THREE.SphereGeometry(.06, 5, 3), N = 600;
+    const im = new THREE.InstancedMesh(lampGeo, lamp, N), sm = new THREE.InstancedMesh(lampGeo, sparkle, N), mm = new THREE.Matrix4();
+    for (let i = 0; i < N; i++) {
+      const y = Math.pow(rng(), 1.15) * 62, half = y < 13 ? 14.5 - y * .47 : y < 28 ? 8 - (y - 13) * .23 : 4.8 - (y - 28) * .07;
+      const side = Math.floor(rng() * 4), t = (rng() * 2 - 1) * half;
+      mm.makeTranslation(side < 2 ? t : (side === 2 ? 1 : -1) * (half + .05), y + 1, side < 2 ? (side ? 1 : -1) * (half + .05) : t); im.setMatrixAt(i, mm); sm.setMatrixAt(i, mm);
     }
-    ISL.eiffelLamp = lamp;
-    landmark('eiffel', '에펠탑', 'france', x, z, 55, '1889년 파리 만국박람회 때 세워진 철탑. 약 7,300톤의 연철로 만들어졌고, 밤마다 반짝이는 조명 쇼를 해요.');
+    im.visible = sm.visible = false; im.frustumCulled = sm.frustumCulled = false; g.add(im); g.add(sm);
+    ISL.eiffelLights = { im, sm, sparkle, sm2: sm };
+    const beacon = new THREE.Mesh(new THREE.ConeGeometry(.8, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: '#fff4d0', transparent: true, opacity: .08, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    beacon.position.set(0, 72, 30); beacon.rotation.x = Math.PI / 2; const bg = new THREE.Group(); bg.position.y = 0; bg.add(beacon); bg.visible = false; g.add(bg); ISL.eiffelLights.beacon = bg;
+    landmark('eiffel', '에펠탑', 'france', x, z, 150, '1889년 파리 만국박람회 때 세워진 철탑. 약 7,300톤의 연철로 만들어졌고, 밤마다 반짝이는 조명 쇼를 해요.');
 
     // 이에나 다리
     const w = plan.iena; const stone = mat('#cfc6b4');
@@ -287,10 +294,10 @@
   }
 
   function haussmann(x, z) {
-    const w = 11 + rng() * 4, d = 11 + rng() * 4, h = 10 + rng() * 2;
+    const w = 11 + rng() * 2.4, d = 11 + rng() * 2.4, h = 17 + rng() * 3; // 오스만 건물: 6층 약 18m
     const g = group(x, z, Math.round(rng() * 2) * Math.PI / 2, H(x, z) - .5);
-    const f = facadeCache.paris || (facadeCache.paris = facade({ wall: '#e9dfc9', win: '#3d4756', frame: '#f4efe4', cols: 4, rows: 5, balcony: '#2b2b2b', lit: .6 }));
-    colOf(mesh(g, new THREE.BoxGeometry(w, h, d), boxMats(f, '#5f6b78'), 0, h / 2, 0));
+    const f = facadeCache.paris || (facadeCache.paris = facade({ wall: '#e9dfc9', win: '#3d4756', frame: '#f4efe4', cols: 4, rows: 6, balcony: '#2b2b2b', lit: .6 }));
+    colOf(mesh(g, new THREE.BoxGeometry(w, h, d), boxMats(f, '#5f6b78'), 0, h / 2, 0)); ISL.world.list[ISL.world.list.length - 1].kind = 'city';
     mesh(g, frustumGeo(w / 2 + .3, d / 2 + .3, w / 2 - 1.6, d / 2 - 1.6, 3.4), mat('#5f6b78', { roughness: .5, metalness: .4 }), 0, h, 0);
     for (let i = 0; i < 3; i++) box(g, .8, 1.6, 1.8, '#c4a58a', (rng() - .5) * (w - 4), h + 2.8, (rng() - .5) * (d - 4));
   }
@@ -313,7 +320,7 @@
     mesh(g, new THREE.BoxGeometry(6, 4.5, 6), boxMats(wall, '#b85c35'), -8, 2.25, 2);
     mesh(g, gableGeo(6, 6, 1.6, .5), mat('#bf6a3f'), -8, 4.5, 2);
     // 사이프러스 길
-    const cyp = []; for (let i = 0; i < 10; i++) { const x = cx + 62, z = cz - 40 + i * 8; cyp.push({ x, y: H(x, z), z, s: .9 + rng() * .3 }); }
+    const cyp = []; for (let i = 0; i < 10; i++) { const x = cx - 62, z = cz - 40 + i * 8; cyp.push({ x, y: H(x, z), z, s: .9 + rng() * .3 }); }
     ISL.placeInstances(scene, 'cypress', cyp);
     landmark('lavender', '프로방스 라벤더 밭', 'france', cx, cz, 60, '6~7월이면 남프랑스 발랑솔 고원이 보랏빛 라벤더로 물들어요. 줄지어 심은 이랑이 바다처럼 펼쳐지죠.');
   }
@@ -356,7 +363,7 @@
   // ============================================================
   function buildBelem() {
     const { x, z } = P.belem; const dir = Math.atan2(P.belemCoast.dirx, P.belemCoast.dirz);
-    const g = group(x, z, dir, 0.6);
+    const g = group(x, z, dir, 0.6); g.scale.setScalar(1.3); // 실제 높이 30m
     const lime = blockMat('#ece4cf', 1.1, .5), lime2 = blockMat('#ddd3ba', 1.1, .5), dome = mat('#e6dcc4');
     // 바다 쪽 다각형 보루
     cyl(g, 9, 9.8, 6, 8, lime2, 0, -2, 5);
@@ -454,7 +461,7 @@
   // 교토
   // ============================================================
   function buildKinkaku() {
-    const cx = 280, cz = 377; const g = group(cx, cz, 0, P.kinkaku.y - .3);
+    const cx = 280, cz = 377; const g = group(cx, cz, 0, P.kinkaku.y - .3); g.scale.setScalar(.72); // 실제 높이 12.5m
     const gold = mat('#e2b33c', { metalness: 1, roughness: .22 }), wood = mat('#3d2f26'), plaster = mat('#ece6d6'), roof = mat('#3a302a', { roughness: .9 });
     box(g, 15, .8, 11, '#8f8b84', 0, -.2, 0);
     box(g, 13.5, 4, 9.5, plaster, 0, .6, 0);
@@ -487,27 +494,28 @@
   function buildInari() {
     const path = plan.inari;
     const ver = mat('#e5482c', { roughness: .55 }), blk = mat('#1d1b1b');
-    const parts = [
-      [new THREE.CylinderGeometry(.24, .26, 4.2, 8).translate(0, 2.1, 0), ver, [[-1.7, 0], [1.7, 0]]],
-      [new THREE.CylinderGeometry(.32, .32, .5, 8).translate(0, .25, 0), blk, [[-1.7, 0], [1.7, 0]]],
-      [new THREE.BoxGeometry(4.6, .32, .5).translate(0, 4.35, 0), blk, [[0, 0]]],
-      [new THREE.BoxGeometry(4.2, .3, .42).translate(0, 4.05, 0), ver, [[0, 0]]],
-      [new THREE.BoxGeometry(3.9, .25, .3).translate(0, 3.3, 0), ver, [[0, 0]]],
-    ];
-    const mats = []; const tmp = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+    // 도리이 하나: 기둥 2(살짝 안쪽으로 기울어짐) + 검은 네마키 + 누키(기둥을 관통) + 가쿠즈카 + 시마키 + 위로 휜 검은 가사기
+    const bend = (geo, lift) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i); p.setY(i, p.getY(i) + lift * Math.pow(Math.abs(x) / 1.6, 2.6)); } geo.computeVertexNormals(); return geo; };
+    const HW = 1.15, TH = 2.95, V = '#d9431f', K = '#1a1716';
+    const pillar = s => { const g = new THREE.CylinderGeometry(.1, .12, TH, 10); g.translate(0, TH / 2, 0); g.rotateZ(-s * .02); g.translate(s * HW, 0, 0); return g; };
+    const torii = ISL.merge([
+      [pillar(-1), V], [pillar(1), V],
+      [new THREE.CylinderGeometry(.14, .14, .32, 10).translate(-HW, .16, 0), K], [new THREE.CylinderGeometry(.14, .14, .32, 10).translate(HW, .16, 0), K],
+      [new THREE.BoxGeometry(2.9, .14, .12).translate(0, 2.32, 0), V],
+      [new THREE.BoxGeometry(.12, .3, .1).translate(0, 2.55, 0), V],
+      [bend(new THREE.BoxGeometry(3.1, .16, .26, 16, 1, 1).translate(0, 2.8, 0), .12), V],
+      [bend(new THREE.BoxGeometry(3.3, .12, .3, 16, 1, 1).translate(0, 2.94, 0), .16), K],
+    ]);
+    const tmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5 });
+    const list = [];
     for (let i = 0; i < path.length - 1; i += 1) {
       const [x, z] = path[i], [x2, z2] = path[i + 1], a = Math.atan2(x2 - x, z2 - z);
-      mats.push({ x, z, y: H(x, z) - .1, a }); for (const ox of [-1.7, 1.7]) ISL.colCircle(x + Math.cos(a) * ox, z - Math.sin(a) * ox, .3);
+      list.push({ x, y: H(x, z) - .05, z, s: 1, ry: a, tint: .92 + rng() * .12 });
+      for (const ox of [-HW, HW]) ISL.colCircle(x + Math.cos(a) * ox, z - Math.sin(a) * ox, .14);
     }
-    for (const [geo, m, offs] of parts) {
-      const im = new THREE.InstancedMesh(geo, m, mats.length * offs.length); let k = 0;
-      for (const t of mats) for (const [ox] of offs) {
-        e.set(0, t.a + Math.PI / 2, 0); q.setFromEuler(e);
-        const px = t.x + Math.cos(t.a) * ox, pz = t.z - Math.sin(t.a) * ox;
-        tmp.compose(new THREE.Vector3(px, t.y, pz), q, new THREE.Vector3(1, 1, 1)); im.setMatrixAt(k++, tmp);
-      }
-      im.castShadow = im.receiveShadow = true; scene.add(im);
-    }
+    ISL.placeInstances(scene, torii, list, { material: tmat, collide: 0, tile: 60 });
+    // 신사 가는 길의 돌 등롱과 여우상
+    for (let i = 6; i < path.length - 1; i += 28) { const [x, z] = path[i], [x2, z2] = path[i + 1], a = Math.atan2(x2 - x, z2 - z); for (const sd of [-1, 1]) { const lx = x + Math.cos(a) * sd * 2.1, lz = z - Math.sin(a) * sd * 2.1, ly = H(lx, lz); box(scene, .5, .7, .5, '#9a958c', lx, ly, lz); box(scene, .7, .3, .7, '#8f8a80', lx, ly + .7, lz); box(scene, .45, .4, .45, '#b4ae9f', lx, ly + 1, lz); cone(scene, .5, .35, 4, '#8f8a80', lx, ly + 1.4, lz, Math.PI / 4); } }
     // 입구 로몬(누문)
     const [sx, sz] = path[0], [nx, nz] = path[3]; const a = Math.atan2(nx - sx, nz - sz);
     const g = group(sx - Math.sin(a) * 8, sz - Math.cos(a) * 8, a);
@@ -520,7 +528,7 @@
   }
 
   function buildPagoda() {
-    const { x, z } = P.pagoda; const g = group(x, z, 0, P.pagoda.y - .3);
+    const { x, z } = P.pagoda; const g = group(x, z, 0, P.pagoda.y - .3); g.scale.setScalar(1.4); // 실제 높이 46m
     const wood = mat('#6e3b28'), roof = mat('#3a3633', { roughness: .85 }), wh = mat('#efe8da'), bronze = mat('#4d4a40', { metalness: .6, roughness: .45 });
     box(g, 11, 1.2, 11, '#8e8a83', 0, 0, 0);
     let y = 1.2;
@@ -576,7 +584,7 @@
   // 아이슬란드
   // ============================================================
   function buildHallgrim() {
-    const { x, z } = P.hallgrim; const g = group(x, z, 0, P.hallgrim.y - .3);
+    const { x, z } = P.hallgrim; const g = group(x, z, 0, P.hallgrim.y - .3); g.scale.setScalar(1.35); // 실제 높이 74.5m
     const conc = blockMat('#d9d9d3', 1.6, 3.2);
     box(g, 5.6, 46, 4.5, conc, 0, 0, 0);
     mesh(g, hipGeo(5.6, 4.5, 5, 0), conc, 0, 46, 0);
@@ -805,7 +813,7 @@
     const geo = ISL.merge([[new THREE.IcosahedronGeometry(.6, 0).scale(2.2, 1.1, .75).translate(0, .85, 0), '#ffffff']]), list = [];
     for (let x = cx - r; x < cx + r; x += 1.35) for (let z = cz - r; z < cz + r; z += 1.35) {
       if (Math.hypot(x - cx, z - cz) > r) continue;
-      const h = H(x, z); if (ISL.slopeAt(x, z) > .16 || h < 3) continue;
+      const h = H(x, z); if (ISL.slopeAt(x, z) > .16 || h < 3 || ISL.world.solidAt(x, h + 1, z)) continue;
       const hx = H(x + 2, z) - H(x - 2, z), hz = H(x, z + 2) - H(x, z - 2);
       if (Math.hypot(hx, hz) < .01 && rng() < .5) continue;
       list.push({ x, y: h - .05, z, s: .9, ry: Math.atan2(hz, -hx) + (rng() - .5) * .1, color: new THREE.Color(color).multiplyScalar(.8 + rng() * .4) });
@@ -873,13 +881,13 @@
 
   // 명소 입구와 에펠탑 전망대
   function hallDoors() {
-    const add = (hall, x, z, a, y) => ISL.Interior.addHallDoor({ scene, hall, x, z, a, y: y !== undefined ? y : H(x, z) });
-    add('hallgrim', P.hallgrim.x, P.hallgrim.z + 2.4, 0, P.hallgrim.y - .3);
+    const add = (hall, x, z, a, y) => ISL.Interior.addHallDoor({ scene, hall, x, z, a, y: Math.max(y !== undefined ? y : -1e9, H(x + Math.sin(a) * .8, z + Math.cos(a) * .8) + .02) });
+    add('hallgrim', P.hallgrim.x, P.hallgrim.z + 2.35 * 1.35, 0, P.hallgrim.y - .3);
     { const dx = P.msmCoast.x - P.msm.x, dz = P.msmCoast.z - P.msm.z, l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l; add('msm', P.msm.x + ux * 32.5, P.msm.z + uz * 32.5, Math.atan2(ux, uz)); }
-    { const r = Math.atan2(P.belemCoast.dirx, P.belemCoast.dirz); add('belem', P.belem.x - 7.2 * Math.sin(r), P.belem.z - 7.2 * Math.cos(r), r + Math.PI, .6); }
+    { const r = Math.atan2(P.belemCoast.dirx, P.belemCoast.dirz); add('belem', P.belem.x - 7.1 * 1.3 * Math.sin(r), P.belem.z - 7.1 * 1.3 * Math.cos(r), r + Math.PI, .6); }
     add('pena', P.pena.x + 11.2 * Math.sin(.4), P.pena.z + 11.2 * Math.cos(.4), .4);
-    add('kinkaku', 280, 377 - 5.7, Math.PI, P.kinkaku.y - .3);
-    add('pagoda', P.pagoda.x, P.pagoda.z + 5.6, 0, P.pagoda.y - .3);
+    add('kinkaku', 280, 377 - 4.85 * .72, Math.PI, P.kinkaku.y - .3);
+    add('pagoda', P.pagoda.x, P.pagoda.z + 5.55 * 1.4, 0, P.pagoda.y - .3);
     // 시옹성: 호숫가에서 성까지 나무다리
     { const C = P.chillon, ux0 = C.x - 330, uz0 = C.z - 40, l = Math.hypot(ux0, uz0), ux = ux0 / l, uz = uz0 / l, lv = P.swissLake.y + 1.2;
       const ax = C.x + ux * 11.6, az = C.z + uz * 11.6, bx = C.x + ux * 27, bz = C.z + uz * 27;
@@ -888,14 +896,15 @@
       add('chillon', C.x + ux * 11.3, C.z + uz * 11.3, Math.atan2(ux, uz), lv); }
     // 에펠탑: 1층·2층·꼭대기 전망대를 걸을 수 있게
     const E = P.eiffel, y0 = H(E.x, E.z);
-    const top = box(scene, 6.6, .3, 6.6, mat('#654b37', { metalness: .3, roughness: .6 }), E.x, y0 + 60.4, E.z);
+    const ES = ISL.EIFFEL_S, D1 = y0 + 15.7 * ES, D2 = y0 + 29.4 * ES, D3 = y0 + 62.6 * ES;
     ISL.floors = ISL.floors || [];
-    const levels = [['지상', y0], ['1층 전망대 (57m)', y0 + 14.2], ['2층 전망대 (115m)', y0 + 28.2], ['꼭대기 전망대 (276m)', y0 + 60.7]];
-    for (const [nm, y, hw] of [[1, y0 + 14.2, 9.6], [2, y0 + 28.2, 5.4], [3, y0 + 60.7, 3.2]]) {
+    const levels = [['지상', y0], ['1층 전망대 (57m)', D1], ['2층 전망대 (115m)', D2], ['꼭대기 전망대 (276m)', D3]];
+    for (const [nm, y, hw] of [[1, D1, 9.6 * ES], [2, D2, 5.6 * ES], [3, D3, 1.9 * ES]]) {
       ISL.floors.push({ x: E.x, z: E.z, hw, hd: hw, y });
       for (const [x, z, a, b] of [[0, hw, hw, .1], [0, -hw, hw, .1], [hw, 0, .1, hw], [-hw, 0, .1, hw]]) {
         ISL.world.add({ t: 'b', x: E.x + x, z: E.z + z, hw: a, hd: b, a: 0, y0: y - .3, y1: y + 1.1 });
-        if (nm === 3) box(scene, a * 2 + .1, 1, b * 2 + .1, mat('#4a382a'), E.x + x, y, E.z + z);
+        for (let k = -hw; k <= hw; k += 1.2) box(scene, .06, 1.05, .06, mat('#4a382a'), E.x + x + (a > .2 ? k : 0), y, E.z + z + (b > .2 ? k : 0));
+        box(scene, a * 2 + .1, .08, b * 2 + .1, mat('#4a382a'), E.x + x, y + 1.05, E.z + z);
       }
     }
     ISL.elevators = [{ x: E.x, z: E.z, levels, name: '에펠탑 엘리베이터' }];

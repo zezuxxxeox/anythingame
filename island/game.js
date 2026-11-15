@@ -42,6 +42,7 @@
     if (o.scarf) part(new THREE.TorusGeometry(.22, .07, 6, 12), M(o.scarf), 0, 1.73, 0).rotation.x = Math.PI / 2;
     if (o.pattern) part(new THREE.TorusGeometry(.31, .05, 6, 16), M(o.pattern), 0, 1.62, 0).rotation.x = Math.PI / 2;
     if (o.backpack) { part(new THREE.BoxGeometry(.5, .6, .26), M(o.backpack), 0, 1.4, -.38); part(new THREE.CylinderGeometry(.1, .1, .5, 8), M('#5b6b7a'), 0, 1.78, -.38).rotation.z = Math.PI / 2; }
+    body.scale.setScalar(.78); // 키 약 1.8m
     return { g, body, legL, legR, armL, armR, emote: null };
   }
   ISL.person = person;
@@ -60,14 +61,14 @@
   let npcs = [], tourists = [], pickups = [];
   function placeNPCs() {
     const PL = ISL.P, pd = ISL.Landmarks.planData;
-    const pos = { sigrid: [PL.hallgrim.x + 6, PL.hallgrim.z + 28], lukas: [300, 110], chloe: [PL.eiffel.x + 6, PL.eiffel.z + 44], joao: [pd.lisbon.x, pd.lisbon.z - 44], haruka: [300, 440] };
+    const pos = { sigrid: [PL.hallgrim.x + 6, PL.hallgrim.z + 28], lukas: [300, 110], chloe: [PL.eiffel.x + 8, PL.eiffel.z + 96], joao: [pd.lisbon.x, pd.lisbon.z - 44], haruka: [300, 440] };
     for (const d of NPCS) {
       const m = person(d.look); const [x, z] = pos[d.id];
       m.g.position.set(x, ISL.H(x, z), z); scene.add(m.g);
-      const tag = label(d.name, '#ffd166'); tag.position.set(0, 3, 0); m.g.add(tag);
-      npcs.push({ d, m, x, z, tag, face: 0 }); ISL.colCircle(x, z, .5);
+      const tag = label(d.name, '#ffd166'); tag.position.set(0, 2.35, 0); m.g.add(tag);
+      npcs.push({ d, m, x, z, tag, face: 0 }); ISL.colCircle(x, z, .35);
     }
-    const spots = [[PL.eiffel.x - 20, PL.eiffel.z + 30], [260, 430], [PL.hallgrim.x - 16, PL.hallgrim.z + 30], [PL.belem.x + 20, PL.belem.z], [PL.chillon.x - 10, PL.chillon.z + 30], [PL.msm.x + 40, PL.msm.z + 10], [470, 380], [180, -30]];
+    const spots = [[PL.eiffel.x - 14, PL.eiffel.z + 110], [260, 430], [PL.hallgrim.x - 16, PL.hallgrim.z + 30], [PL.belem.x + 20, PL.belem.z], [PL.chillon.x - 10, PL.chillon.z + 30], [PL.msm.x + 40, PL.msm.z + 10], [470, 380], [180, -30]];
     const looks = [{ top: '#f4a261', hat: 'sun', hatColor: '#f6e7c1', backpack: '#2a9d8f' }, { top: '#9b5de5', bottom: '#264653', hat: 'cap', hatColor: '#f15bb5' }, { top: '#00bbf9', bottom: '#333', backpack: '#fee440' }, { top: '#e76f51', hair: '#d4a373', longHair: 1 }];
     spots.forEach(([x, z], i) => {
       const m = person(looks[i % looks.length]); m.g.position.set(x, ISL.H(x, z), z); scene.add(m.g);
@@ -95,8 +96,8 @@
   }
 
   // ---------- 플레이어 ----------
-  const player = { x: -110, z: 175, y: 0, vy: 0, fly: false, ground: true, phase: 0, face: Math.PI, speed: 0, swim: false, stepN: 0, splashT: 0, seat: null };
-  const cam = { yaw: Math.PI, pitch: .3, dist: 13, tx: 0, ty: 0, tz: 0 };
+  const player = { x: -150, z: 262, y: 0, vy: 0, fly: false, ground: true, phase: 0, face: Math.PI, speed: 0, swim: false, stepN: 0, splashT: 0, seat: null };
+  const cam = { yaw: Math.PI, pitch: .25, dist: 8, tx: 0, ty: 0, tz: 0 };
   let pm, glider;
   function groundAt(x, z, curY) {
     let h = ISL.H(x, z);
@@ -136,7 +137,7 @@
     if (e.code === 'Space') { e.preventDefault(); jump(); }
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
-  function jump() { if (player.seat) { standUp(); return; } if (!player.fly && player.ground && !player.swim) { player.vy = 9; player.ground = false; } }
+  function jump() { if (player.seat) { standUp(); return; } if (!player.fly && player.ground && !player.swim) { player.vy = 5.4; player.ground = false; } }
   function setupPointer() {
     const el = renderer.domElement;
     el.addEventListener('pointerdown', e => {
@@ -406,7 +407,7 @@
   function toggleFly() {
     if (state.inside) return toast('🏠 실내에서는 날 수 없어요', 1500);
     player.fly = !player.fly; glider.visible = player.fly; player.seat = null; pm.emote = null;
-    if (player.fly) { player.vy = 0; player.y += 4; toast(MOBILE ? '🪂 패러글라이딩! ▲▼ 버튼으로 높이 조절' : '🪂 패러글라이딩! Space 위로 · C 아래로 · F 내리기', 3000); cam.dist = Math.max(cam.dist, 20); document.body.classList.add('flying'); }
+    if (player.fly) { player.vy = 0; player.y += 4; toast(MOBILE ? '🪂 패러글라이딩! ▲▼ 버튼으로 높이 조절' : '🪂 패러글라이딩! Space 위로 · C 아래로 · F 내리기', 3000); cam.dist = Math.max(cam.dist, 16); document.body.classList.add('flying'); }
     else { toast('🚶 착지!', 1200); document.body.classList.remove('flying'); }
   }
 
@@ -419,7 +420,7 @@
     renderer.shadowMap.enabled = !LQ; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     $('app').appendChild(renderer.domElement);
     scene = new THREE.Scene(); scene.fog = new THREE.FogExp2('#bcd3e6', .00078);
-    camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .1, 12000);
+    camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .3, 7000); // 깊이 정밀도 → 바닥 깜빡임 방지
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); if (post) post.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
     sunLight = new THREE.DirectionalLight('#fff4e0', 2.6); sunLight.castShadow = true;
     const sm = MOBILE ? 1024 : 2048; sunLight.shadow.mapSize.set(sm, sm); const sc = sunLight.shadow.camera; sc.left = sc.bottom = -85; sc.right = sc.top = 85; sc.near = 1; sc.far = 900;
@@ -460,7 +461,9 @@
     for (const m of ISL.waterMats) { m.uniforms.uSunCol.value.copy(lightC).multiplyScalar(isSun ? 1 : .4); m.uniforms.uCam.value.copy(camera.position); }
     if (ISL.sea && !state.inside) { const st = ISL.sea.step; ISL.sea.sea.position.set(Math.round(camera.position.x / st) * st, 0, Math.round(camera.position.z / st) * st); ISL.sea.far.position.set(ISL.sea.sea.position.x, -.02, ISL.sea.sea.position.z); }
     if (ISL.clouds) { const cc = new THREE.Color().setRGB(.05 + .95 * day + low * .25, .06 + .9 * day + low * .02, .1 + .85 * day - low * .15); for (const m of ISL.clouds.mats) m.color.copy(cc); ISL.clouds.group.position.x = (performance.now() * .002) % 400; }
-    for (const m of ISL.nightMats) m.emissiveIntensity = night * (m === ISL.eiffelLamp ? 2.2 + Math.sin(performance.now() * .02) * .8 : 1.1);
+    for (const m of ISL.nightMats) m.emissiveIntensity = night * 1.1;
+    if (ISL.eiffelLights) { const L2 = ISL.eiffelLights, on = night > .25, tt = performance.now() * .001; L2.im.visible = on; L2.beacon.visible = on; L2.beacon.rotation.y = tt * .6;
+      const sp = on && (tt % 60) < 10; L2.sm.visible = sp; if (sp) { L2.sparkle.opacity = .5 + .5 * Math.sin(tt * 40); L2.sm.rotation.y = Math.floor(tt * 12) * 1.7; } }
     ISL.U.uTime.value += dt;
     sky.position.copy(camera.position);
     if (!state.inside) for (const c of ISL.chunks) { const bs = c.boundingSphere; c.visible = bs.center.distanceTo(camera.position) - bs.radius < c.userData.lod; }
@@ -489,7 +492,8 @@
     const fx = Math.sin(cam.yaw), fz = Math.cos(cam.yaw), rx = -Math.cos(cam.yaw), rz = Math.sin(cam.yaw);
     return [fx * iz + rx * ix, fz * iz + rz * ix];
   }
-  function turnTo(mx, mz, dt) { const tf = Math.atan2(mx, mz); let d = tf - player.face; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; player.face += d * Math.min(1, dt * 10); }
+  let turnRate = 0;
+  function turnTo(mx, mz, dt) { const tf = Math.atan2(mx, mz); let d = tf - player.face; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; const st = d * Math.min(1, dt * (player.fly ? 2.2 : 10)); player.face += st; turnRate += (st / Math.max(dt, 1e-3) - turnRate) * Math.min(1, dt * 4); }
   function footstep(surface) { const n = Math.floor(player.phase / Math.PI); if (n !== player.stepN) { player.stepN = n; A.step(surface); } }
 
   function updatePlayer(dt) {
@@ -501,7 +505,7 @@
     const depth = wl.level - g0;
     player.swim = !player.fly && depth > 1.3;
     const wading = !player.fly && !player.swim && depth > .15 && player.y < wl.level;
-    const sp = player.fly ? (run ? 85 : 42) : (run ? 22 : 10) * (player.swim ? .45 : wading ? .6 : 1);
+    const sp = player.fly ? (run ? 26 : 13) : (run ? 9.5 : 4.4) * (player.swim ? .35 : wading ? .55 : 1);
     player.speed += ((mag > .05 ? sp * Math.min(1, mag) : 0) - player.speed) * Math.min(1, dt * 8);
     let nx = player.x, nz = player.z;
     if (mag > .05) { nx += mx / mag * player.speed * dt; nz += mz / mag * player.speed * dt; turnTo(mx, mz, dt); }
@@ -509,8 +513,15 @@
     if ((player.swim || wading) && wl.kind === 'river') {
       for (const r of ISL.rivers) { const q = ISL.riverNearest(r, player.x, player.z); if (q && q.d < q.w) { const l = Math.hypot(q.tx, q.tz) || 1, v = (r.speed ? r.speed[q.i] : 1) * (player.swim ? 1.6 : .7); nx += q.tx / l * v * dt; nz += q.tz / l * v * dt; break; } }
     }
+    if (!player.fly && !player.swim && mag > .05) {
+      const g1 = groundAt(nx, nz, player.y), g0b = groundAt(player.x, player.z, player.y), run2 = Math.hypot(nx - player.x, nz - player.z) || 1e-3;
+      if ((g1 - g0b) / run2 > 1.25 && g1 > player.y + .35) { // 너무 가파르면 막힘
+        const gx = groundAt(nx, player.z, player.y), gz = groundAt(player.x, nz, player.y);
+        if ((gx - g0b) / run2 <= 1.25) nz = player.z; else if ((gz - g0b) / run2 <= 1.25) nx = player.x; else { nx = player.x; nz = player.z; }
+      }
+    }
     if (Math.hypot(nx, nz) < 930) {
-      if (!player.fly || player.y < groundAt(nx, nz) + 25) [nx, nz] = ISL.world.resolve(nx, nz, .4, player.y);
+      if (!player.fly || player.y < groundAt(nx, nz) + 25) [nx, nz] = ISL.world.resolve(nx, nz, .32, player.y);
       player.x = nx; player.z = nz;
     }
     // 문이 열린 집 안으로 걸어 들어가면 실내로
@@ -525,11 +536,11 @@
       player.y = Math.max(g + 1.5, Math.min(420, player.y + vy * dt));
     } else if (player.swim) {
       const wave = wl.kind === 'sea' ? ISL.waveY(player.x, player.z, ISL.U.uTime.value) : 0;
-      const ty = wl.level + wave - 1.3; if (player.y > ty + 1 && player.vy < -3) { ripple(player.x, wl.level + wave, player.z, true); A.splash(true); }
+      const ty = wl.level + wave - 1.05; if (player.y > ty + 1 && player.vy < -3) { ripple(player.x, wl.level + wave, player.z, true); A.splash(true); }
       player.y += (ty - player.y) * Math.min(1, dt * 5); player.vy = 0; player.ground = true;
       if ((player.splashT -= dt) < 0 && player.speed > 1) { player.splashT = .55; ripple(player.x, wl.level + wave, player.z); A.step('water'); }
     } else {
-      player.vy -= 25 * dt; player.y += player.vy * dt;
+      player.vy -= 20 * dt; player.y += player.vy * dt;
       if (player.y <= g) { if (player.vy < -8 && wading) { ripple(player.x, wl.level, player.z, true); A.splash(true); } player.y = g; player.vy = 0; player.ground = true; } else if (player.y - g > .4) player.ground = false;
       if (player.ground && player.y - g < .6) player.y = g;
       if (player.ground && player.speed > 1) {
@@ -538,11 +549,13 @@
       }
     }
     pm.g.position.set(player.x, player.y, player.z); pm.g.rotation.y = player.face;
-    player.phase += dt * player.speed * .9;
+    player.phase += dt * Math.min(player.speed, 12) * 1.55;
     if (!poseEmote(pm, dt)) {
-      walkPose(pm, player.phase, player.fly ? 0 : Math.min(.9, player.speed * .06));
+      walkPose(pm, player.phase, player.fly ? 0 : Math.min(.85, player.speed * .1));
       if (player.swim) { const sw = Math.sin(player.phase * 1.5); pm.armL.rotation.x = -2.2 + sw; pm.armR.rotation.x = -2.2 - sw; }
-      if (player.fly) { pm.armL.rotation.x = pm.armR.rotation.x = -2.6; pm.legL.rotation.x = pm.legR.rotation.x = .3; glider.rotation.z = Math.sin(performance.now() * .001) * .05; }
+      if (player.fly) { // 하네스에 앉아 브레이크 줄을 잡은 자세
+        pm.armL.rotation.set(-2.75, 0, -.25); pm.armR.rotation.set(-2.75, 0, .25); pm.legL.rotation.x = pm.legR.rotation.x = -1.35; pm.body.position.y = .12;
+        const t = performance.now() * .001; glider.rotation.z = Math.sin(t * .9) * .04 - turnRate * .25; glider.rotation.x = Math.sin(t * .7) * .02 + .05; }
     }
   }
   function updatePlayerInside(dt) {
@@ -550,19 +563,19 @@
     if (state.dlg) { if (!poseEmote(pm, dt)) walkPose(pm, 0, 0); return; }
     const [mx, mz] = moveInput(), mag = Math.hypot(mx, mz);
     if (mag > .05 && (pm.emote || player.seat)) standUp();
-    const sp = keys.ShiftLeft || $('runBtn').classList.contains('on') ? 5 : 3;
+    const sp = keys.ShiftLeft || $('runBtn').classList.contains('on') ? 3.6 : 1.9;
     player.speed += ((mag > .05 ? sp * Math.min(1, mag) : 0) - player.speed) * Math.min(1, dt * 10);
-    if (mag > .05) { let nx = player.x + mx / mag * player.speed * dt, nz = player.z + mz / mag * player.speed * dt; [nx, nz] = it.phys.resolve(nx, nz, .35, 0); player.x = nx; player.z = nz; turnTo(mx, mz, dt); }
+    if (mag > .05) { let nx = player.x + mx / mag * player.speed * dt, nz = player.z + mz / mag * player.speed * dt; [nx, nz] = it.phys.resolve(nx, nz, .28, 0); player.x = nx; player.z = nz; turnTo(mx, mz, dt); }
     if (player.z > it.D / 2 - .5 && Math.abs(player.x) < .65 && mag > .05 && mz > 0) exitHouse();
     pm.g.position.set(player.x, 0, player.z); pm.g.rotation.y = player.face;
-    player.phase += dt * player.speed * 1.5;
+    player.phase += dt * player.speed * 2.6;
     if (player.speed > .5) footstep(it.door.style === 'machiya' || it.door.style === 'farm' ? 'grass' : 'wood');
-    if (!poseEmote(pm, dt)) walkPose(pm, player.phase, Math.min(.8, player.speed * .2));
+    if (!poseEmote(pm, dt)) walkPose(pm, player.phase, Math.min(.75, player.speed * .3));
     if (player.seat) pm.body.position.y += player.seat.y - .05;
   }
   function updateCamera(dt) {
     const it = state.inside;
-    const tx = player.x, ty = player.y + (it ? 1.5 : 2.2), tz = player.z;
+    const tx = player.x, ty = player.y + (it ? 1.35 : player.fly ? 3 : 1.6), tz = player.z;
     cam.tx += (tx - cam.tx) * Math.min(1, dt * 10); cam.ty += (ty - cam.ty) * Math.min(1, dt * 8); cam.tz += (tz - cam.tz) * Math.min(1, dt * 10);
     if (!drag && player.speed > 3 && !state.dlg && !it) { let d = player.face - cam.yaw; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; cam.yaw += d * dt * .6; }
     const cp = Math.cos(cam.pitch);
@@ -598,7 +611,7 @@
       if (t.t < 0) { t.t = 3 + rng() * 6; const a = rng() * 6.28, r = rng() * 14; t.tx = t.ax + Math.cos(a) * r; t.tz = t.az + Math.sin(a) * r; if (deepWater(t.tx, t.tz)) { t.tx = t.ax; t.tz = t.az; } }
       const dx = t.tx - t.x, dz = t.tz - t.z, d = Math.hypot(dx, dz), talking = state.nearest && state.nearest.o === t;
       if (poseEmote(t.m, dt)) { /* 감정표현 중 */ }
-      else if (d > .3 && !talking) { let nx = t.x + dx / d * dt * 2.2, nz = t.z + dz / d * dt * 2.2; [nx, nz] = ISL.world.resolve(nx, nz, .4); if (Math.hypot(nx - t.x, nz - t.z) < dt * .5) t.t = 0; t.x = nx; t.z = nz; t.m.g.rotation.y = Math.atan2(dx, dz); t.phase += dt * 4; walkPose(t.m, t.phase, .5); }
+      else if (d > .3 && !talking) { let nx = t.x + dx / d * dt * 1.3, nz = t.z + dz / d * dt * 1.3; [nx, nz] = ISL.world.resolve(nx, nz, .32); if (Math.hypot(nx - t.x, nz - t.z) < dt * .5) t.t = 0; t.x = nx; t.z = nz; t.m.g.rotation.y = Math.atan2(dx, dz); t.phase += dt * 3.4; walkPose(t.m, t.phase, .45); }
       else walkPose(t.m, 0, 0);
       if (talking) t.m.g.rotation.y = Math.atan2(player.x - t.x, player.z - t.z);
       t.m.g.position.set(t.x, groundAt(t.x, t.z), t.z);
@@ -611,8 +624,8 @@
     let best = null, bd = 1e9;
     const consider = (o, kind, x, z, r) => { const d = Math.hypot(player.x - x, player.z - z); if (d < r && d < bd) { bd = d; best = { o, kind }; } };
     if (!player.fly) {
-      for (const n of npcs) consider(n, 'npc', n.x, n.z, 6); for (const t of tourists) consider(t, 'tourist', t.x, t.z, 3.5); for (const p of pickups) consider(p, 'pickup', p.x, p.z, 3.5);
-      if (!best) { const d = ISL.Interior.nearestDoor(player.x, player.z, 2.6); if (d && Math.abs((d.y || 0) - player.y) < 2.5) best = { o: d, kind: 'door' }; }
+      for (const n of npcs) consider(n, 'npc', n.x, n.z, 3.6); for (const t of tourists) consider(t, 'tourist', t.x, t.z, 2.6); for (const p of pickups) consider(p, 'pickup', p.x, p.z, 2.4);
+      if (!best) { const d = ISL.Interior.nearestDoor(player.x, player.z, 2.6); if (d && Math.abs((d.y || 0) - player.y) < 4.2) best = { o: d, kind: 'door' }; }
       for (const e of ISL.elevators || []) if (Math.hypot(player.x - e.x, player.z - e.z) < 3.5) best = { o: e, kind: 'elevator' };
     }
     state.nearest = best;
@@ -663,13 +676,11 @@
     await step('에펠탑과 금각사를 세우는 중… 🗼', 68); ISL.Landmarks.build(scene); ISL.Landmarks.mergeStatic();
     await step('숲과 풀밭을 키우는 중… 🌿', 80);
     ISL.Nature.makeTrees(scene);
-    ISL.Nature.makeGrass(scene, LQ ? 6000 : MOBILE ? 11000 : 30000);
+    ISL.Nature.maskGrass();
+    ISL.Nature.makeGrass(scene, LQ ? 7000 : MOBILE ? 16000 : 46000);
     await step('친구들을 부르는 중… 👋', 88);
     pm = person({ top: '#4a90d9', bottom: '#34495e', hat: 'cap', hatColor: '#f4a261', backpack: '#e07a3a', hair: '#2b1d14' });
-    glider = new THREE.Group();
-    const canopy = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 1.8, 24, 1, true, -1.1, 2.2), new THREE.MeshStandardMaterial({ color: '#ff7b54', side: THREE.DoubleSide, roughness: .6 }));
-    canopy.rotation.set(0, Math.PI / 2, Math.PI / 2); canopy.position.y = 2.2; canopy.castShadow = true; glider.add(canopy);
-    glider.position.y = 3.2; glider.visible = false; pm.g.add(glider); scene.add(pm.g);
+    glider = makeGlider(); glider.visible = false; pm.g.add(glider); scene.add(pm.g);
     player.y = groundAt(player.x, player.z);
     placeNPCs();
     await step('지도를 그리는 중… 🗺️', 95); buildMapImage(); setupPointer(); buildWheel();
@@ -678,6 +689,35 @@
     cam.tx = player.x; cam.ty = player.y + 2; cam.tz = player.z;
     loop();
   }
+  // 패러글라이더: 활처럼 휜 날개(에어포일 단면을 호를 따라 쓸어 만듦) + 셀 무늬 + 줄 + 하네스
+  function makeGlider() {
+    const G = new THREE.Group(), R = 5.6, SPAN = 1.25, NS = 36, chord = 2.6;
+    const af = []; for (let k = 0; k <= 16; k++) { const t = k / 16, x = (1 - Math.cos(t * Math.PI)) / 2, th = .16 * (1.4845 * Math.sqrt(x) - .63 * x - 1.758 * x * x + 1.4215 * x ** 3 - .5075 * x ** 4); af.push([x, th]); }
+    const sec = af.concat(af.slice(1, -1).reverse().map(([x, t]) => [x, -t * .35]));
+    const pos = [], col = [], idx = [], NC = sec.length, cA = new THREE.Color('#ff7b2e'), cB = new THREE.Color('#ffd23f'), cC = new THREE.Color('#2a9df4');
+    for (let i = 0; i <= NS; i++) {
+      const u = i / NS, a = (u - .5) * SPAN * 2, ch = chord * (1 - .45 * Math.pow(Math.abs(u - .5) * 2, 2.2));
+      const cx = Math.sin(a) * R, cy = Math.cos(a) * R, nx = Math.sin(a), ny = Math.cos(a);
+      const cell = Math.floor(u * 18), c = cell % 6 === 0 ? cC : cell % 2 ? cA : cB;
+      for (const [x, t] of sec) { pos.push(cx + nx * t * chord, cy + ny * t * chord - R + 6.6, (.5 - x) * ch); col.push(c.r, c.g, c.b); }
+      if (i) for (let k = 0; k < NC; k++) { const a0 = (i - 1) * NC + k, a1 = (i - 1) * NC + (k + 1) % NC, b0 = i * NC + k, b1 = i * NC + (k + 1) % NC; idx.push(a0, b0, a1, a1, b0, b1); }
+    }
+    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); wg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); wg.setIndex(idx); wg.computeVertexNormals();
+    const wing = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: .55 })); wing.castShadow = true; G.add(wing);
+    const lp = [];
+    for (let i = 1; i < NS; i += 3) for (const fx of [.15, .55, .9]) {
+      const u = i / NS, a = (u - .5) * SPAN * 2, ch = chord * (1 - .45 * Math.pow(Math.abs(u - .5) * 2, 2.2));
+      lp.push(Math.sin(a) * R, Math.cos(a) * R - R + 6.6 - .05, (.5 - fx) * ch, (u < .5 ? -.22 : .22), 1.5, .05);
+    }
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+    G.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: '#d9d4c8', transparent: true, opacity: .75 })));
+    const hm = new THREE.MeshStandardMaterial({ color: '#2b2f38', roughness: .7 });
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(.55, .14, .7), hm); seat.position.set(0, .62, .05); G.add(seat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(.55, .75, .16), hm); back.position.set(0, 1.0, -.32); back.rotation.x = -.25; G.add(back);
+    for (const s of [-1, 1]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .9, 6), hm); st.position.set(s * .22, 1.05, .02); G.add(st); }
+    return G;
+  }
+
   function buildWheel() {
     const w = $('wheel'); w.innerHTML = '';
     ISL.EMOTES.forEach((e, i) => { const b = document.createElement('button'); b.innerHTML = `<span>${e.icon}</span><em>${MOBILE ? '' : (i + 1) + '. '}${e.name}</em>`; b.onclick = () => { doEmote(e.id); toggleWheel(false); }; w.appendChild(b); });

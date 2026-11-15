@@ -55,7 +55,7 @@
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const b = bubbles[i];
       if (now > b.until || !b.obj.parent) { b.el.remove(); bubbles.splice(i, 1); continue; }
-      b.obj.getWorldPosition(v); v.y += 2.9; v.project(camera);
+      b.obj.getWorldPosition(v); v.y += 2.15; v.project(camera);
       const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
       b.el.style.display = vis ? 'block' : 'none';
       if (vis) { b.el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; b.el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px'; b.el.style.opacity = Math.min(1, (b.until - now) / 400); }

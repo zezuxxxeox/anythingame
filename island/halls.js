@@ -49,7 +49,7 @@
     const leaves = [];
     for (const s of [-1, 1]) { const p = new THREE.Group(); p.position.set(s * dw / 2, 0, D / 2 - .05); exitPivot.add(p); LH.box(p, dw / 2, 3.15, .12, o.doorCol || '#5a3b26', -s * dw / 4, 0, 0); LH.sphere(p, .06, '#c9a24a', -s * (dw / 2 - .2), 1.2, -.08); leaves.push([p, s]); }
     const exit = { pivot: exitPivot, open: 0, target: 0 };
-    anim.push(dt => { if (exit.open !== exit.target) { exit.open += Math.sign(exit.target - exit.open) * Math.min(Math.abs(exit.target - exit.open), dt * 2.4); for (const [p, s] of leaves) p.rotation.y = s * exit.open * 1.4; } });
+    anim.push(dt => { if (exit.open !== exit.target) { exit.open += Math.sign(exit.target - exit.open) * Math.min(Math.abs(exit.target - exit.open), dt * 2.4); for (const [p, s] of leaves) p.rotation.y = -s * exit.open * 1.4; } }); // 안쪽으로 열림
     inter.push({ x: 0, z: D / 2 - 1, r: 1.6, label: '🚪 밖으로 나가기', act: 'exit' });
     const ctx = { scene, g, phys, inter, anim, env, W, D, H, wallBox, solid, LH,
       light(c, i, d, x, y, z, flick) { const l = new THREE.PointLight(c, i, d, 2); l.position.set(x, y, z); scene.add(l); if (flick) anim.push((dt, tt) => { l.intensity = i * (.85 + Math.sin(tt * 9 + x) * .08 + Math.random() * .07); }); return l; },

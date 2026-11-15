@@ -69,6 +69,19 @@
             c+=vec3(0.55,0.6,0.85)*mw*(0.02+0.05*n2(d.xy*40.0+d.z*20.0))*uNight;
             c+=aurora(d)*uNight;
           }
+          // 구름: 하늘 위 한 층에 펼쳐진 뭉게구름 (해 쪽은 밝고 두꺼운 곳은 그늘)
+          if(d.y>0.0){
+            float sunsetC=exp(-pow(uSun.y*4.2,2.0));
+            vec2 cp=d.xz/(d.y+0.06)*0.55+vec2(uTime*0.0035,uTime*0.0012);
+            float f=0.0, a=0.5; vec2 q=cp; for(int i=0;i<5;i++){ f+=a*n2(q); q=q*2.03+vec2(1.7,9.2); a*=0.5; }
+            float cov=smoothstep(0.5,0.74,f);
+            vec2 q2=cp+normalize(uSun.xz+1e-4)*0.06; float f2=0.0; a=0.5; for(int i=0;i<4;i++){ f2+=a*n2(q2); q2=q2*2.03+vec2(1.7,9.2); a*=0.5; }
+            float shade=clamp(1.05-(f2-f)*4.0-cov*0.22,0.42,1.08);
+            vec3 cc=mix(vec3(0.05,0.06,0.09), vec3(0.98,0.98,1.0), day)*shade;
+            cc=mix(cc, vec3(1.0,0.62,0.42)*shade*1.05, sunsetC*day*0.7);
+            cc+=vec3(1.0,0.9,0.75)*pow(max(sd,0.0),12.0)*(1.0-cov)*0.6*day;
+            c=mix(c, cc, cov*smoothstep(0.0,0.12,d.y)*0.96);
+          }
           if(d.y<0.0) c=mix(c, c*0.6, smoothstep(0.0,-0.2,d.y));
           gl_FragColor=vec4(c,1.0);
           #include <tonemapping_fragment>
@@ -131,7 +144,7 @@
         }`,
       fragmentShader: SKY_GLSL + `
         varying vec3 vW; varying vec2 vUv; varying vec3 vN; varying float vSp;
-        uniform float uRiver; uniform vec3 uDeep; uniform vec3 uShallow; uniform sampler2D uHeight; uniform vec3 uHB; uniform float uMilky; uniform vec3 uSunCol;
+        uniform float uRiver; uniform float uWave; uniform vec3 uDeep; uniform vec3 uShallow; uniform sampler2D uHeight; uniform vec3 uHB; uniform float uMilky; uniform vec3 uSunCol;
         #include <fog_pars_fragment>
         float wh(vec2 p){ return sin(p.x*0.8+uTime*1.3)*0.25+sin(p.y*0.63-uTime*1.1+p.x*0.3)*0.25+sin((p.x+p.y)*1.7+uTime*2.1)*0.12+sin((p.x*2.3-p.y*1.9)-uTime*2.7)*0.08+sin(p.x*4.1+p.y*3.3+uTime*3.3)*0.04; }
         void main(){
@@ -159,8 +172,8 @@
           float foam=smoothstep(1.1,0.0,depth)*(0.55+0.45*sin(depth*9.0-uTime*2.2+vW.x*0.15));
           // 해안으로 밀려오는 하얀 파도 줄
           float brk=sin(depth*1.35 - uTime*1.7 + sin(vW.x*0.05+vW.z*0.04)*2.0);
-          foam += smoothstep(0.55,0.95,brk)*smoothstep(5.0,0.6,depth)*0.75*(1.0-uRiver);
-          foam += smoothstep(0.32,0.6,vW.y)*smoothstep(0.55,0.9,sin(vW.x*0.7+vW.z*0.5+uTime)*0.5+0.5)*0.3*(1.0-uRiver);
+          foam += smoothstep(0.55,0.95,brk)*smoothstep(5.0,0.6,depth)*0.75*(1.0-uRiver)*uWave;
+          foam += smoothstep(0.32,0.6,vW.y)*smoothstep(0.55,0.9,sin(vW.x*0.7+vW.z*0.5+uTime)*0.5+0.5)*0.3*(1.0-uRiver)*uWave;
           float fall=smoothstep(0.2,0.6,steep);
           foam+=fall*(0.75+0.25*sin(vUv.y*3.0+uTime*14.0+vUv.x*20.0));
           if(uRiver>0.5) foam+=(0.08+smoothstep(1.6,3.2,vSp)*0.5)*smoothstep(0.55,1.0,sin(p.x*3.0+p.y*2.0)*0.5+sin(p2.x*2.0-p2.y*3.0)*0.5);
@@ -179,7 +192,7 @@
     const sg = new THREE.PlaneGeometry(1500, 1500, segs, segs); sg.rotateX(-Math.PI / 2);
     const seaMat = waterMat({ deep: '#0a3550', shallow: '#3fb5b8', wave: 1 });
     const sea = new THREE.Mesh(sg, seaMat); sea.renderOrder = 1; sea.frustumCulled = false; scene.add(sea);
-    const rg = new THREE.RingGeometry(700, 7000, 64, 1); rg.rotateX(-Math.PI / 2);
+    const rg = new THREE.RingGeometry(700, 5600, 64, 1); rg.rotateX(-Math.PI / 2);
     const far = new THREE.Mesh(rg, waterMat({ deep: '#0a3550', shallow: '#3fb5b8' })); far.renderOrder = 1; far.frustumCulled = false; scene.add(far);
     ISL.sea = { sea, far, step: 1500 / segs };
     ISL.waterMats = [seaMat, far.material];
@@ -242,9 +255,11 @@
     const sandK = ISL.sstep(3.2, 1.2, h); SURF.sand = sandK;
     if (sandK > 0) { tmpC2.setRGB(0, 0, 0); for (let i = 0; i < 5; i++) { tmpC2.r += PAL.sand[i].r * W[i]; tmpC2.g += PAL.sand[i].g * W[i]; tmpC2.b += PAL.sand[i].b * W[i]; } if (ck > .3) tmpC2.lerp(W[2] > W[3] ? PAL.chalk : PAL.goldSand, .6); out.lerp(tmpC2, sandK); }
     if (h < 0) out.lerp(PAL.under, ISL.sstep(0, -6, h));
-    const wl = ISL.waterAt(x, z); SURF.wet = 0; SURF.water = wl.level > h + .15;
+    const wl = ISL.waterAt(x, z); SURF.wet = 0; SURF.water = wl.level > h + .15; SURF.bank = 0;
+    for (const rv of ISL.rivers) { const q = ISL.riverNearest(rv, x, z); if (!q || q.d > q.w + 4.5) continue; const b = ISL.sstep(q.w + 4.5, q.w + .3, q.d) * ISL.sstep(q.level + 2.6, q.level + .2, h); if (b > SURF.bank) SURF.bank = b; }
+    if (SURF.bank > 0) { tmpC2.set(ISL.noise(x * .6, z * .6) > .1 ? '#8c8576' : '#5e5444'); out.lerp(tmpC2, SURF.bank * .75); }
     if (wl.kind !== 'sea' && h < wl.level + 0.6) { SURF.wet = ISL.sstep(wl.level + .6, wl.level - 1.5, h); out.lerp(PAL.wet, SURF.wet); }
-    let rockK = Math.max(ISL.sstep(.28, .5, slope + nz * .05), ISL.sstep(70, 115, h + nz * 15) * W[1] * .85);
+    let rockK = Math.max(ISL.sstep(.2, .36, slope + nz * .04), ISL.sstep(70, 115, h + nz * 15) * W[1] * .85);
     if (ck > .2) rockK = Math.max(rockK, ISL.sstep(.08, .22, slope) * Math.min(1, ck * 1.5));
     SURF.rock = rockK;
     if (rockK > 0) {
@@ -274,8 +289,8 @@
       G.g = 0; G.fl = 0; G.fp = 0; G.lu = 0; G.gc.setRGB(0, 0, 0); let wm = 0;
       for (let r = 0; r < 5; r++) { const w = WILD[r]; G.g += W[r] * w.g; G.fl += W[r] * w.fl; G.gc.r += W[r] * w.gc.r; G.gc.g += W[r] * w.gc.g; G.gc.b += W[r] * w.gc.b; if (W[r] > wm) { wm = W[r]; G.fp = w.fp; } }
       G.gc.lerp(c, .3);
-      const bare = Math.max(SURF.rock, SURF.snow, SURF.sand, SURF.wet, SURF.water ? 1 : 0);
-      G.g *= 1 - bare; G.fl *= 1 - bare;
+      const bare = Math.max(SURF.rock, SURF.snow, SURF.sand, SURF.wet, SURF.bank * .85, SURF.water ? 1 : 0);
+      G.g *= (1 - bare) * (1 - ISL.sstep(.14, .27, slope)); G.fl *= (1 - bare) * (1 - ISL.sstep(.08, .18, slope));
       if (bare < .3 && !SURF.water) ISL.Land.groundInfo(x, z, h, slope, k, c, G);
       for (const f of ISL.groundTints) { const t = f(x, z); if (t) { c.lerp(t[0], t[1]); if (t[2] !== undefined) { G.g = t[2]; G.fl = 0; } else { G.g *= 1 - t[1]; G.fl *= 1 - t[1]; } if (t[1] > .5) G.lu = Math.max(G.lu, 3); } }
       if (SURF.water) G.lu = 4;
@@ -341,49 +356,72 @@
       return [n, c ? new THREE.Color(c) : null];
     });
     let total = 0; arrs.forEach(([g]) => total += g.attributes.position.count);
-    const pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), col = new Float32Array(total * 3);
-    let o = 0;
+    const pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), col = new Float32Array(total * 3), uv = new Float32Array(total * 2), leaf = new Float32Array(total);
+    let o = 0, anyLeaf = false;
     for (const [g, c] of arrs) {
       const cnt = g.attributes.position.count;
       pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
       if (c) for (let i = 0; i < cnt; i++) { col[(o + i) * 3] = c.r; col[(o + i) * 3 + 1] = c.g; col[(o + i) * 3 + 2] = c.b; }
       else if (g.attributes.color) col.set(g.attributes.color.array, o * 3);
+      if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2);
+      if (g.attributes.aLeaf) { leaf.set(g.attributes.aLeaf.array, o); anyLeaf = true; }
       o += cnt;
     }
     const out = new THREE.BufferGeometry();
     out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    out.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); out.setAttribute('leafUv', new THREE.BufferAttribute(uv, 2)); out.setAttribute('aLeaf', new THREE.BufferAttribute(leaf, 1)); out.userData.leaf = anyLeaf;
     return out;
   }
   ISL.merge = merge;
 
-  // 잎 덩어리: 작은 구 여러 개를 모아 솜처럼 부드럽게, 아래는 어둡고 위는 밝게
-  function canopy(parts, low, high, seed) {
-    const cL = C(low), cH = C(high);
-    let y0 = 1e9, y1 = -1e9, cx = 0, cy = 0, cz = 0;
-    for (const [x, y, z, r, , sy = 1] of parts) { y0 = Math.min(y0, y - r * sy); y1 = Math.max(y1, y + r * sy); cx += x; cy += y; cz += z; }
-    cx /= parts.length; cy /= parts.length; cz /= parts.length;
-    const geos = parts.map(([x, y, z, r, sx = 1, sy = 1, sz = sx], pi) => {
-      const g = new THREE.IcosahedronGeometry(r, 1), p = g.attributes.position;
-      for (let i = 0; i < p.count; i++) { const vx = p.getX(i), vy = p.getY(i), vz = p.getZ(i), k = 1 + ISL.noise(vx * 1.3 + seed + pi, vy * 1.3 + vz) * .16; p.setXYZ(i, vx * k * sx + x, vy * k * sy + y, vz * k * sz + z); }
-      g.computeVertexNormals(); return g;
-    });
-    let total = 0; geos.forEach(g => total += g.attributes.position.count);
-    const pos = new Float32Array(total * 3), nor = new Float32Array(total * 3), col = new Float32Array(total * 3);
-    let o = 0; const v = new THREE.Vector3(), c = new THREE.Color();
-    for (const g of geos) {
-      const p = g.attributes.position, nn = g.attributes.normal;
-      for (let i = 0; i < p.count; i++) {
-        const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-        v.set(x - cx, (y - cy) * 1.2, z - cz).normalize().multiplyScalar(.75); v.x += nn.getX(i) * .25; v.y += nn.getY(i) * .25; v.z += nn.getZ(i) * .25; v.normalize();
-        const t = Math.max(0, Math.min(1, (y - y0) / (y1 - y0) * .85 + ISL.noise(x * .9 + seed, z * .9) * .15 + v.y * .1));
-        c.copy(cL).lerp(cH, t);
-        const k = (o + i) * 3; pos[k] = x; pos[k + 1] = y; pos[k + 2] = z; nor[k] = v.x; nor[k + 1] = v.y; nor[k + 2] = v.z; col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b;
-      }
-      o += p.count; g.dispose();
+  // 잎 텍스처: 투명 배경 위에 작은 잎 수십 장 (흰색 계열 → 정점 색으로 물들임)
+  let leafTex = null;
+  function getLeafTex() {
+    if (leafTex) return leafTex;
+    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'), r = ISL.mulberry32(5);
+    x.clearRect(0, 0, 256, 256);
+    for (let i = 0; i < 230; i++) {
+      const a = r() * 6.283, d = Math.pow(r(), .6) * 112, px = 128 + Math.cos(a) * d, py = 128 + Math.sin(a) * d, L = 9 + r() * 12, ang = a + (r() - .5) * 1.4;
+      const v = 150 + r() * 105; x.fillStyle = `rgb(${v * .92 | 0},${v | 0},${v * .85 | 0})`;
+      x.beginPath(); x.ellipse(px, py, L, L * .42, ang, 0, 6.283); x.fill();
+      x.strokeStyle = 'rgba(60,70,40,.35)'; x.lineWidth = 1; x.beginPath(); x.moveTo(px - Math.cos(ang) * L, py - Math.sin(ang) * L); x.lineTo(px + Math.cos(ang) * L, py + Math.sin(ang) * L); x.stroke();
     }
-    const out = new THREE.BufferGeometry();
-    out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    return [out, null];
+    leafTex = new THREE.CanvasTexture(c); leafTex.colorSpace = THREE.SRGBColorSpace; leafTex.anisotropy = 4;
+    return leafTex;
+  }
+
+  // 잎 덩어리: 잎 카드(투명 텍스처 사각형) 수십 장을 덩어리 모양으로 배치. 법선은 수관 중심에서 바깥으로 → 부드러운 빛
+  function canopy(parts, low, high, seed) {
+    const cL = C(low), cH = C(high), r = ISL.mulberry32(seed * 977 + 13);
+    let y0 = 1e9, y1 = -1e9, cx = 0, cy = 0, cz = 0;
+    for (const [x, y, z, rr, , sy = 1] of parts) { y0 = Math.min(y0, y - rr * sy); y1 = Math.max(y1, y + rr * sy); cx += x; cy += y; cz += z; }
+    cx /= parts.length; cy /= parts.length; cz /= parts.length;
+    const pos = [], nor = [], col = [], uv = [], leaf = [], idx = [];
+    const v = new THREE.Vector3(), n = new THREE.Vector3(), t1 = new THREE.Vector3(), t2 = new THREE.Vector3(), c = new THREE.Color(), up = new THREE.Vector3(0, 1, 0);
+    for (const [x, y, z, rr, sx = 1, sy = 1, sz = sx] of parts) {
+      const cards = Math.round(9 + rr * 9);
+      for (let k = 0; k < cards; k++) {
+        // 껍질 근처에 많이: 바깥에서 잘 보이는 잎
+        const th = r() * 6.283, ph = Math.acos(2 * r() - 1), rad = rr * (.45 + .5 * Math.pow(r(), .5));
+        const px = x + Math.sin(ph) * Math.cos(th) * rad * sx, py = y + Math.cos(ph) * rad * sy * .9, pz = z + Math.sin(ph) * Math.sin(th) * rad * sz;
+        n.set(px - cx, (py - cy) * 1.1, pz - cz).normalize();
+        const tw = new THREE.Vector3(r() - .5, r() - .5, r() - .5).normalize(); const fn = n.clone().multiplyScalar(.55).add(tw.multiplyScalar(.45)).normalize();
+        t1.crossVectors(fn, Math.abs(fn.y) > .9 ? new THREE.Vector3(1, 0, 0) : up).normalize(); t2.crossVectors(fn, t1).normalize();
+        const size = rr * (.85 + r() * .5), base = pos.length / 3;
+        const ht = Math.max(0, Math.min(1, (py - y0) / (y1 - y0) * .8 + n.y * .15 + (r() - .5) * .15));
+        c.copy(cL).lerp(cH, ht);
+        for (const [a, b, u, w] of [[-1, -1, 0, 0], [1, -1, 1, 0], [1, 1, 1, 1], [-1, 1, 0, 1]]) {
+          pos.push(px + (t1.x * a + t2.x * b) * size * .5, py + (t1.y * a + t2.y * b) * size * .5, pz + (t1.z * a + t2.z * b) * size * .5);
+          v.copy(n).multiplyScalar(.8).addScaledVector(fn, .2).normalize(); nor.push(v.x, v.y, v.z);
+          col.push(c.r, c.g, c.b); uv.push(u, w); leaf.push(1);
+        }
+        idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('leafUv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('aLeaf', new THREE.Float32BufferAttribute(leaf, 1)); g.setIndex(idx);
+    return [g, null];
   }
   ISL.canopy = canopy;
   function trunk(parts, color) { // [x0,y0,z0,x1,y1,z1,r0,r1]
@@ -394,23 +432,28 @@
       g.translate(x0, y0, z0); return [g, color];
     });
   }
-  function tiers(n, h0, h1, r0, r1, low, high, seed, segs = 9) { // 침엽수 층층 가지
-    const out = [], cL = C(low), cH = C(high), c = new THREE.Color();
+  function tiers(n, h0, h1, r0, r1, low, high, seed) { // 침엽수: 층마다 아래로 처진 가지 카드
+    const cL = C(low), cH = C(high), r = ISL.mulberry32(seed * 31 + 7), pos = [], nor = [], col = [], uv = [], leaf = [], idx = [], c = new THREE.Color();
     for (let i = 0; i < n; i++) {
-      const t = i / (n - 1), y = h0 + (h1 - h0) * t, r = r0 + (r1 - r0) * t, hh = (h1 - h0) / n * 2.1;
-      const g0 = new THREE.ConeGeometry(r, hh, segs, 1); g0.translate(0, y + hh / 2, 0);
-      const g = g0.toNonIndexed(); g0.dispose();
-      const p = g.attributes.position, col = new Float32Array(p.count * 3);
-      for (let k = 0; k < p.count; k++) {
-        const py = p.getY(k), px = p.getX(k), pz = p.getZ(k);
-        if (py < y + .01) { const jit = 1 + ISL.noise(px * 2 + seed + i, pz * 2) * .18; p.setXYZ(k, px * jit, py - Math.abs(ISL.noise(px * 3, pz * 3 + i)) * .45, pz * jit); }
-        c.copy(cL).lerp(cH, Math.min(1, t * .7 + (py > y + .01 ? .35 : 0))); col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
+      const t = i / (n - 1), y = h0 + (h1 - h0) * t, R = r0 + (r1 - r0) * t, k = Math.max(5, Math.round(7 + R * 2));
+      for (let j = 0; j < k; j++) {
+        const a = (j + r() * .5) / k * 6.283 + i * .7, ca = Math.cos(a), sa = Math.sin(a), droop = .45 + r() * .2, w = R * .9;
+        const base = pos.length / 3;
+        // 카드: 줄기에서 바깥으로 뻗고 아래로 처짐, 폭은 가지 방향의 수직
+        const pts = [[0, -w * .45], [R, -w * .45], [R, w * .45], [0, w * .45]];
+        for (const [d, side] of pts) {
+          pos.push(ca * d - sa * side, y - d * droop + .25, sa * d + ca * side);
+          const nx = ca * .55, ny = .85, nz = sa * .55, l = Math.hypot(nx, ny, nz); nor.push(nx / l, ny / l, nz / l);
+          c.copy(cL).lerp(cH, Math.min(1, t * .6 + d / R * .35 + r() * .1)); col.push(c.r, c.g, c.b);
+          uv.push(d / R * .9 + .05, side / w + .5); leaf.push(1);
+        }
+        idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
       }
-      g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
-      const nn = g.attributes.normal; for (let k = 0; k < nn.count; k++) nn.setY(k, nn.getY(k) * .6 + .4);
-      out.push([g, null]);
     }
-    return out;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('leafUv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('aLeaf', new THREE.Float32BufferAttribute(leaf, 1)); g.setIndex(idx);
+    return [[g, null]];
   }
   const BARK = '#5b4636', BARK2 = '#4a3a30';
   const TREE_GEO = {
@@ -433,23 +476,44 @@
     cork: () => merge([...trunk([[0, 0, 0, 0, 2.2, 0, .5, .4]], '#a3542e'), ...trunk([[0, 2.2, 0, 1.4, 3.6, .3, .26, .15], [0, 2.2, 0, -1.3, 3.7, -.4, .26, .15]], '#4a3a30'),
       canopy([[0, 4.4, 0, 1.9, 1.4, .6], [1.9, 4.0, .4, 1.5, 1.3, .6], [-1.8, 4.1, -.4, 1.5, 1.3, .6], [.3, 3.9, 1.6, 1.4, 1.3, .6], [-.2, 4.0, -1.7, 1.4, 1.3, .6]], '#3a5229', '#869a55', 10)]),
     birch: () => merge([...trunk([[0, 0, 0, .1, 3, 0, .14, .1]], '#e8e2d6'), canopy([[.1, 3.2, 0, .9, 1, 1.3], [.4, 2.6, .3, .7], [-.3, 2.8, -.2, .7]], '#5f8a3a', '#bcd66e', 11)]),
-    conifer: () => merge([...trunk([[0, 0, 0, 0, 2, 0, .34, .26]], '#4e3a2c'), ...tiers(6, 1.4, 9.5, 2.6, .5, '#1d3a29', '#4f7f4c', 12)]),
-    sugi: () => merge([...trunk([[0, 0, 0, 0, 4, 0, .36, .28]], '#6b4a35'), ...tiers(7, 3, 14, 1.9, .35, '#1b3324', '#3f6a40', 13, 8)]),
+    conifer: () => merge([...trunk([[0, 0, 0, 0, 9.8, 0, .32, .06]], '#4e3a2c'), ...tiers(11, 1.2, 9.6, 2.5, .35, '#1a3526', '#4f7f4c', 12)]),
+    sugi: () => merge([...trunk([[0, 0, 0, 0, 14.2, 0, .36, .06]], '#6b4a35'), ...tiers(12, 3.5, 14, 1.8, .3, '#18301f', '#3f6a40', 13)]),
     bush: () => merge([canopy([[0, .6, 0, 1.1, 1.2, .7], [.8, .5, .3, .8, 1, .7], [-.7, .5, -.2, .8, 1, .7]], '#3f6a2d', '#86b452', 14)]),
   };
 
-  function treeMaterial() {
-    const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
-    m.onBeforeCompile = sh => {
-      sh.uniforms.uTime = U.uTime;
-      sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>',
-        `#include <begin_vertex>
+  const LEAF_VS = `attribute float aLeaf; attribute vec2 leafUv; varying float vLeaf; varying vec2 vLUv;`;
+  const LEAF_SWAY = `
+        vLeaf = aLeaf; vLUv = leafUv;
         #ifdef USE_INSTANCING
         float ph = instanceMatrix[3].x*0.13 + instanceMatrix[3].z*0.07;
         float sw = max(position.y-1.5,0.0);
-        transformed.x += sin(uTime*1.3+ph)*0.03*sw; transformed.z += cos(uTime*1.1+ph*1.3)*0.02*sw;
-        #endif`);
-      sh.fragmentShader = sh.fragmentShader.replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n reflectedLight.indirectDiffuse *= 1.2;');
+        transformed.x += sin(uTime*1.3+ph)*0.025*sw; transformed.z += cos(uTime*1.1+ph*1.3)*0.018*sw;
+        transformed += aLeaf * normal * sin(uTime*3.1 + position.x*2.0 + position.y*1.7 + ph) * 0.04;
+        #endif`;
+  function treeMaterial() {
+    const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, side: THREE.DoubleSide });
+    m.onBeforeCompile = sh => {
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uLeaf = { value: getLeafTex() };
+      sh.vertexShader = 'uniform float uTime;\n' + LEAF_VS + '\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>' + LEAF_SWAY);
+      sh.fragmentShader = 'uniform sampler2D uLeaf; varying float vLeaf; varying vec2 vLUv;\n' + sh.fragmentShader
+        .replace('#include <color_fragment>', `#include <color_fragment>
+          if (vLeaf > .5) { vec4 lt = texture2D(uLeaf, vLUv); if (lt.a < .45) discard; diffuseColor.rgb *= lt.rgb * 1.15; }`)
+        .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+          reflectedLight.indirectDiffuse *= 1.25;
+          // 잎을 투과하는 빛
+          #if NUM_DIR_LIGHTS > 0
+          if (vLeaf > .5) reflectedLight.directDiffuse += diffuseColor.rgb * max(0.0, -dot(normal, directionalLights[0].direction)) * directionalLights[0].color * .25;
+          #endif`);
+    };
+    m.customProgramCacheKey = () => 'tree2';
+    return m;
+  }
+  function leafDepthMaterial() {
+    const m = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+    m.onBeforeCompile = sh => {
+      sh.uniforms.uTime = U.uTime; sh.uniforms.uLeaf = { value: getLeafTex() };
+      sh.vertexShader = 'uniform float uTime;\n' + LEAF_VS + '\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>' + LEAF_SWAY);
+      sh.fragmentShader = 'uniform sampler2D uLeaf; varying float vLeaf; varying vec2 vLUv;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n if (vLeaf > .5 && texture2D(uLeaf, vLUv).a < .45) discard;');
     };
     return m;
   }
@@ -483,6 +547,7 @@
       });
       mesh.computeBoundingSphere();
       mesh.castShadow = opts.shadow !== false; mesh.receiveShadow = true;
+      if (geo.userData.leaf) mesh.customDepthMaterial = placeInstances.dm || (placeInstances.dm = leafDepthMaterial());
       mesh.userData.lod = opts.lod || 1200;
       scene.add(mesh); out.push(mesh); ISL.chunks.push(mesh);
       const cr = opts.collide !== undefined ? opts.collide : (typeof type === 'string' && type !== 'bush' ? (type === 'cypress' || type === 'birch' ? .3 : .45) : 0);
@@ -501,9 +566,9 @@
       const h = ISL.H(x, z); if (h < 2.5) return false; if (lu(x, z)) return false; if (ISL.slopeAt(x, z) > slopeMax) return false;
       if (ISL.waterAt(x, z).level > h - 1) return false;
       for (const r of ISL.rivers) { const q = ISL.riverNearest(r, x, z); if (q && q.d < q.w + 2.5) return false; }
-      return !blocked(x, z) && !ISL.Land.reserved(x, z);
+      return !blocked(x, z) && !ISL.Land.reserved(x, z) && !ISL.world.solidAt(x, h + 1, z) && !ISL.world.solidAt(x, h + 6, z);
     };
-    const add = (t, x, z, s) => lists[t].push({ x, y: ISL.H(x, z) - .15, z, s: s || (.8 + rng() * .45), rz: (rng() - .5) * .08 });
+    const add = (t, x, z, s) => lists[t].push({ x, y: ISL.H(x, z) - .15, z, s: (s || (.8 + rng() * .45)) * (t === 'olive' || t === 'bush' ? 1.15 : t === 'sugi' || t === 'conifer' ? 1.9 : 1.6), rz: (rng() - .5) * .05 });
     let total = 0;
     for (let k = 0; k < 60000 && total < 2300; k++) {
       const x = (rng() * 2 - 1) * 720, z = (rng() * 2 - 1) * 720;
@@ -518,7 +583,7 @@
       if (!t || !ok(x, z)) continue;
       add(t, x, z); total++;
     }
-    for (const e of ISL.Land.extraTrees) { if (e.type !== 'olive' && !ok(e.x, e.z, .3)) continue; add(e.type, e.x, e.z, e.type === 'olive' ? .9 + rng() * .3 : 1 + rng() * .2); }
+    for (const e of ISL.Land.extraTrees) { if (!ok(e.x, e.z, .35)) continue; add(e.type, e.x, e.z, e.type === 'olive' ? .9 + rng() * .3 : 1 + rng() * .2); }
     const kr = ISL.rivers[2]; // 교토 강가의 벚꽃길
     for (let i = 0; i < kr.pts.length; i += 3) {
       const a = kr.pts[Math.max(0, i - 1)], b = kr.pts[Math.min(kr.pts.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
@@ -526,6 +591,23 @@
     }
     for (const k in lists) placeInstances(scene, k, lists[k]);
     ISL.treeCount = Object.values(lists).reduce((a, b) => a + b.length, 0);
+    // 물가: 갈대 무리와 젖은 자갈
+    const reedParts = []; for (let i = 0; i < 9; i++) { const a = i * 2.4, rr = .08 + (i % 3) * .1, h = 1.2 + (i % 4) * .25, g = new THREE.CylinderGeometry(.006, .02, h, 3); g.translate(0, h / 2, 0); g.rotateZ((i % 3 - 1) * .09); g.translate(Math.cos(a) * rr, 0, Math.sin(a) * rr); reedParts.push([g, '#6f8a45']); if (i % 2) { const t = new THREE.CylinderGeometry(.03, .03, .22, 5); t.translate(Math.cos(a) * rr, h, Math.sin(a) * rr); reedParts.push([t, '#6b4a2e']); } }
+    const reedGeo = merge(reedParts), reeds = [], pebbles = [];
+    const shore = (x, z) => { const h = ISL.H(x, z); if (h < .3 || blocked(x, z) || ISL.Land.reserved(x, z) || ISL.world.solidAt(x, h + 1, z)) return; const w = ISL.waterAt(x, z); if (w.level > h + .25) return; return h; };
+    for (const rv of ISL.rivers) for (let i = 0; i < rv.pts.length; i += 2) {
+      if (rv.lv[i] < .2) continue;
+      const a = rv.pts[Math.max(0, i - 1)], b = rv.pts[Math.min(rv.pts.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      for (const sd of [-1, 1]) {
+        const off = rv.wd[i] * (1.05 + rng() * .5), x = rv.pts[i][0] - (b[1] - a[1]) / l * sd * off, z = rv.pts[i][1] + (b[0] - a[0]) / l * sd * off, h = shore(x, z);
+        if (h === undefined) continue;
+        if (rng() < .45) reeds.push({ x, y: h - .1, z, s: .7 + rng() * .6 });
+        if (rng() < .7) pebbles.push({ x: x + (rng() - .5) * 2, y: h - .08, z: z + (rng() - .5) * 2, s: .12 + rng() * .25, sy: .55, color: new THREE.Color('#7d776b').multiplyScalar(.8 + rng() * .4) });
+      }
+    }
+    for (const L of ISL.lakes) for (let k = 0; k < L.r * 2.5; k++) { const a = rng() * 6.283, d = L.r * (1.02 + rng() * .18), x = L.x + Math.cos(a) * d, z = L.z + Math.sin(a) * d, h = shore(x, z); if (h !== undefined && L.color !== 'lagoon' && L.color !== 'glacier') reeds.push({ x, y: h - .1, z, s: .7 + rng() * .6 }); }
+    placeInstances(scene, reedGeo, reeds, { collide: 0, shadow: false, lod: 260, tile: 120, material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 }) });
+    placeInstances(scene, merge([[new THREE.DodecahedronGeometry(1, 0), '#ffffff']]), pebbles, { collide: 0, shadow: false, lod: 200, tile: 120, material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .4, flatShading: true }) });
     const rock = merge([[new THREE.DodecahedronGeometry(1.3, 0).scale(1.3, .8, 1), '#ffffff']]), rocks = [];
     for (let k = 0; k < 9000 && rocks.length < 500; k++) {
       const x = (rng() * 2 - 1) * 720, z = (rng() * 2 - 1) * 720, h = ISL.H(x, z), sl = ISL.slopeAt(x, z);
@@ -540,7 +622,7 @@
   function makeGrass(scene, count) {
     // 한 포기 = 잎 5장 (각자 방향·높이·휘어짐이 다름)
     const BV = [-.5, 0, .5, 0, -.36, .48, .36, .48, -.18, .82, .18, .82, 0, 1], BI = [0, 1, 2, 2, 1, 3, 2, 3, 4, 4, 3, 5, 4, 5, 6];
-    const NB = 6, bpos = [], bb = [], bidx = [], br = ISL.mulberry32(31);
+    const NB = 7, bpos = [], bb = [], bidx = [], br = ISL.mulberry32(31);
     for (let b = 0; b < NB; b++) {
       const a = br() * 6.28, r = Math.sqrt(br()) * .5, hf = .55 + br() * .6, rot = br() * 6.28;
       for (let v = 0; v < 7; v++) { bpos.push(BV[v * 2], BV[v * 2 + 1], 0); bb.push(Math.cos(a) * r, Math.sin(a) * r, rot, hf); }
@@ -548,7 +630,7 @@
     }
     const geo = new THREE.InstancedBufferGeometry(); geo.setIndex(bidx);
     geo.setAttribute('position', new THREE.Float32BufferAttribute(bpos, 3)); geo.setAttribute('aB', new THREE.Float32BufferAttribute(bb, 4));
-    const SZ = 104, off = new Float32Array(count * 2), rnd = new Float32Array(count * 2);
+    const SZ = 80, off = new Float32Array(count * 2), rnd = new Float32Array(count * 2);
     for (let i = 0; i < count; i++) { off[i * 2] = (rng() - .5) * SZ * 4; off[i * 2 + 1] = (rng() - .5) * SZ * 4; rnd[i * 2] = rng(); rnd[i * 2 + 1] = rng(); }
     geo.setAttribute('aOff', new THREE.InstancedBufferAttribute(off, 2)); geo.setAttribute('aRnd', new THREE.InstancedBufferAttribute(rnd, 2));
     geo.instanceCount = count;
@@ -588,11 +670,12 @@
           float isF = step(bladeR, B.r) * step(aB.w, .9);
           // 자연스럽게 무리 지어 자라는 풀 (큰 얼룩 + 작은 얼룩)
           float ptch = vn2(base*.07)*.65 + vn2(base*.31)*.35;
-          float hgt = (.2 + 1.25*gh) * (.55 + .75*aRnd.x) * aB.w * fade * step(.03, gh) * (.55 + .9*ptch) * (1. + isF*.2);
+          float hgt = (.1 + .72*gh) * (.55 + .75*aRnd.x) * aB.w * fade * step(.03, gh) * (.55 + .9*ptch) * (1. + isF*.35);
           float ang = aRnd.y*6.2831 + aB.z;
           vec3 p = position;
-          float w = .085*(.75 + aRnd.x*.5)*(1. + isF*.7);
-          vec3 l = vec3(p.x*w*cos(ang) + aB.x*(.6 + gh), p.y*hgt, p.x*w*sin(ang) + aB.y*(.6 + gh));
+          float w = .042*(.75 + aRnd.x*.5)*(1. + isF*1.6);
+          vec3 l = vec3(p.x*w*cos(ang) + aB.x*(.35 + gh*.5), p.y*hgt, p.x*w*sin(ang) + aB.y*(.35 + gh*.5));
+          float curl = p.y*p.y*hgt*.35; l.x += curl*sin(ang); l.z -= curl*cos(ang);
           float lean = (hh(base + aB.zw) - .5) * .5 * p.y*p.y*hgt; l.x += lean*cos(aB.z); l.z += lean*sin(aB.z);
           float gust = sin(uTime*1.1 + base.x*.05 + base.y*.035)*.5+.5;
           float sway = (sin(uTime*2.3 + base.x*.7 + base.y*.5)*.22 + gust*.6) * p.y*p.y * hgt * .42;
@@ -642,6 +725,7 @@
   }
   function makeClouds(scene) {
     ISL.puffTex = puffTexture();
+    return; // 구름은 이제 하늘 셰이더 안에서 그림
     const group = new THREE.Group(); const mats = [];
     for (let i = 0; i < 40; i++) {
       const cx = (rng() * 2 - 1) * 1300, cz = (rng() * 2 - 1) * 1300, cy = 200 + rng() * 120;
@@ -713,5 +797,15 @@
     const m = new THREE.Mesh(g, mat); m.frustumCulled = false; scene.add(m); ISL.aurora = m;
   }
 
-  ISL.Nature = { makeSky, makeWater, makeTerrain, makeTrees, makeGrass, makeClouds, makeAurora, natural };
+  // 건물·구조물 바닥 아래로 풀이 뚫고 나오지 않게 풀 지도를 지움
+  function maskGrass() {
+    const A = ISL.grassTex.A.image.data, B = ISL.grassTex.B.image.data, N = ISL.N, E = ISL.E, S = ISL.STEP;
+    const clear = (i, j) => { if (i < 0 || j < 0 || i >= N || j >= N) return; const k = j * N + i; A[k * 4 + 3] = 0; B[k * 4] = 0; };
+    for (const c of ISL.world.list) {
+      if (c.t === 'b') { const r = c.br + .6; for (let j = Math.floor((c.z - r + E) / S); j <= Math.ceil((c.z + r + E) / S); j++) for (let i = Math.floor((c.x - r + E) / S); i <= Math.ceil((c.x + r + E) / S); i++) { const [lx, lz] = ISL.world.toLocal(c, -E + i * S, -E + j * S); if (Math.abs(lx) < c.hw + .6 && Math.abs(lz) < c.hd + .6) clear(i, j); } }
+      else if (c.r > .9) { const r = c.r + .5; for (let j = Math.floor((c.z - r + E) / S); j <= Math.ceil((c.z + r + E) / S); j++) for (let i = Math.floor((c.x - r + E) / S); i <= Math.ceil((c.x + r + E) / S); i++) if (Math.hypot(-E + i * S - c.x, -E + j * S - c.z) < r) clear(i, j); }
+    }
+    ISL.grassTex.A.needsUpdate = true; ISL.grassTex.B.needsUpdate = true;
+  }
+  ISL.Nature = { maskGrass, makeSky, makeWater, makeTerrain, makeTrees, makeGrass, makeClouds, makeAurora, natural };
 })();

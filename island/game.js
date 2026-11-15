@@ -767,6 +767,7 @@
     $('startBtn').onclick = startGame;
     $('mapBtn').onclick = toggleMap; $('ppBtn').onclick = togglePassport; $('timeBtn').onclick = cycleTime; $('flyBtn').onclick = toggleFly; $('photoBtn').onclick = toggleUI; $('unphoto').onclick = toggleUI;
     $('sndBtn').onclick = () => { A.init(); A.on = !A.on; $('sndBtn').textContent = A.on ? '🔊 소리' : '🔈 소리 꺼짐'; };
+    $('musBtn').onclick = () => { A.init(); A.musicOn = !A.musicOn; $('musBtn').textContent = A.musicOn ? '🎵 음악 켜짐' : '🎵 음악 꺼짐'; };
     $('moreBtn').onclick = () => $('more').classList.toggle('open'); $('more').addEventListener('click', () => $('more').classList.remove('open'));
     $('emoBtn').onclick = () => toggleWheel(); $('chatBtn').onclick = openChat; $('mEmo').onclick = () => toggleWheel(); $('mChat').onclick = openChat;
     $('chatSend').onclick = sendChat; $('chatIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });

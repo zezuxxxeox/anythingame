@@ -109,10 +109,10 @@
     for (let i = 0; i < p.count; i++) { const x = p.getX(i) / (w / 2), z = p.getZ(i) / (d / 2), y = p.getY(i); const c = Math.pow(Math.abs(x * z), 3); p.setY(i, y + lift * h * c * (1 - y / h)); }
     g.computeVertexNormals(); return g;
   }
-  function crenels(p, w, d, y, m, size = .9, gap = 1.9) {
+  function crenels(p, w, d, y, m, size = .9, gap = 1.9, cx = 0, cz = 0) {
     for (const [sx, sz, len, horiz] of [[0, d / 2, w, 1], [0, -d / 2, w, 1], [w / 2, 0, d, 0], [-w / 2, 0, d, 0]]) {
       const n = Math.max(2, Math.floor(len / gap));
-      for (let i = 0; i <= n; i++) { const t = -len / 2 + i * len / n; box(p, size, size * 1.1, size, m, horiz ? t : sx, y, horiz ? sz : t); }
+      for (let i = 0; i <= n; i++) { const t = -len / 2 + i * len / n; box(p, size, size * 1.1, size, m, cx + (horiz ? t : sx), y, cz + (horiz ? sz : t)); }
     }
   }
   function ringCrenels(p, r, y, n, m, size = .8, cx = 0, cz = 0) { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; box(p, size, size * 1.1, size * .8, m, cx + Math.cos(a) * r, y, cz + Math.sin(a) * r, -a); } }
@@ -390,9 +390,9 @@
     for (let i = -1; i <= 1; i++) box(g, 1.2, 1.8, .2, '#3d3a35', i * 1.9, 11.6, 2.45);
     for (let k = 0; k < 3; k++) for (const sx of [-1, 1]) box(g, .2, 2, 1.2, '#3d3a35', sx * 4.05, 6 + k * 5, -3);
     const rope = new THREE.Mesh(new THREE.TorusGeometry(5.8, .22, 6, 4), lime2); rope.rotation.set(Math.PI / 2, 0, Math.PI / 4); rope.position.set(0, 9.5, -3); g.add(rope);
-    crenels(g, 8, 8, 20, lime, .9, 1.8);
+    crenels(g, 8, 8, 20, lime, .9, 1.8, 0, -3);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) turret(g, sx * 4.1, 18.5, -3 + sz * 4.1, .65, 2.4, lime, dome);
-    box(g, 5, 3, 5, lime, 0, 20, -3); crenels(g, 5, 5, 23, lime, .7, 1.4);
+    box(g, 5, 3, 5, lime, 0, 20, -3); crenels(g, 5, 5, 23, lime, .7, 1.4, 0, -3);
     landmark('belem', '벨렝탑', 'portugal', x, z, 35, '대항해시대에 테주 강 하구를 지키던 16세기 요새. 마누엘 양식의 밧줄 장식과 작은 둥근 망루들이 특징이에요.');
   }
 
@@ -462,10 +462,10 @@
     const { x, z } = P.pena; const g = group(x, z, .4, P.pena.y - .5);
     const grey = blockMat('#8d8a83', 1, .5), red = mat('#b9473c'), yel = mat('#e8bb42'), dome = mat('#7d8c95', { roughness: .4, metalness: .3 }), wh = mat('#efe6d6');
     box(g, 30, 4, 22, grey, 0, -1, 0); crenels(g, 30, 22, 3, grey, .9, 2.2);
-    box(g, 13, 10, 10, red, -6, 3, -3); crenels(g, 13, 10, 13, yel, .8, 1.6);
-    box(g, 14, 8, 9, yel, 7, 3, 2); crenels(g, 14, 9, 11, red, .8, 1.6);
+    box(g, 13, 10, 10, red, -6, 3, -3); crenels(g, 13, 10, 13, yel, .8, 1.6, -6, -3);
+    box(g, 14, 8, 9, yel, 7, 3, 2); crenels(g, 14, 9, 11, red, .8, 1.6, 7, 2);
     for (let i = -2; i <= 2; i++) box(g, 1.4, 2.4, .2, '#5b3a2e', 7 + i * 2.6, 5, 6.55);
-    box(g, 4.4, 18, 4.4, red, -9, 3, 3); crenels(g, 4.4, 4.4, 21, yel, .7, 1.3);
+    box(g, 4.4, 18, 4.4, red, -9, 3, 3); crenels(g, 4.4, 4.4, 21, yel, .7, 1.3, -9, 3);
     cyl(g, 1.6, 1.6, 3, 10, yel, -9, 22, 3); sphere(g, 1.7, dome, -9, 25, 3, 1.4); cone(g, .3, 1.8, 6, dome, -9, 27, 3);
     sphere(g, .6, wh, -9, 16, 5.25);
     cyl(g, 3.4, 3.6, 13, 14, wh, 8, 3, -6); sphere(g, 3.6, dome, 8, 16, -6, 1.15); cone(g, .5, 2.4, 8, dome, 8, 19.5, -6);
@@ -933,11 +933,14 @@
     add('kinkaku', 280, 377 - 4.85 * .72, Math.PI, P.kinkaku.y - .3);
     add('pagoda', P.pagoda.x, P.pagoda.z + 5.55 * 1.4, 0, P.pagoda.y - .3);
     // 시옹성: 호숫가에서 성까지 나무다리
-    { const C = P.chillon, ux0 = C.x - 330, uz0 = C.z - 40, l = Math.hypot(ux0, uz0), ux = ux0 / l, uz = uz0 / l, lv = P.swissLake.y + 1.2;
-      const ax = C.x + ux * 11.6, az = C.z + uz * 11.6, bx = C.x + ux * 27, bz = C.z + uz * 27;
+    { const C = P.chillon, lv = P.swissLake.y + 1.2; let ux = 1, uz = 0, bestE = 1e9;
+      // 다리는 가장 가깝고 낮은 호숫가 쪽으로 (산비탈을 타고 오르지 않게)
+      for (let k = 0; k < 48; k++) { const a = k / 48 * Math.PI * 2, cxx = Math.cos(a), czz = Math.sin(a); let far = 0; for (let d = 12; d <= 34; d += 2) { const hh = H(C.x + cxx * d, C.z + czz * d); if (hh > P.swissLake.y + .6) { far = d; const e = Math.abs(hh - lv) + d * .15 + ISL.slopeAt(C.x + cxx * d, C.z + czz * d) * 30; if (e < bestE) { bestE = e; ux = cxx; uz = czz; C.bridgeLen = d + 1.5; } break; } } }
+      let D0 = 3; while (D0 < 16 && (ISL.world.solidAt(C.x + ux * D0, lv + 1, C.z + uz * D0) || ISL.world.solidAt(C.x + ux * D0 - uz * 1.3, lv + 1, C.z + uz * D0 + ux * 1.3) || ISL.world.solidAt(C.x + ux * D0 + uz * 1.3, lv + 1, C.z + uz * D0 - ux * 1.3))) D0 += .25; D0 += .35;
+      const BL = Math.max(C.bridgeLen || 27, D0 + 6), ax = C.x + ux * (D0 + .3), az = C.z + uz * (D0 + .3), bx = C.x + ux * BL, bz = C.z + uz * BL;
       const w = { ax, az, bx, bz, hw: 1.6, yA: lv, yB: H(bx, bz) + .25, arch: 0, cx: (ax + bx) / 2, cz: (az + bz) / 2, dx: uz, dz: -ux, len: Math.hypot(bx - ax, bz - az), level: P.swissLake.y };
       ISL.walkables.push(w); buildDeck(w, mat('#6b5643'), mat('#5a4636'), { railH: 1, piers: 2 });
-      add('chillon', C.x + ux * 11.3, C.z + uz * 11.3, Math.atan2(ux, uz), lv); }
+      add('chillon', C.x + ux * D0, C.z + uz * D0, Math.atan2(ux, uz), lv); }
     // 에펠탑: 1층·2층·꼭대기 전망대를 걸을 수 있게
     const E = P.eiffel, y0 = H(E.x, E.z);
     const ES = ISL.EIFFEL_S, D1 = y0 + 15.7 * ES, D2 = y0 + 29.4 * ES, D3 = y0 + 62.6 * ES;

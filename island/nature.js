@@ -216,7 +216,7 @@
         spd.push(r.speed[i], r.speed[i]);
         const a = r.pts[Math.max(0, i - 1)], b = r.pts[Math.min(r.pts.length - 1, i + 1)];
         let tx = b[0] - a[0], tz = b[1] - a[1]; const l = Math.hypot(tx, tz); tx /= l; tz /= l;
-        const w = r.wd[i] * 1.18, x = r.pts[i][0], z = r.pts[i][1], y = Math.max(r.lv[i], 0.02);
+        const w = Math.max(r.wd[i] * 1.18, 3), x = r.pts[i][0], z = r.pts[i][1], y = Math.max(r.lv[i], 0.02);
         pos.push(x - tz * w, y, z + tx * w, x + tz * w, y, z - tx * w); uv.push(0, r.s[i] / 6, 1, r.s[i] / 6);
         if (n) { const k = (n - 1) * 2; idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
         n++;

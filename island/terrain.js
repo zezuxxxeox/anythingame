@@ -189,7 +189,8 @@
       s[i] = acc;
     }
     for (let i = 0; i < n; i++) {
-      const h = applyFeatures(pts[i][0], pts[i][1], baseH(pts[i][0], pts[i][1])) - 0.6;
+      let h = applyFeatures(pts[i][0], pts[i][1], baseH(pts[i][0], pts[i][1])) - 0.6;
+      for (const L of lakes) if (Math.hypot(pts[i][0] - L.x, pts[i][1] - L.z) < L.r * 1.25) h = Math.max(h, L.level - .08); // 발원 연못 안에서는 연못 수면에서 시작
       cur = Math.min(cur, h); lv[i] = cur; wd[i] = mix(w0, w1, Math.pow(s[i] / acc, 0.8)) * (1 + 1.7 * sstep(.8, 1, s[i] / acc)); // 하구로 갈수록 넓어짐
     }
     // 아주 짧은 구간의 급경사는 약간 부드럽게 (폭포는 남김)
@@ -219,7 +220,7 @@
   function carve(x, z, h) {
     for (const r of rivers) {
       const q = riverNearest(r, x, z); if (!q) continue;
-      const W = q.w, L = q.level;
+      const W = Math.max(q.w, 4.2), L = q.level; // 격자(3.2m)보다 좁으면 물길이 땅에 묻혀 끊겨 보임
       if (q.d < W * 2.6) {
         const target = q.d < W ? L - 2.6 * (1 - (q.d / W) ** 2) : L + ((q.d - W) / (1.6 * W)) ** 2 * 7;
         if (target < h) h = target;

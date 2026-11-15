@@ -247,7 +247,7 @@
       ch.push(['그만두기', null]);
       openDlg(e.name, '🗼', ['어느 층으로 갈까요? 위로 갈수록 바람이 세고 섬이 한눈에 보여요.'], () => ({ text: '층을 골라 주세요', choices: ch }));
     } else if (n.kind === 'door') {
-      const d = n.o; if (d.target) { d.open = 1; enterHouse(d); } else ISL.Interior.toggle(d, true);
+      const d = n.o; if (d.target) { d.open = 1; enterHouse(d); } else { ISL.Interior.toggle(d, true); setTimeout(() => { if (!state.inside && d.target && Math.hypot(player.x - d.x, player.z - d.z) < 3.2) enterHouse(d); }, 750); } // 문이 열리면 그대로 안으로 들어감
     }
   }
   // 집 안으로
@@ -528,7 +528,7 @@
     }
     if (Math.hypot(nx, nz) < 930) {
       // 다리 위에서는 난간 밖으로 떨어지지 않게
-      for (const w of ISL.walkables) { const q0 = ISL.segDist(player.x, player.z, w.ax, w.az, w.bx, w.bz); if (player.fly || q0.d > w.hw || Math.abs(player.y - ISL.deckY(w, q0.t)) > .6) continue; const q1 = ISL.segDist(nx, nz, w.ax, w.az, w.bx, w.bz); if (q1.t > .03 && q1.t < .97 && q1.d > w.hw - .3) { const px = w.ax + (w.bx - w.ax) * q1.t, pz = w.az + (w.bz - w.az) * q1.t, k = (w.hw - .3) / q1.d; nx = px + (nx - px) * k; nz = pz + (nz - pz) * k; } }
+      for (const w of ISL.walkables) { const q0 = ISL.segDist(player.x, player.z, w.ax, w.az, w.bx, w.bz); if (w.noRail || player.fly || q0.d > w.hw || Math.abs(player.y - ISL.deckY(w, q0.t)) > .6) continue; const q1 = ISL.segDist(nx, nz, w.ax, w.az, w.bx, w.bz); if (q1.t > .03 && q1.t < .97 && q1.d > w.hw - .3) { const px = w.ax + (w.bx - w.ax) * q1.t, pz = w.az + (w.bz - w.az) * q1.t, k = (w.hw - .3) / q1.d; nx = px + (nx - px) * k; nz = pz + (nz - pz) * k; } }
       [nx, nz] = ISL.world.resolve(nx, nz, player.fly ? .9 : .32, player.y, player.fly ? 6 : 1.8);
       player.x = nx; player.z = nz;
     }

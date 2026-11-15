@@ -7,13 +7,42 @@
   const doorMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .7 });
 
   // ---------- 바깥 문 ----------
+  // 문짝 만들기: 문틀(선대·띠장) 안에 판을 끼운 실제 구조. 경첩은 x=0 쪽, 문은 +x로 dw만큼.
+  function leafGeo(kind, dw, dh, c, flip) {
+    const P = [], dark = new THREE.Color(c).multiplyScalar(.72).getStyle(), lite = new THREE.Color(c).multiplyScalar(1.12).getStyle(), iron = '#1f1f22', brass = '#c9a24a';
+    const B = (w, h, t, x, y, z, col) => P.push([new THREE.BoxGeometry(w, h, t).translate(x, y, z), col]);
+    const hx = flip ? .12 : dw - .12; // 손잡이 쪽
+    B(dw, dh, .045, dw / 2, dh / 2, 0, dark);                                     // 속판
+    const st = .11; B(st, dh, .075, st / 2, dh / 2, 0, c); B(st, dh, .075, dw - st / 2, dh / 2, 0, c); B(dw, st, .075, dw / 2, st / 2 + .0, 0, c); B(dw, st, .075, dw / 2, dh - st / 2, 0, c); // 선대와 위아래 띠장
+    if (kind === 'panel' || kind === 'glazed') {
+      B(dw - st * 2, st, .075, dw / 2, dh * .46, 0, c); B(st * .8, dh - st * 2, .075, dw / 2, dh / 2, 0, c);
+      for (const [x0, y0, w0, h0] of [[st, st, dw / 2 - st * 1.4, dh * .46 - st * 1.5], [dw / 2 + st * .4, st, dw / 2 - st * 1.4, dh * .46 - st * 1.5]]) B(w0 - .08, h0 - .08, .06, x0 + w0 / 2, y0 + h0 / 2, 0, lite);
+      for (const x0 of [st, dw / 2 + st * .4]) { const w0 = dw / 2 - st * 1.4, y0 = dh * .46 + st * .5, h0 = dh - st - y0; if (kind === 'glazed') { B(w0, h0, .03, x0 + w0 / 2, y0 + h0 / 2, 0, '#26323d'); B(w0, .03, .06, x0 + w0 / 2, y0 + h0 / 2, 0, c); } else B(w0 - .08, h0 - .08, .06, x0 + w0 / 2, y0 + h0 / 2, 0, lite); }
+    } else if (kind === 'plank' || kind === 'hall') {
+      const n = Math.round(dw / .22); for (let k = 1; k < n; k++) B(.015, dh - st * 2, .085, k * dw / n, dh / 2, 0, dark);
+      for (const y of [dh * .2, dh * .8]) { B(dw * .78, .07, .1, flip ? dw - dw * .39 : dw * .39, y, 0, iron); for (const z of [.05, -.05]) P.push([new THREE.CylinderGeometry(.05, .05, .02, 8).rotateX(Math.PI / 2).translate(flip ? dw - .05 : .05, y, z), iron]); } // 철 띠 경첩
+      if (kind === 'hall') { for (let r = 0; r < 5; r++) for (let k = 0; k < Math.round(dw / .3); k++) for (const z of [.05, -.05]) P.push([new THREE.SphereGeometry(.03, 6, 4).translate(.2 + k * .3, dh * (.12 + r * .19), z), iron]);
+        for (const z of [.08, -.08]) P.push([new THREE.TorusGeometry(.11, .02, 6, 14).translate(hx, dh * .42, z), iron]); }
+      else { B(dw - st * 2, .08, .09, dw / 2, dh * .5, 0, c); B(.24, .3, .05, dw / 2, dh * .72, 0, '#26323d'); for (const k of [-1, 0, 1]) B(.02, .3, .09, dw / 2 + k * .07, dh * .72, 0, iron); }
+    } else if (kind === 'modern') {
+      for (let k = 0; k < 3; k++) B(.26, .22, .05, dw / 2, dh * .52 + k * .3, 0, '#26323d'); B(dw - st * 2 - .1, dh * .32, .06, dw / 2, dh * .25, 0, lite); B(.3, .04, .1, dw / 2, 1.0, 0, brass);
+    }
+    if (kind !== 'hall') for (const z of [.07, -.07]) { P.push([new THREE.CylinderGeometry(.022, .022, .11, 8).rotateX(Math.PI / 2).translate(hx, 1.02, z * .9), brass]); P.push([new THREE.CylinderGeometry(.018, .018, .16, 8).rotateZ(Math.PI / 2).translate(hx + (flip ? .07 : -.07), 1.02, z * 1.5), brass]); P.push([new THREE.BoxGeometry(.05, .2, .012).translate(hx, 1.02, z * .62), brass]); } // 레버 손잡이
+    return ISL.merge(P);
+  }
+  function slidingGeo(dw, dh) { // 일본식 격자 미닫이 (고시도)
+    const P = [], wood = '#3a2a1e', B = (w, h, t, x, y, col) => P.push([new THREE.BoxGeometry(w, h, t).translate(x, y, 0), col]);
+    B(dw, dh, .012, 0, dh / 2, '#e9e2cf'); for (const x of [-dw / 2 + .04, dw / 2 - .04]) B(.08, dh, .06, x, dh / 2, wood); for (const y of [.05, dh * .32, dh - .05]) B(dw, .09, .06, 0, y, wood);
+    for (let k = 1; k < 14; k++) B(.022, dh, .05, -dw / 2 + k * dw / 14, dh / 2, wood); B(dw - .1, dh * .3, .03, 0, dh * .16, '#4a3626');
+    P.push([new THREE.BoxGeometry(.04, .16, .08).translate(dw / 2 - .12, 1.0, 0), '#1e150e']);
+    return ISL.merge(P);
+  }
+  const LEAF_KIND = { pt: 'plank', prov: 'glazed', norm: 'plank', ch: 'panel', is: 'modern', turf: 'plank' };
+  // ---------- 바깥 문 ----------
   function addDoor(h, g, w, d, style, rnd) {
     const sliding = style === 'machiya' || style === 'farm';
     const dw = sliding ? 1.5 : 1.1, cols = DOOR_COL[style], c = cols[Math.floor(rnd() * cols.length)];
-    const parts = [[new THREE.BoxGeometry(dw, 2.15, .1).translate(sliding ? 0 : dw / 2, 1.075, 0), c]];
-    if (sliding) for (let i = -2; i <= 2; i++) parts.push([new THREE.BoxGeometry(.05, 2.1, .12).translate(i * dw / 5, 1.075, 0), '#1e150e']);
-    else { parts.push([new THREE.SphereGeometry(.06, 8, 6).translate(dw - .14, 1.05, .08), '#d4a937']); parts.push([new THREE.BoxGeometry(dw - .25, .7, .12).translate(dw / 2, 1.55, 0), new THREE.Color(c).multiplyScalar(.8).getStyle()]); }
-    const geo = ISL.merge(parts);
+    const geo = sliding ? slidingGeo(dw, 2.15) : leafGeo(LEAF_KIND[style] || 'panel', dw, 2.15, c, false);
     const pivot = new THREE.Group(), mesh = new THREE.Mesh(geo, doorMat); mesh.castShadow = true; pivot.add(mesh);
     const a = g.rotation.y, cs = Math.cos(a), sn = Math.sin(a), lx = sliding ? 0 : -dw / 2, lz = d / 2 + .07;
     pivot.position.set(g.position.x + lx * cs + lz * sn, g.position.y, g.position.z - lx * sn + lz * cs); pivot.rotation.y = a;
@@ -23,13 +52,16 @@
     doors.push(door); h.door = door;
     return door;
   }
-  // 명소 입구 문 (크고 무거운 나무문)
+  // 명소 입구: 두 짝으로 열리는 큰 나무문 (철 띠 경첩, 징, 고리 손잡이) + 돌 문틀
   function addHallDoor(o) {
-    const dw = o.w || 2.2, dh = o.h || 3.2, a = o.a, cs = Math.cos(a), sn = Math.sin(a);
-    const geo = ISL.merge([[new THREE.BoxGeometry(dw, dh, .14).translate(dw / 2, dh / 2, 0), o.color || '#4a3020'], [new THREE.BoxGeometry(dw - .3, .12, .18).translate(dw / 2, dh * .3, 0), '#2a1a10'], [new THREE.BoxGeometry(dw - .3, .12, .18).translate(dw / 2, dh * .75, 0), '#2a1a10'], [new THREE.SphereGeometry(.09, 8, 6).translate(dw - .2, dh * .48, .1), '#d4a937']]);
-    const pivot = new THREE.Group(), mesh = new THREE.Mesh(geo, doorMat); mesh.castShadow = true; pivot.add(mesh);
-    pivot.position.set(o.x - dw / 2 * cs, o.y, o.z + dw / 2 * sn); pivot.rotation.y = a; pivot.userData.dynamic = true; o.scene.add(pivot);
-    const door = { hall: o.hall, pivot, mesh, open: 0, target: 0, sliding: false, dw, w: 8, d: 8, a, style: 'hall', timer: 0, base: pivot.position.clone(), x: o.x + sn * .8, z: o.z + cs * .8, y: o.y, region: 0, seed: 1 };
+    const dw = o.w || 2.4, dh = o.h || 3.3, a = o.a, cs = Math.cos(a), sn = Math.sin(a), lw = dw / 2;
+    const mk = (flip) => { const p = new THREE.Group(), m = new THREE.Mesh(leafGeo('hall', lw, dh, o.color || '#5a3a24', flip), doorMat); m.castShadow = true; if (flip) m.position.x = -lw; p.add(m); p.rotation.y = a; p.userData.dynamic = true; o.scene.add(p); return p; };
+    const pivot = mk(false), pivot2 = mk(true);
+    pivot.position.set(o.x - lw * cs, o.y, o.z + lw * sn); pivot2.position.set(o.x + lw * cs, o.y, o.z - lw * sn);
+    const fr = new THREE.Group(); fr.position.set(o.x, o.y, o.z); fr.rotation.y = a; o.scene.add(fr); const stone = ISL.blockMat('#b9b2a4', .45, .3);
+    for (const s of [-1, 1]) ISL.LH.box(fr, .32, dh + .2, .5, stone, s * (lw + .16), 0, -.1); ISL.LH.box(fr, dw + .9, .4, .55, stone, 0, dh + .05, -.1); ISL.LH.box(fr, dw + .3, .14, .9, stone, 0, -.14, .2);
+    ISL.LH.box(fr, dw, dh, .04, '#120e0b', 0, 0, -.28);
+    const door = { hall: o.hall, pivot, pivot2, mesh: pivot.children[0], open: 0, target: 0, sliding: false, dw, w: 8, d: 8, a, style: 'hall', timer: 0, base: pivot.position.clone(), x: o.x + sn * .8, z: o.z + cs * .8, y: o.y, region: 0, seed: 1 };
     doors.push(door); return door;
   }
   function toggle(door, open) {
@@ -39,13 +71,13 @@
   function update(dt, camPos) {
     for (const d of doors) {
       const dist = Math.hypot(d.x - camPos.x, d.z - camPos.z);
-      d.pivot.visible = dist < 180;
+      d.pivot.visible = dist < 180; if (d.pivot2) d.pivot2.visible = d.pivot.visible;
       if (d.target && (d.timer += dt) > 7) toggle(d, false); // 자동으로 닫힘
       if (d.open !== d.target) {
         d.open += Math.sign(d.target - d.open) * Math.min(Math.abs(d.target - d.open), dt * 2.4);
         const e = d.open * d.open * (3 - 2 * d.open);
         if (d.sliding) { const s = -d.dw * .95 * e; d.pivot.position.set(d.base.x + s * Math.cos(d.a), d.base.y, d.base.z - s * Math.sin(d.a)); }
-        else d.pivot.rotation.y = d.a - e * 1.65; // 바깥쪽으로 열림 (벽을 뚫지 않음)
+        else { d.pivot.rotation.y = d.a - e * 1.65; if (d.pivot2) d.pivot2.rotation.y = d.a + e * 1.65; } // 바깥쪽으로 열림 (벽을 뚫지 않음)
       }
     }
   }

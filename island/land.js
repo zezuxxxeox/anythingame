@@ -263,7 +263,11 @@
     const gy = g.position.y, cs = Math.cos(g.rotation.y), sn = Math.sin(g.rotation.y);
     // 계단: 땅이 내려갈수록 한 칸씩 (칸 높이 17cm, 깊이 30cm), 각 칸은 땅까지 채움
     let k = 1;
-    for (; k < 14; k++) { const z = .3 + k * .3, sx = g.position.x + (d / 2 + z) * sn, sz = g.position.z + (d / 2 + z) * cs, top = -.17 * k, gnd = H(sx, sz) - gy; if (top < gnd + .05) break; LH.box(fg, 1.5, top - gnd + .3, .3, ISL.blockMat('#9a948a', .5, .17), 0, gnd - .3, z); }
+    const k0 = 1; for (; k < 14; k++) { const z = .3 + k * .3, sx = g.position.x + (d / 2 + z) * sn, sz = g.position.z + (d / 2 + z) * cs, top = -.17 * k, gnd = H(sx, sz) - gy; if (top < gnd + .05) break; LH.box(fg, 1.5, top - gnd + .3, .3, ISL.blockMat('#9a948a', .5, .17), 0, gnd - .3, z); }
+    if (k > 1) { // 계단을 실제로 밟고 오르내릴 수 있게
+      const z0 = d / 2 + .25, z1 = d / 2 + .45 + k * .3, ax = g.position.x + z0 * sn, az = g.position.z + z0 * cs, bx = g.position.x + z1 * sn, bz = g.position.z + z1 * cs;
+      ISL.walkables.push({ ax, az, bx, bz, hw: .85, yA: gy, yB: H(bx, bz), arch: 0, cx: (ax + bx) / 2, cz: (az + bz) / 2, dx: sn, dz: cs, len: z1 - z0, level: -99, noRail: true, stairs: true });
+    }
     return h;
   }
   function chimney(g, x, z, y, c, cap) { LH.box(g, .7, 2, .7, ISL.blockMat(c, .35, .2), x, y - .6, z); LH.box(g, .9, .12, .9, LH.mat(cap || '#5a5650'), x, y + 1.4, z); LH.box(g, .25, .3, .25, LH.mat('#3a3632'), x, y + 1.52, z); }

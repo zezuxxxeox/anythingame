@@ -100,6 +100,7 @@
   let pm, glider;
   function groundAt(x, z, curY) {
     let h = ISL.H(x, z);
+    if (curY !== undefined && ISL.floors) for (const f of ISL.floors) if (Math.abs(x - f.x) < f.hw && Math.abs(z - f.z) < f.hd && f.y > h && f.y < curY + 1) h = f.y;
     for (const w of ISL.walkables) {
       if (Math.abs(x - w.cx) > w.len && Math.abs(z - w.cz) > w.len) continue;
       const q = ISL.segDist(x, z, w.ax, w.az, w.bx, w.bz);
@@ -239,6 +240,10 @@
     else if (n.kind === 'pickup') {
       const p = n.o; S.items[p.id] = (S.items[p.id] || 0) + 1; save(); scene.remove(p.g); pickups.splice(pickups.indexOf(p), 1);
       A.chime([7, 11, 14], .08); toast(`가방에 <b>${ITEMS[p.id]}</b>을(를) 넣었어요`);
+    } else if (n.kind === 'elevator') {
+      const e = n.o, ch = e.levels.filter(([nm, y]) => Math.abs(y - player.y) > 1).map(([nm, y]) => [`🛗 ${nm}`, () => { dlgClose(); fade(() => { player.y = y; player.vy = 0; cam.curDist = undefined; }); A.chime([0, 4, 7], .05); }]);
+      ch.push(['그만두기', null]);
+      openDlg(e.name, '🗼', ['어느 층으로 갈까요? 위로 갈수록 바람이 세고 섬이 한눈에 보여요.'], () => ({ text: '층을 골라 주세요', choices: ch }));
     } else if (n.kind === 'door') {
       const d = n.o; if (d.target) { d.open = 1; enterHouse(d); } else ISL.Interior.toggle(d, true);
     }
@@ -255,7 +260,7 @@
       cam.yaw = Math.PI + .7; cam.pitch = .5; cam.tx = player.x; cam.ty = 1.5; cam.tz = player.z; cam.curDist = undefined; cam.ix = cam.iy = cam.iz = undefined;
       it.exit.target = 0; ISL.Interior.toggle(door, false);
       A.setInside(true);
-      $('where').textContent = '🏠 실내'; document.body.classList.add('inside');
+      $('where').textContent = door.hall ? `🏛️ ${ISL.Halls.names[door.hall]}` : '🏠 실내'; document.body.classList.add('inside');
       if (it.resident) setTimeout(() => { if (state.inside === it) { ISL.bubble(it.resident.m.g, it.resident.hello); it.resident.m.emote = { id: 'wave', t: 0 }; } }, 600);
     });
   }
@@ -428,7 +433,7 @@
     if (!envScene) { envScene = new THREE.Scene(); envScene.add(new THREE.Mesh(sky.geometry, sky.material)); }
     const rt = pmrem.fromScene(envScene, 0, .1, 9000);
     if (scene.environment && scene.environment !== rt.texture) scene.environment.dispose();
-    scene.environment = rt.texture;
+    scene.environment = rt.texture; ISL.envTex = rt.texture;
   }
   const tmpV = new THREE.Vector3(), fogC = new THREE.Color(), lightC = new THREE.Color();
   function updateSky(dt) {
@@ -607,11 +612,12 @@
     const consider = (o, kind, x, z, r) => { const d = Math.hypot(player.x - x, player.z - z); if (d < r && d < bd) { bd = d; best = { o, kind }; } };
     if (!player.fly) {
       for (const n of npcs) consider(n, 'npc', n.x, n.z, 6); for (const t of tourists) consider(t, 'tourist', t.x, t.z, 3.5); for (const p of pickups) consider(p, 'pickup', p.x, p.z, 3.5);
-      if (!best) { const d = ISL.Interior.nearestDoor(player.x, player.z, 2.6); if (d) best = { o: d, kind: 'door' }; }
+      if (!best) { const d = ISL.Interior.nearestDoor(player.x, player.z, 2.6); if (d && Math.abs((d.y || 0) - player.y) < 2.5) best = { o: d, kind: 'door' }; }
+      for (const e of ISL.elevators || []) if (Math.hypot(player.x - e.x, player.z - e.z) < 3.5) best = { o: e, kind: 'elevator' };
     }
     state.nearest = best;
-    setPrompt(best ? (best.kind === 'pickup' ? `${ITEMS[best.o.id]} 줍기` : best.kind === 'door' ? (best.o.target ? '🏠 안으로 들어가기' : '🚪 문 열기') : `${best.kind === 'npc' ? best.o.d.name : '여행자'}와(과) 이야기하기`) : null,
-      best ? (best.kind === 'door' ? '🚪' : best.kind === 'pickup' ? '✋' : '💬') : '✋');
+    setPrompt(best ? (best.kind === 'pickup' ? `${ITEMS[best.o.id]} 줍기` : best.kind === 'elevator' ? '🛗 엘리베이터 타기' : best.kind === 'door' ? (best.o.target ? (best.o.hall ? `🏛️ ${ISL.Halls.names[best.o.hall]} 안으로` : '🏠 안으로 들어가기') : (best.o.hall ? `🚪 ${ISL.Halls.names[best.o.hall]} 문 열기` : '🚪 문 열기')) : `${best.kind === 'npc' ? best.o.d.name : '여행자'}와(과) 이야기하기`) : null,
+      best ? (best.kind === 'elevator' ? '🛗' : best.kind === 'door' ? '🚪' : best.kind === 'pickup' ? '✋' : '💬') : '✋');
   }
   function updateInside(dt) {
     const it = state.inside;

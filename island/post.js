@@ -14,7 +14,7 @@
       this.bright = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, px: { value: new THREE.Vector2() } }, vertexShader: VS, depthTest: false,
         fragmentShader: `uniform sampler2D t; uniform vec2 px; varying vec2 vUv;
           void main(){ vec3 c = (texture2D(t,vUv+px*vec2(-1.,-1.)).rgb+texture2D(t,vUv+px*vec2(1.,-1.)).rgb+texture2D(t,vUv+px*vec2(-1.,1.)).rgb+texture2D(t,vUv+px*vec2(1.,1.)).rgb)*.25;
-            float l = dot(c, vec3(.2126,.7152,.0722)); gl_FragColor = vec4(c*smoothstep(.75,1.6,l), 1.); }` });
+            c = min(c, vec3(3.)); float l = dot(c, vec3(.2126,.7152,.0722)); gl_FragColor = vec4(c*smoothstep(1.0,2.2,l), 1.); }` });
       this.blur = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, dir: { value: new THREE.Vector2() } }, vertexShader: VS, depthTest: false,
         fragmentShader: `uniform sampler2D t; uniform vec2 dir; varying vec2 vUv;
           void main(){ vec3 c = texture2D(t,vUv).rgb*.227;

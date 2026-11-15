@@ -10,6 +10,22 @@
   // ---------- 도우미 ----------
   const MATS = {};
   function mat(c, o) { const k = c + (o ? JSON.stringify(o) : ''); return MATS[k] || (MATS[k] = new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .82 }, o || {}))); }
+  // 돌을 쌓은 벽: 월드 좌표로 벽돌 줄눈과 돌마다 다른 색을 그림
+  function blockMat(c, bw, bh, extra) {
+    const key = 'blk' + c + bw + bh; if (MATS[key]) return MATS[key];
+    const m = new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .92 }, extra || {}));
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = 'varying vec3 vBW; varying vec3 vBN;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vBW = (modelMatrix*vec4(transformed,1.0)).xyz; vBN = normalize(mat3(modelMatrix)*objectNormal);');
+      sh.fragmentShader = 'varying vec3 vBW; varying vec3 vBN;\nfloat bhh(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        vec3 an = abs(vBN); vec2 q = an.y > max(an.x, an.z) ? vBW.xz : (an.x > an.z ? vBW.zy : vBW.xy);
+        q /= vec2(${bw.toFixed(2)}, ${bh.toFixed(2)}); q.x += floor(q.y)*0.5; vec2 cell = floor(q), f = fract(q);
+        float mortar = smoothstep(0.0,0.045,f.x)*smoothstep(1.0,0.955,f.x)*smoothstep(0.0,0.08,f.y)*smoothstep(1.0,0.92,f.y);
+        float grain = bhh(floor(vBW.xz*7.0)+floor(vBW.y*7.0))*0.06;
+        diffuseColor.rgb *= (0.84 + 0.24*bhh(cell) - grain) * mix(0.6, 1.0, mortar);`);
+    };
+    return MATS[key] = m;
+  }
+  ISL.blockMat = blockMat;
   function mesh(p, geo, m, x = 0, y = 0, z = 0, ry = 0) { const me = new THREE.Mesh(geo, typeof m === 'string' ? mat(m) : m); me.position.set(x, y, z); me.rotation.y = ry; me.castShadow = me.receiveShadow = true; p.add(me); return me; }
   let autoCol = false;
   const isDyn = o => { for (let p = o; p; p = p.parent) if (p.userData.dynamic) return true; return false; };
@@ -304,7 +320,7 @@
 
   function buildMSM() {
     const { x, z } = P.msm; const g = group(x, z, 0, 0);
-    const stone = mat('#9e978a'), stone2 = mat('#8b8478'), roof = mat('#3f4048'), slate = mat('#4a4c55', { roughness: .5 });
+    const stone = blockMat('#a39b8d', .9, .45), stone2 = blockMat('#8f887b', .8, .4), roof = mat('#3f4048'), slate = mat('#4a4c55', { roughness: .5 });
     // 성벽과 원형 탑
     for (let i = 0; i <= 22; i++) {
       const a = -1.9 + i * .16, r = 31, px = Math.cos(a) * r, pz = Math.sin(a) * r, gy = H(x + px, z + pz);
@@ -341,7 +357,7 @@
   function buildBelem() {
     const { x, z } = P.belem; const dir = Math.atan2(P.belemCoast.dirx, P.belemCoast.dirz);
     const g = group(x, z, dir, 0.6);
-    const lime = mat('#ece4cf'), lime2 = mat('#ddd3ba'), dome = mat('#e6dcc4');
+    const lime = blockMat('#ece4cf', 1.1, .5), lime2 = blockMat('#ddd3ba', 1.1, .5), dome = mat('#e6dcc4');
     // 바다 쪽 다각형 보루
     cyl(g, 9, 9.8, 6, 8, lime2, 0, -2, 5);
     ringCrenels(g, 8.6, 4, 22, lime, .9, 0, 5);
@@ -420,7 +436,7 @@
 
   function buildPena() {
     const { x, z } = P.pena; const g = group(x, z, .4, P.pena.y - .5);
-    const grey = mat('#8d8a83'), red = mat('#b9473c'), yel = mat('#e8bb42'), dome = mat('#7d8c95', { roughness: .4, metalness: .3 }), wh = mat('#efe6d6');
+    const grey = blockMat('#8d8a83', 1, .5), red = mat('#b9473c'), yel = mat('#e8bb42'), dome = mat('#7d8c95', { roughness: .4, metalness: .3 }), wh = mat('#efe6d6');
     box(g, 30, 4, 22, grey, 0, -1, 0); crenels(g, 30, 22, 3, grey, .9, 2.2);
     box(g, 13, 10, 10, red, -6, 3, -3); crenels(g, 13, 10, 13, yel, .8, 1.6);
     box(g, 14, 8, 9, yel, 7, 3, 2); crenels(g, 14, 9, 11, red, .8, 1.6);
@@ -561,7 +577,7 @@
   // ============================================================
   function buildHallgrim() {
     const { x, z } = P.hallgrim; const g = group(x, z, 0, P.hallgrim.y - .3);
-    const conc = mat('#d9d9d3', { roughness: .9 });
+    const conc = blockMat('#d9d9d3', 1.6, 3.2);
     box(g, 5.6, 46, 4.5, conc, 0, 0, 0);
     mesh(g, hipGeo(5.6, 4.5, 5, 0), conc, 0, 46, 0);
     cyl(g, .12, .2, 4, 6, '#9a9a96', 0, 51, 0);
@@ -668,7 +684,7 @@
     landmark('matterhorn', '마터호른', 'swiss', 470, -175, 150, '피라미드처럼 뾰족한 알프스의 명봉(4,478m). 네 개의 날카로운 능선이 동서남북을 향해요. 토블론 초콜릿 상자의 그 산!');
     // 시옹성
     const C = P.chillon; const g = group(C.x, C.z, -.3, C.y - .8);
-    const wall = mat('#e3dccd'), roof = mat('#8a4b35', { roughness: .7 }), dark = mat('#cfc6b4');
+    const wall = blockMat('#e3dccd', .9, .45), roof = mat('#8a4b35', { roughness: .7 }), dark = blockMat('#cfc6b4', .8, .4);
     box(g, 22, 7, 10, wall, 0, 0, 0); crenels(g, 22, 10, 7, wall, .7, 1.5);
     box(g, 6, 17, 6, dark, -3, 0, 0); mesh(g, hipGeo(6, 6, 6, .3), roof, -3, 17, 0);
     for (const [tx, tz, r, h] of [[-10, 4, 1.8, 11], [9, -4, 2, 12], [10, 4.5, 1.6, 10], [-10, -4.5, 1.6, 9.5]]) { cyl(g, r, r, h, 14, wall, tx, 0, tz); cone(g, r * 1.25, r * 2.8, 14, roof, tx, h, tz); }
@@ -812,6 +828,79 @@
     }
   }
 
+  // 해안 절벽: 지형 격자보다 훨씬 날카로운 수직 암벽을 해안선을 따라 세움
+  function buildCliffFaces() {
+    const strips = { gold: [], chalk: [] }; let cur = null, curType = null;
+    const flush = () => { if (cur && cur.length > 3) strips[curType].push(cur); cur = null; };
+    for (let a = -Math.PI; a < Math.PI; a += .0026) {
+      const c = Math.cos(a), s = Math.sin(a);
+      let r = 940; while (r > 300 && H(c * r, s * r) < .8) r -= 1.2;
+      if (r <= 300) { flush(); continue; } r += 1.2;
+      const rx = c * (r - 9), rz = s * (r - 9), top = H(rx, rz), W = ISL.weights(rx, rz), k = ISL.cliffK(rx, rz, W);
+      if (k < .45 || top < 7) { flush(); continue; }
+      const type = W[2] > W[3] ? 'chalk' : 'gold';
+      if (cur && type !== curType) flush();
+      if (!cur) { cur = []; curType = type; }
+      let re = r; while (re > r - 16 && H(c * re, s * re) < top - 1.2) re -= .5;
+      cur.push({ c, s, a, re, top, rs: r });
+    }
+    flush();
+    ISL.cliffStrips = { gold: strips.gold.map(s => s.length), chalk: strips.chalk.map(s => s.length) };
+    const boulders = [];
+    for (const type of ['gold', 'chalk']) {
+      const pos = [], idx = []; let base = 0; const ROWS = 12;
+      for (const st of strips[type]) {
+        st.forEach((p, i) => {
+          for (let k = 0; k <= ROWS; k++) {
+            const t = k / ROWS, y = p.top + .5 - t * (p.top + 7.5);
+            const ov = ISL.noise(p.a * 95, y * .22) * 1.6 + ISL.noise(p.a * 340, y * .9) * .55 + (Math.sin(y * 1.7 + ISL.noise(p.a * 40, 0) * 3) * .25);
+            const cave = Math.max(0, ISL.noise(p.a * 60, 7.3) - .45) * 6 * ISL.sstep(4, 0, y) * ISL.sstep(-3, 0, y);
+            const rr = p.re + .3 + t * 1.4 + ov - cave + (k === 0 ? -.9 : 0);
+            pos.push(p.c * rr, y, p.s * rr);
+          }
+          if (i) for (let k = 0; k < ROWS; k++) { const a0 = base + (i - 1) * (ROWS + 1) + k, b0 = base + i * (ROWS + 1) + k; idx.push(a0, b0, a0 + 1, a0 + 1, b0, b0 + 1); }
+          if (i % 3 === 0) for (let b = 0; b < 2; b++) { const rr = p.rs + rng() * 7 - 1, x = p.c * rr, z = p.s * rr; boulders.push({ x, y: -1 + rng() * 1.2, z, s: .5 + rng() * 1.5, color: new THREE.Color(type === 'gold' ? '#c99a5a' : '#e3e0d6').multiplyScalar(.75 + rng() * .3) }); }
+        });
+        base += st.length * (ROWS + 1);
+      }
+      if (!pos.length) continue;
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = rockMat(type === 'gold' ? '#d4a05c' : '#ece8de'); m.side = THREE.DoubleSide;
+      const me = new THREE.Mesh(g, m); me.castShadow = me.receiveShadow = true; scene.add(me);
+    }
+    ISL.placeInstances(scene, ISL.merge([[new THREE.DodecahedronGeometry(1.2, 1).scale(1.3, .75, 1), '#ffffff']]), boulders, { collide: 1, material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }) });
+  }
+
+  // 명소 입구와 에펠탑 전망대
+  function hallDoors() {
+    const add = (hall, x, z, a, y) => ISL.Interior.addHallDoor({ scene, hall, x, z, a, y: y !== undefined ? y : H(x, z) });
+    add('hallgrim', P.hallgrim.x, P.hallgrim.z + 2.4, 0, P.hallgrim.y - .3);
+    { const dx = P.msmCoast.x - P.msm.x, dz = P.msmCoast.z - P.msm.z, l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l; add('msm', P.msm.x + ux * 32.5, P.msm.z + uz * 32.5, Math.atan2(ux, uz)); }
+    { const r = Math.atan2(P.belemCoast.dirx, P.belemCoast.dirz); add('belem', P.belem.x - 7.2 * Math.sin(r), P.belem.z - 7.2 * Math.cos(r), r + Math.PI, .6); }
+    add('pena', P.pena.x + 11.2 * Math.sin(.4), P.pena.z + 11.2 * Math.cos(.4), .4);
+    add('kinkaku', 280, 377 - 5.7, Math.PI, P.kinkaku.y - .3);
+    add('pagoda', P.pagoda.x, P.pagoda.z + 5.6, 0, P.pagoda.y - .3);
+    // 시옹성: 호숫가에서 성까지 나무다리
+    { const C = P.chillon, ux0 = C.x - 330, uz0 = C.z - 40, l = Math.hypot(ux0, uz0), ux = ux0 / l, uz = uz0 / l, lv = P.swissLake.y + 1.2;
+      const ax = C.x + ux * 11.6, az = C.z + uz * 11.6, bx = C.x + ux * 27, bz = C.z + uz * 27;
+      const w = { ax, az, bx, bz, hw: 1.6, yA: lv, yB: H(bx, bz) + .25, arch: 0, cx: (ax + bx) / 2, cz: (az + bz) / 2, dx: uz, dz: -ux, len: Math.hypot(bx - ax, bz - az), level: P.swissLake.y };
+      ISL.walkables.push(w); buildDeck(w, mat('#6b5643'), mat('#5a4636'), { railH: 1, piers: 2 });
+      add('chillon', C.x + ux * 11.3, C.z + uz * 11.3, Math.atan2(ux, uz), lv); }
+    // 에펠탑: 1층·2층·꼭대기 전망대를 걸을 수 있게
+    const E = P.eiffel, y0 = H(E.x, E.z);
+    const top = box(scene, 6.6, .3, 6.6, mat('#654b37', { metalness: .3, roughness: .6 }), E.x, y0 + 60.4, E.z);
+    ISL.floors = ISL.floors || [];
+    const levels = [['지상', y0], ['1층 전망대 (57m)', y0 + 14.2], ['2층 전망대 (115m)', y0 + 28.2], ['꼭대기 전망대 (276m)', y0 + 60.7]];
+    for (const [nm, y, hw] of [[1, y0 + 14.2, 9.6], [2, y0 + 28.2, 5.4], [3, y0 + 60.7, 3.2]]) {
+      ISL.floors.push({ x: E.x, z: E.z, hw, hd: hw, y });
+      for (const [x, z, a, b] of [[0, hw, hw, .1], [0, -hw, hw, .1], [hw, 0, .1, hw], [-hw, 0, .1, hw]]) {
+        ISL.world.add({ t: 'b', x: E.x + x, z: E.z + z, hw: a, hd: b, a: 0, y0: y - .3, y1: y + 1.1 });
+        if (nm === 3) box(scene, a * 2 + .1, 1, b * 2 + .1, mat('#4a382a'), E.x + x, y, E.z + z);
+      }
+    }
+    ISL.elevators = [{ x: E.x, z: E.z, levels, name: '에펠탑 엘리베이터' }];
+  }
+
   // ============================================================
   function build(sc) {
     scene = sc; autoCol = true;
@@ -821,8 +910,9 @@
     buildKinkaku(); buildInari(); buildPagoda(); buildBamboo();
     buildHallgrim(); buildIcelandNature();
     buildSwiss();
-    buildAlgarve(); buildEtretat(); buildJokul(); buildTerraces();
+    buildAlgarve(); buildEtretat(); buildJokul(); buildTerraces(); buildCliffFaces();
     autoCol = false;
+    hallDoors();
   }
   // 움직이지 않는 명소 부품을 재질·구역별로 합쳐 드로우콜을 줄임
   function mergeStatic() {

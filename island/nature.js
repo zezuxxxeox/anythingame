@@ -31,10 +31,28 @@
 
   function makeSky() {
     const mat = new THREE.ShaderMaterial({
-      uniforms: { uSun: U.uSun, uDay: U.uDay, uTime: U.uTime },
+      uniforms: { uSun: U.uSun, uDay: U.uDay, uTime: U.uTime, uNight: U.uNight },
       vertexShader: `varying vec3 vD; void main(){ vD=normalize(position); vec4 p=modelViewMatrix*vec4(position,1.0); gl_Position=projectionMatrix*p; gl_Position.z=gl_Position.w*0.99999; }`,
       fragmentShader: SKY_GLSL + `
-        varying vec3 vD;
+        varying vec3 vD; uniform float uNight;
+        float h2(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+        float n2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h2(i),h2(i+vec2(1,0)),f.x),mix(h2(i+vec2(0,1)),h2(i+vec2(1,1)),f.x),f.y); }
+        // 오로라: 높이별 층을 따라 빛의 커튼을 적분 (아래 초록, 위 보라·붉은빛)
+        vec3 aurora(vec3 d){
+          vec3 acc=vec3(0.0);
+          for(int i=0;i<22;i++){
+            float fi=float(i)/22.0, hgt=0.75+fi*0.9;
+            vec2 p=d.xz/max(d.y,0.03)*hgt;
+            float wob=sin(p.x*0.55+uTime*0.045)*0.45+sin(p.x*1.3-uTime*0.07)*0.18+(n2(p*0.5+uTime*0.015)-0.5)*0.7;
+            float band=p.y+1.7+wob;
+            float cur=exp(-band*band*9.0)+0.45*exp(-pow(band+0.9+sin(p.x*0.8)*0.3,2.0)*14.0);
+            float rays=n2(vec2(p.x*7.0+n2(p*1.7+uTime*0.05)*3.0, fi*2.0+uTime*0.08)); rays=pow(rays,1.6);
+            vec3 col=mix(vec3(0.15,1.0,0.5), vec3(0.45,0.35,1.0), smoothstep(0.35,0.75,fi));
+            col=mix(col, vec3(1.0,0.25,0.35), smoothstep(0.75,1.0,fi));
+            acc+=col*cur*(0.25+rays)*(1.0-fi*0.6)*0.085;
+          }
+          return acc*smoothstep(0.02,0.14,d.y);
+        }
         float hash(vec3 p){ p=fract(p*0.3183099+.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
         void main(){
           vec3 d=normalize(vD); vec3 c=skyCol(d);
@@ -46,6 +64,11 @@
           c+=vec3(0.3,0.35,0.5)*pow(max(md,0.0),30.0)*0.15*(1.0-day);
           if(d.y>0.0){ vec3 q=floor(d*280.0); float s=hash(q); float tw=0.6+0.4*sin(uTime*2.0+s*50.0);
             c+=vec3(0.9,0.95,1.0)*step(0.9965,s)*(s-0.9965)*500.0*tw*(1.0-day)*smoothstep(0.0,0.15,d.y); }
+          if(d.y>0.0 && uNight>0.01){
+            vec3 mwAxis=normalize(vec3(0.35,0.25,0.9)); float mw=exp(-pow(dot(d,mwAxis),2.0)*28.0);
+            c+=vec3(0.55,0.6,0.85)*mw*(0.02+0.05*n2(d.xy*40.0+d.z*20.0))*uNight;
+            c+=aurora(d)*uNight;
+          }
           if(d.y<0.0) c=mix(c, c*0.6, smoothstep(0.0,-0.2,d.y));
           gl_FragColor=vec4(c,1.0);
           #include <tonemapping_fragment>
@@ -132,7 +155,7 @@
           vec3 water=mix(uShallow,uDeep,dk)*lit;
           vec3 col=mix(water,refl,fres*(1.0-uMilky*0.6));
           vec3 L=uSun.y>-0.05?uSun:-uSun;
-          col+=uSunCol*pow(max(dot(r,L),0.0),220.0)*(uSun.y>-0.05?2.5:0.5);
+          col+=uSunCol*min(pow(max(dot(r,L),0.0),220.0)*(uSun.y>-0.05?2.5:0.5), 1.2);
           float foam=smoothstep(1.1,0.0,depth)*(0.55+0.45*sin(depth*9.0-uTime*2.2+vW.x*0.15));
           // 해안으로 밀려오는 하얀 파도 줄
           float brk=sin(depth*1.35 - uTime*1.7 + sin(vW.x*0.05+vW.z*0.04)*2.0);
@@ -597,6 +620,7 @@
           float d = max(uL.y, 0.)*.7 + .3;
           vec3 c = vCol * (amb + uLC*d*(.75 + .35*vY)) / 3.14159;
           c += vCol * uLC * vBack*vBack * .06 * (1. - uL.y); // 해를 등지면 잎이 비쳐 보임
+          c += uLC * pow(vY, 5.) * .03 * max(uL.y, 0.); // 잎끝 광택
           gl_FragColor = vec4(c, 1.);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -661,7 +685,9 @@
   ISL.Emitter = Emitter;
 
   // ---------- 오로라 ----------
-  function makeAurora(scene) {
+  function makeAurora(scene) { return; // 오로라는 이제 하늘 셰이더 안에서 그림
+  }
+  function makeAuroraOld(scene) {
     const g = new THREE.PlaneGeometry(1, 1, 160, 1), p = g.attributes.position;
     for (let i = 0; i < p.count; i++) {
       const u = p.getX(i) + .5, v = p.getY(i) + .5, a = -1.2 + u * 2.4, r = 1100;

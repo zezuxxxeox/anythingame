@@ -23,6 +23,15 @@
     doors.push(door); h.door = door;
     return door;
   }
+  // 명소 입구 문 (크고 무거운 나무문)
+  function addHallDoor(o) {
+    const dw = o.w || 2.2, dh = o.h || 3.2, a = o.a, cs = Math.cos(a), sn = Math.sin(a);
+    const geo = ISL.merge([[new THREE.BoxGeometry(dw, dh, .14).translate(dw / 2, dh / 2, 0), o.color || '#4a3020'], [new THREE.BoxGeometry(dw - .3, .12, .18).translate(dw / 2, dh * .3, 0), '#2a1a10'], [new THREE.BoxGeometry(dw - .3, .12, .18).translate(dw / 2, dh * .75, 0), '#2a1a10'], [new THREE.SphereGeometry(.09, 8, 6).translate(dw - .2, dh * .48, .1), '#d4a937']]);
+    const pivot = new THREE.Group(), mesh = new THREE.Mesh(geo, doorMat); mesh.castShadow = true; pivot.add(mesh);
+    pivot.position.set(o.x - dw / 2 * cs, o.y, o.z + dw / 2 * sn); pivot.rotation.y = a; pivot.userData.dynamic = true; o.scene.add(pivot);
+    const door = { hall: o.hall, pivot, mesh, open: 0, target: 0, sliding: false, dw, w: 8, d: 8, a, style: 'hall', timer: 0, base: pivot.position.clone(), x: o.x + sn * .8, z: o.z + cs * .8, y: o.y, region: 0, seed: 1 };
+    doors.push(door); return door;
+  }
   function toggle(door, open) {
     door.target = open === undefined ? (door.target ? 0 : 1) : (open ? 1 : 0); door.timer = 0;
     ISL.Audio.door(door.target === 1, door.sliding);
@@ -90,6 +99,7 @@
 
   // ---------- 실내 만들기 ----------
   function build(door) {
+    if (door.hall) return ISL.Halls.build(door);
     const LH = ISL.LH, st = STYLES[door.style], ri = door.region, rnd = ISL.mulberry32(door.seed);
     const scene = new THREE.Scene(); scene.background = new THREE.Color('#1a1612');
     const g = new THREE.Group(); scene.add(g);
@@ -219,5 +229,5 @@
     };
   }
 
-  ISL.Interior = { addDoor, toggle, update, nearestDoor, build, doors };
+  ISL.Interior = { addHallDoor, addDoor, toggle, update, nearestDoor, build, doors };
 })();

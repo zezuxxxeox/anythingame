@@ -275,7 +275,7 @@
       player.x = d.x + sn * 1.2; player.z = d.z + cs * 1.2; player.y = groundAt(player.x, player.z); player.face = d.a; cam.yaw = d.a; cam.pitch = .3; player.seat = null; pm.emote = null; cam.curDist = undefined;
       state.inside = null; it.exit.target = 0; it.exit.open = 0;
       ISL.Interior.toggle(d, true); d.timer = 5.2;
-      A.setInside(false); document.body.classList.remove('inside'); state.region = null;
+      A.setInside(false); document.body.classList.remove('inside'); state.region = null; seasonKey = '';
     }), 350);
   }
   function interactInside() {
@@ -429,7 +429,8 @@
     scene.add(sunLight, sunLight.target);
     hemi = new THREE.HemisphereLight('#cfe3ff', '#5d6b45', .9); scene.add(hemi);
     pmrem = new THREE.PMREMGenerator(renderer);
-    if (!LQ && renderer.capabilities.isWebGL2) { post = new ISL.Post(renderer); post.setSize(innerWidth, innerHeight); }
+    if (!LQ && !MOBILE && renderer.capabilities.isWebGL2) { post = new ISL.Post(renderer); // 폰에서는 후처리 없이 직접 그림 (iOS에서 검은 네모 깜빡임 방지)
+ post.setSize(innerWidth, innerHeight); }
   }
   function updateEnv() {
     if (!envScene) { envScene = new THREE.Scene(); envScene.add(new THREE.Mesh(sky.geometry, sky.material)); }
@@ -620,8 +621,18 @@
     for (const p of pickups) { p.gem.rotation.y += dt * 2; p.g.position.y = ISL.H(p.x, p.z) + 1 + Math.sin(performance.now() * .003) * .2; }
     if (heartFx) heartFx.update(dt, -2, .5);
     updateRipples(dt);
-    if (state.region && state.region.id === 'kyoto') { if (!petals) petals = new ISL.Emitter(scene, 220, { size: .8, color: '#ffc4d6', opacity: .95, life: 7 }); for (let i = 0; i < 2; i++) petals.emit(player.x + (rng() - .5) * 60, player.y + 14 + rng() * 6, player.z + (rng() - .5) * 60, 1 + rng(), -1.5, (rng() - .5), 7); }
-    if (petals) petals.update(dt, 0, 0);
+    const rid = state.region && state.region.id;
+    if (rid === 'kyoto') { // 봄 구역엔 벚꽃잎, 가을 구역엔 단풍잎
+      if (!petals) { petals = new ISL.Emitter(scene, 220, { size: .8, color: '#ffc4d6', opacity: .95, life: 7 }); leavesFx = new ISL.Emitter(scene, 220, { size: .9, color: '#e0662a', opacity: .95, life: 7 }); }
+      const em = ISL.kyotoAutumn(player.x, player.z) ? leavesFx : petals;
+      for (let i = 0; i < 2; i++) em.emit(player.x + (rng() - .5) * 60, player.y + 14 + rng() * 6, player.z + (rng() - .5) * 60, 1 + rng(), -1.5, (rng() - .5), 7);
+    }
+    if (petals) { petals.update(dt, 0, 0); leavesFx.update(dt, 0, 0); }
+    if (rid === 'iceland' && !player.swim) { // 크리스마스의 눈
+      if (!snowFx) snowFx = new ISL.Emitter(scene, 700, { size: .55, color: '#ffffff', opacity: .9, life: 6 });
+      for (let i = 0; i < 6; i++) snowFx.emit(player.x + (rng() - .5) * 70, player.y + 10 + rng() * 14, player.z + (rng() - .5) * 70, (rng() - .5) * 1.5, -2.6 - rng(), (rng() - .5) * 1.5, 6);
+    }
+    if (snowFx) snowFx.update(dt, 0, 0);
     let best = null, bd = 1e9;
     const consider = (o, kind, x, z, r) => { const d = Math.hypot(player.x - x, player.z - z); if (d < r && d < bd) { bd = d; best = { o, kind }; } };
     if (!player.fly) {
@@ -648,7 +659,7 @@
   }
 
   // 소리 환경 (0.2초마다)
-  let envSndT = 0, regionT = 0, petals = null;
+  let envSndT = 0, regionT = 0, petals = null, leavesFx = null, snowFx = null, seasonKey = '';
   function soundEnv(dt) {
     if ((envSndT -= dt) > 0) return; envSndT = .2;
     const it = state.inside, px = it ? it.outside.x : player.x, pz = it ? it.outside.z : player.z;
@@ -742,7 +753,7 @@
       else { updatePlayer(dt); updateCamera(dt); updateWorld(dt); }
       if (state.freeCam) { const f = state.freeCam; camera.position.set(f[0], f[1], f[2]); camera.lookAt(f[3], f[4], f[5]); }
       if (state.dlg) { const d = state.dlg, txt = d.choices ? d.menuText : d.pages[d.i]; if (d.shown < txt.length) { d.shown = Math.min(txt.length, d.shown + dt * 45); renderDlg(); } }
-      if (!state.inside && (regionT -= dt) < 0) { regionT = .4; const r = ISL.regionAt(player.x, player.z); if (r !== state.region) { state.region = r; banner(r); } checkDiscover(); }
+      if (!state.inside && (regionT -= dt) < 0) { regionT = .4; const r = ISL.regionAt(player.x, player.z), sk = r.id === 'kyoto' ? (ISL.kyotoAutumn(player.x, player.z) ? '교토 · 가을 🍁' : '교토 · 봄 🌸') : r.id === 'iceland' ? '아이슬란드 · 크리스마스 🎄' : r.name; if (sk !== seasonKey) { seasonKey = sk; state.region = r; banner(Object.assign({}, r, { name: sk, hello: r.id === 'iceland' ? 'Gleðileg jól!' : r.hello })); state.region = r; } checkDiscover(); }
       soundEnv(dt);
       ISL.updateBubbles(camera);
     }

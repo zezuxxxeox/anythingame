@@ -160,6 +160,7 @@
   const plan = {};
   function planAll() {
     const T = ISL.groundTints, NT = ISL.noTree, NS = ISL.noTreeSeg;
+    { const fall = new THREE.Color('#b08a3a'); T.push((x, z) => { if (x < 330 || z < 120) return null; const W = ISL.weights(x, z); return W[4] > .5 && ISL.kyotoAutumn(x, z) && ISL.H(x, z) > 3 ? [fall, .28 * W[4]] : null; }); } // 가을 구역: 낙엽 빛 땅
     // 프랑스
     NT.push({ x: P.eiffel.x, z: P.eiffel.z, r: 118 });
     NS.push({ ax: P.eiffel.x, az: P.eiffel.z, bx: P.eiffel.x, bz: P.eiffel.z + 170, w: 34 });
@@ -302,13 +303,22 @@
 
   function buildLavender() {
     const { x: cx, z: cz } = P.lavender;
-    const geo = ISL.merge([[new THREE.IcosahedronGeometry(.75, 1).scale(.9, .85, .62).translate(0, .45, 0), '#ffffff']]);
-    const list = [];
-    for (let r = -36; r <= 36; r += 2.4) for (let c = -54; c <= 54; c += 1.25) {
-      const x = cx + c, z = cz + r + Math.sin(c * .05) * .8;
-      list.push({ x, y: H(x, z) - .1, z, s: .85 + rng() * .35, color: new THREE.Color().setHSL(.73 + rng() * .04, .5 + rng() * .15, .42 + rng() * .1), ry: 0 });
+    // 라벤더 한 포기: 회녹색 낮은 잎 둔덕 + 사방으로 뻗은 가는 보라색 꽃대 (실제 크기: 폭 0.8m, 높이 0.6m)
+    const lp = [[new THREE.SphereGeometry(.38, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2).scale(1.15, .62, .9), '#7d8f72']];
+    const lr = ISL.mulberry32(77);
+    for (let i = 0; i < 26; i++) {
+      const a = lr() * 6.283, tilt = .15 + lr() * .75, len = .34 + lr() * .14;
+      const stem = new THREE.CylinderGeometry(.006, .008, len, 3, 1, true); stem.translate(0, len / 2, 0);
+      const fl = new THREE.CylinderGeometry(.022, .03, .2, 4, 1); fl.translate(0, len + .08, 0);
+      for (const [gg, c] of [[stem, '#8a9a70'], [fl, i % 3 ? '#8b62d6' : '#a57be6']]) { gg.rotateZ(-tilt); gg.rotateY(a); gg.translate(Math.cos(a) * .12, .16, -Math.sin(a) * .12); gg.scale(1.15, 1, .9); lp.push([gg, c]); }
     }
-    ISL.placeInstances(scene, geo, list, { shadow: false, material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 }) });
+    const geo = ISL.merge(lp);
+    const list = [];
+    for (let r = -36; r <= 36; r += 1.7) for (let c = -54; c <= 54; c += .78) {
+      const x = cx + c + (rng() - .5) * .1, z = cz + r + Math.sin(c * .05) * .8;
+      const v = .88 + rng() * .24; list.push({ x, y: H(x, z) - .03, z, s: .9 + rng() * .25, color: new THREE.Color(v, v, v), ry: rng() * .3 });
+    }
+    ISL.placeInstances(scene, geo, list, { shadow: false, lod: 260, tile: 50, material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 }) });
     // 프로방스 농가 (마스)
     const g = group(cx + 68, cz - 6, -.2);
     const wall = facade({ wall: '#dcc8a2', win: '#40566b', frame: '#c9b48d', shutter: '#5f8fb3', cols: 3, rows: 2, lit: .5 });
@@ -809,15 +819,15 @@
     landmark('jokul', '요쿨살론 빙하 호수', 'iceland', J.x, J.z, 50, '빙하에서 떨어져 나온 푸른 얼음덩이들이 천천히 바다로 흘러가는 호수. 바닷가 검은 모래 위에 얼음이 보석처럼 흩어져 "다이아몬드 해변"이라 불려요.');
   }
   function terraceVines(cx, cz, r, color) {
-    const geo = ISL.merge([[new THREE.IcosahedronGeometry(.6, 0).scale(2.2, 1.1, .75).translate(0, .85, 0), '#ffffff']]), list = [];
+    const geo = ISL.vineGeo(), list = [];
     for (let x = cx - r; x < cx + r; x += 1.35) for (let z = cz - r; z < cz + r; z += 1.35) {
       if (Math.hypot(x - cx, z - cz) > r) continue;
       const h = H(x, z); if (ISL.slopeAt(x, z) > .16 || h < 3 || ISL.world.solidAt(x, h + 1, z)) continue;
       const hx = H(x + 2, z) - H(x - 2, z), hz = H(x, z + 2) - H(x, z - 2);
       if (Math.hypot(hx, hz) < .01 && rng() < .5) continue;
-      list.push({ x, y: h - .05, z, s: .9, ry: Math.atan2(hz, -hx) + (rng() - .5) * .1, color: new THREE.Color(color).multiplyScalar(.8 + rng() * .4) });
+      list.push({ x, y: h - .05, z, s: .9, ry: Math.atan2(hz, -hx) + (rng() - .5) * .1, color: new THREE.Color(1, 1, 1).multiplyScalar(.82 + rng() * .18) });
     }
-    ISL.placeInstances(scene, geo, list, { material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 }), lod: 420, tile: 80 });
+    ISL.placeInstances(scene, geo, list, { lod: 420, tile: 80 });
   }
   function buildTerraces() {
     terraceVines(P.lavaux.x, P.lavaux.z, 36, '#557a30');

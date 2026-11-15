@@ -268,8 +268,14 @@
       out.lerp(tmpC2, rockK);
     }
     const snowLine = W[1] * 128 + W[0] * 62 + (W[2] + W[3] + W[4]) * 400 + nz * 12;
-    const snowK = ISL.sstep(snowLine, snowLine + 14, h) * (1 - ISL.sstep(.55, .8, slope) * .7); SURF.snow = snowK;
-    if (snowK > 0) out.lerp(W[0] > .5 ? PAL.glacier : PAL.snow, snowK);
+    let snowK = ISL.sstep(snowLine, snowLine + 14, h) * (1 - ISL.sstep(.55, .8, slope) * .7);
+    if (W[0] > .35) { // 아이슬란드의 겨울: 온 땅에 눈 (바닷가·온천·간헐천 주변은 녹아 있음)
+      const P = ISL.P, warm = Math.max(P.lagoon ? 1 - ISL.sstep(30, 48, Math.hypot(x - P.lagoon.x, z - P.lagoon.z)) : 0, P.geysir ? 1 - ISL.sstep(8, 16, Math.hypot(x - P.geysir.x, z - P.geysir.z)) : 0);
+      const cover = ISL.sstep(.35, .7, W[0]) * ISL.sstep(1.2, 3.2, h) * (1 - ISL.sstep(.5, .8, slope) * .6) * (1 - warm) * (.82 + .18 * ISL.sstep(-.4, .3, nz));
+      snowK = Math.max(snowK, cover);
+    }
+    SURF.snow = snowK;
+    if (snowK > 0) out.lerp(W[0] > .5 && h > 62 ? PAL.glacier : PAL.snow, snowK);
     return out;
   }
 
@@ -457,6 +463,8 @@
   }
   const BARK = '#5b4636', BARK2 = '#4a3a30';
   const TREE_GEO = {
+    ginkgo: () => merge([...trunk([[0, 0, 0, 0, 4, 0, .34, .22], [0, 3, 0, .9, 4.6, .2, .14, .08], [0, 3.2, 0, -.8, 4.8, -.3, .14, .08]], '#5a4a3c'),
+      canopy([[0, 5.6, 0, 1.7, 1, 1.25], [.9, 4.8, .3, 1.3], [-.9, 4.9, -.4, 1.3], [0, 7, 0, 1.2, 1, 1.2]], '#d9a21e', '#ffe45c', 21)]),
     broad: () => merge([...trunk([[0, 0, 0, 0, 3.4, 0, .42, .28], [0, 2.6, 0, 1.3, 4.2, .3, .18, .1], [0, 2.8, 0, -1.2, 4.3, -.4, .18, .1]], BARK),
       canopy([[0, 5.3, 0, 2.0], [1.4, 4.7, .4, 1.55], [-1.3, 4.8, -.5, 1.55], [.3, 4.4, 1.3, 1.4], [-.4, 4.6, -1.35, 1.4], [0, 6.4, .1, 1.35], [.9, 5.9, -.8, 1.2]], '#3c6a2d', '#93c25a', 1)]),
     plane: () => merge([...trunk([[0, 0, 0, 0, 5, 0, .5, .34], [0, 4, 0, 1.6, 6, .4, .2, .12], [0, 4.2, 0, -1.5, 6.1, -.4, .2, .12]], '#9a8e78'),
@@ -519,6 +527,8 @@
   }
   ISL.treeMaterial = treeMaterial;
 
+  // 교토는 서쪽이 봄(벚꽃), 동쪽이 가을(단풍·은행)
+  ISL.kyotoAutumn = (x, z) => x + ISL.noise(z * .01, 3.3) * 14 > 345;
   ISL.noTree = []; ISL.noTreeSeg = [];
   function blocked(x, z) {
     for (const b of ISL.noTree) if ((x - b.x) ** 2 + (z - b.z) ** 2 < b.r * b.r) return true;
@@ -570,16 +580,18 @@
     };
     const add = (t, x, z, s) => lists[t].push({ x, y: ISL.H(x, z) - .15, z, s: (s || (.8 + rng() * .45)) * (t === 'olive' || t === 'bush' ? 1.15 : t === 'sugi' || t === 'conifer' ? 1.9 : 1.6), rz: (rng() - .5) * .05 });
     let total = 0;
-    for (let k = 0; k < 60000 && total < 2300; k++) {
+    for (let k = 0; k < 60000 && total < 1500; k++) {
       const x = (rng() * 2 - 1) * 720, z = (rng() * 2 - 1) * 720;
       const W = ISL.weights(x, z), ri = ISL.pickRegion(W, rng());
       const forest = ISL.fbm(x * .007 + ri * 5, z * .007, 3), h = ISL.H(x, z);
       let t = null;
       if (ri === 0) { if (Math.hypot(x - ISL.P.hallgrim.x, z - ISL.P.hallgrim.z) < 140 && rng() < .15) t = 'birch'; }
-      else if (ri === 1) { if (forest > .08 && h > 14 && h < 135) t = h > 55 || rng() < .75 ? 'conifer' : 'broad'; else if (rng() < .02) t = 'broad'; }
-      else if (ri === 2) { if (forest > .28) t = rng() < .8 ? 'broad' : 'poplar'; else if (rng() < .015) t = 'broad'; }
-      else if (ri === 3) { if (forest > .32) t = rng() < .55 ? 'stonepine' : 'cork'; else if (rng() < .06) t = rng() < .5 ? 'cork' : 'olive'; }
-      else { if (h > 12 && forest > .05) { const r = rng(); t = r < .4 ? 'sugi' : r < .62 ? 'maple' : r < .82 ? 'broad' : 'cherry'; } else if (rng() < .02) t = 'cherry'; }
+      else if (ri === 1) { if (forest > .16 && h > 14 && h < 135) t = h > 55 || rng() < .75 ? 'conifer' : 'broad'; else if (rng() < .012) t = 'broad'; }
+      else if (ri === 2) { if (forest > .42) t = rng() < .8 ? 'broad' : 'poplar'; else if (rng() < .008) t = 'poplar'; }
+      else if (ri === 3) { if (forest > .46) t = rng() < .55 ? 'stonepine' : 'cork'; else if (rng() < .03) t = rng() < .5 ? 'cork' : 'olive'; }
+      else { const autumn = ISL.kyotoAutumn(x, z);
+        if (h > 12 && forest > .12) { const r = rng(); t = autumn ? (r < .45 ? 'maple' : r < .7 ? 'ginkgo' : 'sugi') : (r < .5 ? 'cherry' : r < .8 ? 'broad' : 'sugi'); }
+        else if (rng() < .03) t = autumn ? (rng() < .6 ? 'maple' : 'ginkgo') : 'cherry'; }
       if (!t || !ok(x, z)) continue;
       add(t, x, z); total++;
     }
@@ -587,7 +599,7 @@
     const kr = ISL.rivers[2]; // 교토 강가의 벚꽃길
     for (let i = 0; i < kr.pts.length; i += 3) {
       const a = kr.pts[Math.max(0, i - 1)], b = kr.pts[Math.min(kr.pts.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-      for (const sd of [-1, 1]) { const x = kr.pts[i][0] - (b[1] - a[1]) / l * sd * (kr.wd[i] + 5), z = kr.pts[i][1] + (b[0] - a[0]) / l * sd * (kr.wd[i] + 5); if (ok(x, z, .3)) add('cherry', x, z, .9 + rng() * .25); }
+      for (const sd of [-1, 1]) { const x = kr.pts[i][0] - (b[1] - a[1]) / l * sd * (kr.wd[i] + 5), z = kr.pts[i][1] + (b[0] - a[0]) / l * sd * (kr.wd[i] + 5); if (ok(x, z, .3)) add(ISL.kyotoAutumn(x, z) ? (i % 2 ? 'maple' : 'ginkgo') : 'cherry', x, z, .9 + rng() * .25); }
     }
     for (const k in lists) placeInstances(scene, k, lists[k]);
     ISL.treeCount = Object.values(lists).reduce((a, b) => a + b.length, 0);

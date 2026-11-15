@@ -14,7 +14,8 @@
       this.bright = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, px: { value: new THREE.Vector2() } }, vertexShader: VS, depthTest: false,
         fragmentShader: `uniform sampler2D t; uniform vec2 px; varying vec2 vUv;
           void main(){ vec3 c = (texture2D(t,vUv+px*vec2(-1.,-1.)).rgb+texture2D(t,vUv+px*vec2(1.,-1.)).rgb+texture2D(t,vUv+px*vec2(-1.,1.)).rgb+texture2D(t,vUv+px*vec2(1.,1.)).rgb)*.25;
-            c = min(c, vec3(3.)); float l = dot(c, vec3(.2126,.7152,.0722)); gl_FragColor = vec4(c*smoothstep(1.0,2.2,l), 1.); }` });
+            float l = dot(c, vec3(.2126,.7152,.0722)); if (!(l >= 0.0 && l < 60000.0)) c = vec3(0.); // NaN/Inf 픽셀이 번져 검은 네모가 되는 것 방지
+            c = clamp(c, 0., 3.); l = dot(c, vec3(.2126,.7152,.0722)); gl_FragColor = vec4(c*smoothstep(1.0,2.2,l), 1.); }` });
       this.blur = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, dir: { value: new THREE.Vector2() } }, vertexShader: VS, depthTest: false,
         fragmentShader: `uniform sampler2D t; uniform vec2 dir; varying vec2 vUv;
           void main(){ vec3 c = texture2D(t,vUv).rgb*.227;
@@ -28,8 +29,8 @@
           vec3 toSRGB(vec3 c){ return mix(c*12.92, 1.055*pow(c,vec3(1./2.4))-.055, step(vec3(.0031308),c)); }
           float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
           void main(){
-            vec3 c = texture2D(tS,vUv).rgb;
-            vec3 b = texture2D(tB1,vUv).rgb*.6 + texture2D(tB2,vUv).rgb*.9;
+            vec3 c = texture2D(tS,vUv).rgb; if (!(dot(c, vec3(1.)) >= 0.0 && dot(c, vec3(1.)) < 180000.0)) c = vec3(0.);
+            vec3 b = texture2D(tB1,vUv).rgb*.6 + texture2D(tB2,vUv).rgb*.9; if (!(dot(b, vec3(1.)) >= 0.0 && dot(b, vec3(1.)) < 60000.0)) b = vec3(0.);
             c += b*uBloom;
             c = aces(c*uExp);
             float l = dot(c, vec3(.2126,.7152,.0722));

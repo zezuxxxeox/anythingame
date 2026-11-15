@@ -393,10 +393,19 @@
   }
 
   // ---------- 줄지어 심는 작물 ----------
+  // 포도나무 한 칸(2.6m): 말뚝 + 철사 두 줄 + 뒤틀린 줄기 + 잎 카드로 된 얇은 잎 벽 + 포도송이
+  ISL.vineGeo = function () {
+    if (ISL._vine) return ISL._vine;
+    const parts = [ISL.canopy([[-.75, 1.25, 0, .5, 1.5, .9, .32], [.0, 1.3, 0, .52, 1.5, .9, .32], [.75, 1.22, 0, .5, 1.5, .9, .32]], '#3f6a26', '#8fb84a', 41)];
+    for (const x of [-1.3, 1.3]) parts.push([new THREE.CylinderGeometry(.035, .04, 1.7, 5).translate(x, .85, 0), '#6b5a46']);
+    for (const y of [.8, 1.45]) parts.push([new THREE.CylinderGeometry(.006, .006, 2.6, 3).rotateZ(Math.PI / 2).translate(0, y, 0), '#9a9a9a']);
+    for (const x of [-.65, .65]) { parts.push([new THREE.CylinderGeometry(.03, .05, .85, 5).rotateZ(x * .25).translate(x, .42, 0), '#4a3a2c']); for (const s of [-1, 1]) parts.push([new THREE.SphereGeometry(.07, 5, 4).scale(1, 1.6, 1).translate(x + s * .3, .78, .12 * s), '#4a2a5e']); }
+    return ISL._vine = ISL.merge(parts);
+  };
   function rowGeos() {
     const blob = (r, sx, sy, sz, y, c) => { const g = new THREE.IcosahedronGeometry(r, 0); g.scale(sx, sy, sz); g.translate(0, y, 0); return [g, c]; };
     return {
-      vine: ISL.merge([blob(.6, 2.2, 1.1, .75, .85, '#ffffff'), [new THREE.CylinderGeometry(.05, .05, 1.6, 4).translate(1.3, .8, 0), '#6b5a46']]),
+      vine: ISL.vineGeo(),
       tea: ISL.merge([blob(.7, 1.9, .8, 1.15, .45, '#ffffff')]),
       sunflower: ISL.merge([[new THREE.CylinderGeometry(.05, .07, 2, 4).translate(0, 1, 0), '#4f7a2e'], [new THREE.CylinderGeometry(.42, .42, .12, 10).rotateX(Math.PI / 2 - .3).translate(0, 2.05, .1), '#f2c21b'], [new THREE.CylinderGeometry(.2, .2, .14, 8).rotateX(Math.PI / 2 - .3).translate(0, 2.05, .16), '#5a3a1e'], blob(.3, 1.4, .25, .9, 1.2, '#4f7a2e')]),
       bale: ISL.merge([[new THREE.CylinderGeometry(.75, .75, 1.3, 12).rotateZ(Math.PI / 2).translate(0, .72, 0), '#d8c27a']]),
@@ -418,11 +427,11 @@
         const h = H(x, z); if (!farmable(x, z, h, ISL.slopeAt(x, z)) || ISL.world.solidAt(x, h + 1, z) || ISL.world.solidAt(x + 1, h + 1, z) || ISL.world.solidAt(x, h + 1, z + 1)) continue;
         if (kind === 'olive') { extraTrees.push({ type: 'olive', x, z }); continue; }
         if (kind !== 'sunflower') ISL.colCircle(x, z, .45, h - 1, h + 1.3);
-        lists[kind].push({ x, y: h - .05, z, s: .9 + rng() * .2, ry: c.ang, color: kind === 'vine' ? tint('#4f6e2e', .8 + rng() * .4) : kind === 'tea' ? tint('#3f6a2c', .85 + rng() * .3) : null });
+        lists[kind].push({ x, y: h - .05, z, s: .9 + rng() * .2, ry: c.ang, color: kind === 'vine' ? tint('#ffffff', .82 + rng() * .18) : kind === 'tea' ? tint('#3f6a2c', .85 + rng() * .3) : null });
       }
     }
     const m = () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 });
-    ISL.placeInstances(scene, G.vine, lists.vine, { material: m(), lod: 380, tile: 120 });
+    ISL.placeInstances(scene, G.vine, lists.vine, { lod: 380, tile: 120 });
     ISL.placeInstances(scene, G.tea, lists.tea, { material: m(), lod: 380, tile: 120 });
     ISL.placeInstances(scene, G.sunflower, lists.sunflower, { material: m(), lod: 300, tile: 120, shadow: false });
     ISL.placeInstances(scene, G.bale, lists.bale, { material: m(), lod: 500 });

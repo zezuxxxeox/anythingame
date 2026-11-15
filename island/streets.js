@@ -195,7 +195,8 @@
         for (let k = 0; k < fl; k++) for (let b = 0; b < bays; b++) {
           const cx = (b + .5) * w / bays; if (k === 0 && Math.abs(cx - w / 2) < w / bays * .5) continue;
           if (k === 0 && shopN) P.window({ cx, y0: .6, w: w / bays * .7, h: 1.8, frame: '#ffffff', bars: [1, 1], glassTop: '#c9d8e2' });
-          else P.window({ cx, y0: k * uh + .8, w: 1.05, h: 1.3, frame: '#ffffff', bars: [2, 2], fw: .08, curtain: P.r() < .4 ? 'rgba(255,255,255,.5)' : null });
+          else { P.window({ cx, y0: k * uh + .8, w: 1.05, h: 1.3, frame: '#ffffff', bars: [2, 2], fw: .08, curtain: P.r() < .4 ? 'rgba(255,255,255,.5)' : null });
+            for (let q = 0; q < 7; q++) { const px = cx - .33 + q * .11, py = k * uh + .92 + (.2 - Math.abs(q - 3) * .055); P.rect(px - .012, k * uh + .9, .024, py - k * uh - .9, '#f4f0e8'); P.x.fillStyle = '#ffd86a'; P.x.beginPath(); P.x.arc(P.X(px), P.Y(py + .03), P.S(.035), 0, 7); P.x.fill(); } } // 창가의 일곱 촛불(아드벤트 촛대)
         }
         P.doorway(w / 2, 1.1, 2.25, '#ffffff');
         if (shopN) { P.rect(w / 2 - 1.3, 2.55, 2.6, .4, '#f4f1ea'); P.text(shopN, w / 2, 2.75, .26, '#2a2a2a'); }
@@ -204,6 +205,9 @@
       LH.mesh(g, new THREE.BoxGeometry(w, h, d), [side, side, M('#555'), M('#555'), f, side], 0, h / 2, 0);
       const roof = ISL.roofMat(['#b03a2e', '#2b2f36', '#2f5d50'][n % 3], 'metal');
       LH.mesh(g, LH.gableGeo(d, w + .1, 2.6, .45), roof, 0, h, 0, Math.PI / 2);
+      LH.mesh(g, LH.gableGeo(d - .5, w + .12, 2.5, .28), M('#f4f7fa', { roughness: 1 }), 0, h + .16, 0, Math.PI / 2); // 지붕에 쌓인 눈
+      { const wr = new THREE.Mesh(new THREE.TorusGeometry(.26, .09, 6, 14), M('#1f5a2c')); wr.position.set(1.15, 1.7, d / 2 + .06); g.add(wr); LH.box(g, .2, .12, .05, M('#c0392b'), 1.15, 1.38, d / 2 + .12); } // 문 옆 리스
+      { const N2 = Math.floor(w / .45), lg = new THREE.SphereGeometry(.06, 5, 4), im = new THREE.InstancedMesh(lg, xmasMat(), N2), mt = new THREE.Matrix4(), cc = new THREE.Color(); for (let q = 0; q < N2; q++) { mt.makeTranslation(-w / 2 + (q + .5) * w / N2, h - .12 - Math.abs(Math.sin(q * 1.57)) * .12, d / 2 + .3); im.setMatrixAt(q, mt); im.setColorAt(q, cc.set(XCOL[q % XCOL.length])); } g.add(im); im.userData.dynamic = true; } // 처마 전구
       if (r() < .5) { LH.box(g, 1.3, 1.2, 1.4, side, 0, h + .2, d / 2 - 1.2); LH.mesh(g, LH.gableGeo(1.4, 1.6, .6, .1), roof, 0, h + 1.4, d / 2 - 1.2); LH.box(g, .8, .8, .04, M('#2f3a44'), 0, h + .4, d / 2 - .48); }
       LH.box(g, .5, 1.6, .5, M('#e8e4dc'), w / 2 - 1.2, h + .8, -d / 4);
       return { h: h + 2.6, interior: 'is', trim: '#ffffff' };
@@ -248,6 +252,34 @@
       return { h: h + 4.6, interior: 'ch', trim: '#8f8778' };
     },
   };
+  const XCOL = ['#ff4a3a', '#ffd23a', '#3ad26a', '#3a8aff', '#ff7ad0', '#fff2c0'];
+  let xm = null; const xmasMat = () => xm || (xm = new THREE.MeshBasicMaterial({ color: '#ffffff' }));
+  // 줄 전구: 두 점 사이에 늘어진 줄 + 색 전구
+  function lightString(a, b, sag, n) {
+    const pts = [], im = new THREE.InstancedMesh(new THREE.SphereGeometry(.09, 6, 4), xmasMat(), n), mt = new THREE.Matrix4(), cc = new THREE.Color();
+    for (let i = 0; i <= n; i++) { const t = i / n, x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t - Math.sin(t * Math.PI) * sag, z = a[2] + (b[2] - a[2]) * t; pts.push(x, y, z); if (i < n) { mt.makeTranslation(x, y - .1, z); im.setMatrixAt(i, mt); im.setColorAt(i, cc.set(XCOL[i % XCOL.length])); } }
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)); scene.add(new THREE.Line(lg, new THREE.LineBasicMaterial({ color: '#1e2a1e' }))); im.userData.dynamic = true; im.frustumCulled = false; scene.add(im);
+  }
+  // 크리스마스 트리 (오슬로 트리처럼 광장에 선 큰 전나무): 층층 가지 + 눈 + 전구 + 별
+  function xmasTree(x, z, hgt) {
+    const y = H(x, z), g = new THREE.Group(); g.position.set(x, y, z); scene.add(g);
+    LH.cyl(g, .22, .3, hgt * .12, 8, M('#4e3a2c'), 0, 0, 0);
+    const n = 9; for (let i = 0; i < n; i++) { const t = i / (n - 1), r = hgt * .3 * (1 - t * .92), yy = hgt * .1 + t * hgt * .82; LH.cone(g, r, hgt * .2, 12, M('#1f4a2c'), 0, yy, 0); LH.cone(g, r * .93, hgt * .2 * .5, 12, M('#f2f6f8', { roughness: 1 }), 0, yy + hgt * .105, 0); }
+    const N2 = 160, im = new THREE.InstancedMesh(new THREE.SphereGeometry(.11, 6, 4), xmasMat(), N2), mt = new THREE.Matrix4(), cc = new THREE.Color();
+    for (let i = 0; i < N2; i++) { const t = i / N2, a = t * 38, r = hgt * .3 * (1 - t * .9) * .92, yy = hgt * .14 + t * hgt * .84; mt.makeTranslation(Math.cos(a) * r, yy, Math.sin(a) * r); im.setMatrixAt(i, mt); im.setColorAt(i, cc.set(XCOL[i % XCOL.length])); }
+    im.userData.dynamic = true; g.add(im);
+    const star = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), new THREE.MeshBasicMaterial({ color: '#ffe680' })); star.position.y = hgt * 1.07; star.scale.set(1, 1.5, .4); star.userData.dynamic = true; g.add(star);
+    ISL.colCircle(x, z, hgt * .12, y - 1, y + 4);
+    for (const [ox, oz, s] of [[hgt * .3, 2, 1], [-hgt * .3, 1.5, .8], [1, hgt * .32, .9]]) { const px = x + ox, pz = z + oz, py = H(px, pz); LH.box(scene, s, s * .8, s, M(['#c0392b', '#2e6f9e', '#e6b422'][Math.round(s * 10) % 3]), px, py, pz); LH.box(scene, s + .02, s * .82, .14, M('#f4f1ea'), px, py, pz); ISL.colCircle(px, pz, s * .6, py - 1, py + 1); }
+  }
+  function snowman(x, z) {
+    const y = H(x, z), g = new THREE.Group(); g.position.set(x, y, z); scene.add(g); const w = M('#f6f8fa', { roughness: 1 });
+    LH.sphere(g, .55, w, 0, .5, 0); LH.sphere(g, .4, w, 0, 1.25, 0); LH.sphere(g, .28, w, 0, 1.82, 0);
+    const nose = LH.cone(g, .05, .28, 6, M('#e8761e'), 0, 1.8, .3); nose.rotation.x = Math.PI / 2; nose.position.set(0, 1.84, .36);
+    for (const sx of [-1, 1]) LH.sphere(g, .035, M('#1a1a1a'), sx * .1, 1.92, .25); LH.cyl(g, .3, .3, .04, 12, M('#1a1a1a'), 0, 2.04, 0); LH.cyl(g, .19, .19, .28, 12, M('#1a1a1a'), 0, 2.06, 0);
+    const sc = new THREE.Mesh(new THREE.TorusGeometry(.26, .07, 6, 12), M('#c0392b')); sc.rotation.x = Math.PI / 2; sc.position.y = 1.58; g.add(sc);
+    ISL.colCircle(x, z, .55, y - 1, y + 2);
+  }
   let lampMat = null;
   function streetLampMat() { if (!lampMat) { lampMat = new THREE.MeshStandardMaterial({ color: '#fff2c8', emissive: '#ffd890', emissiveIntensity: 0, roughness: .3 }); ISL.nightMats.push(lampMat); } return lampMat; }
 
@@ -400,6 +432,11 @@
         ISL.tramLane = s;
       } else if (s.style === 'reyk') {
         for (let t = 8; t < s.len; t += 18) for (const sd of [-1, 1]) { const [x, z] = along(t, sd * (s.road + .5)); lamp(x, z, 'reyk'); }
+        // 크리스마스: 거리를 가로지르는 줄 전구, 광장의 큰 트리, 눈사람
+        const o = s.road + s.walk + .45;
+        for (let t = 4; t < s.len; t += 6.5) { const a = along(t, -o), b = along(t, o); lightString([a[0], H(a[0], a[1]) + 5.2, a[1]], [b[0], H(b[0], b[1]) + 5.2, b[1]], .8, 16); }
+        { const [x, z] = along(-10, 0); xmasTree(x, z, 14); }
+        { const [x, z] = along(s.len * .45, -(s.road + 1.1)); snowman(x, z); } { const [x, z] = along(s.len * .8, s.road + 1.2); snowman(x, z); }
       } else if (s.style === 'luzern') {
         for (let t = 9; t < s.len; t += 17) { const [x, z] = along(t, (t % 2 ? 1 : -1) * (s.road + .5)); lamp(x, z, 'luzern'); }
         const [fx, fz] = along(-5, 0); fountain(fx, fz, 'luzern');

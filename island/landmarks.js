@@ -179,7 +179,7 @@
     NT.push({ x: P.kinkaku.x, z: P.kinkaku.z, r: 52 });
     T.push((x, z) => { const d = Math.hypot(x - P.kinkaku.x, z - P.kinkaku.z); return d < 50 ? [new THREE.Color('#5d8a3e'), .5] : null; });
     const ip = [[436, 420], [452, 404], [446, 384], [466, 370], [482, 352], [498, 344], [510, 328], [508, 310]];
-    plan.inari = ISL.catmull(ip, .62); // 실제처럼 거의 맞닿게 촘촘히
+    plan.inari = ISL.catmull(ip, .45); // 실제처럼 거의 맞닿게 촘촘히
     for (let i = 0; i < ip.length - 1; i++) NS.push({ ax: ip[i][0], az: ip[i][1], bx: ip[i + 1][0], bz: ip[i + 1][1], w: 4 });
     T.push((x, z) => { for (let i = 0; i < ip.length - 1; i++) if (ISL.segDist(x, z, ip[i][0], ip[i][1], ip[i + 1][0], ip[i + 1][1]).d < 1.7) return [new THREE.Color('#9c8466'), .85, 0]; return null; });
     NT.push({ x: P.pagoda.x, z: P.pagoda.z, r: 18 });
@@ -513,7 +513,7 @@
     const ver = mat('#e5482c', { roughness: .55 }), blk = mat('#1d1b1b');
     // 도리이 하나: 기둥 2(살짝 안쪽으로 기울어짐) + 검은 네마키 + 누키(기둥을 관통) + 가쿠즈카 + 시마키 + 위로 휜 검은 가사기
     const bend = (geo, lift) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i); p.setY(i, p.getY(i) + lift * Math.pow(Math.abs(x) / 1.6, 2.6)); } geo.computeVertexNormals(); return geo; };
-    const HW = 1.15, TH = 2.95, V = '#d9431f', K = '#1a1716';
+    const HW = 1.15, TH = 2.95, TS = .85, V = '#d9431f', K = '#1a1716';
     const pillar = s => { const g = new THREE.CylinderGeometry(.1, .12, TH, 10); g.translate(0, TH / 2, 0); g.rotateZ(-s * .02); g.translate(s * HW, 0, 0); return g; };
     const torii = ISL.merge([
       [pillar(-1), V], [pillar(1), V],
@@ -527,8 +527,8 @@
     const list = [];
     for (let i = 0; i < path.length - 1; i += 1) {
       const [x, z] = path[i], [x2, z2] = path[i + 1], a = Math.atan2(x2 - x, z2 - z);
-      list.push({ x, y: H(x, z) - .05, z, s: 1, ry: a, tint: .92 + rng() * .12 });
-      for (const ox of [-HW, HW]) ISL.colCircle(x + Math.cos(a) * ox, z - Math.sin(a) * ox, .14);
+      list.push({ x, y: H(x, z) - .05, z, s: TS, ry: a, tint: .92 + rng() * .12 }); // 실제 센본도리이: 높이 약 2.5m, 폭 약 2m
+      for (const ox of [-HW * TS, HW * TS]) ISL.colCircle(x + Math.cos(a) * ox, z - Math.sin(a) * ox, .12);
     }
     ISL.placeInstances(scene, torii, list, { material: tmat, collide: 0, tile: 60 });
     // 신사 가는 길의 돌 등롱과 여우상

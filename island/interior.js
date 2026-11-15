@@ -135,7 +135,7 @@
     const LH = ISL.LH, st = STYLES[door.style], ri = door.region, rnd = ISL.mulberry32(door.seed);
     const scene = new THREE.Scene(); scene.background = new THREE.Color('#1a1612');
     const g = new THREE.Group(); scene.add(g);
-    const W = Math.max(5.2, Math.min(9, door.w - .4)), D = Math.max(5.2, Math.min(9, door.d - .4)), HT = 3;
+    const W = Math.max(5, Math.min(6.2, door.w - .6)), D = Math.max(4.8, Math.min(6, door.d - .6)), HT = st.jp ? 2.4 : 2.6; // 실제 방 크기 (약 5×5m, 천장 2.4~2.6m)
     const phys = new ISL.Phys(4), inter = [];
     const M = (c, o) => LH.mat(c, o);
     const box = (w, h, d, m, x, y, z, ry = 0) => LH.box(g, w, h, d, m, x, y, z, ry);
@@ -148,14 +148,14 @@
     const wallMat = (len) => { const t = wallT.clone(); t.needsUpdate = true; t.repeat.set(len / 3, 1); return new THREE.MeshStandardMaterial({ map: t, roughness: .9, side: THREE.DoubleSide }); };
     const wall = (len, x, z, ry, h = HT, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(len, h), wallMat(len)); m.position.set(x, y + h / 2, z); m.rotation.y = ry; m.receiveShadow = true; g.add(m); return m; };
     wall(W, 0, -D / 2, 0); wall(D, -W / 2, 0, Math.PI / 2); wall(D, W / 2, 0, -Math.PI / 2);
-    const dw = 1.3; wall((W - dw) / 2, -(W + dw) / 4, D / 2, Math.PI); wall((W - dw) / 2, (W + dw) / 4, D / 2, Math.PI); wall(dw, 0, D / 2, Math.PI, HT - 2.25, 2.25);
+    const dw = 1.3; wall((W - dw) / 2, -(W + dw) / 4, D / 2, Math.PI); wall((W - dw) / 2, (W + dw) / 4, D / 2, Math.PI); wall(dw, 0, D / 2, Math.PI, HT - 2.18, 2.18);
     for (const [x, z, w, d] of [[0, -D / 2 - .25, W + 1, .5], [-W / 2 - .25, 0, .5, D + 1], [W / 2 + .25, 0, .5, D + 1], [-(W + dw) / 4 - .1, D / 2 + .25, (W - dw) / 2, .5], [(W + dw) / 4 + .1, D / 2 + .25, (W - dw) / 2, .5]]) solid(x, z, w, d);
     box(W, .12, .06, st.jp ? '#4e3626' : '#d8cfbf', 0, 0, -D / 2 + .03); // 걸레받이
     if (st.beams) for (let x = -W / 2 + .8; x < W / 2; x += 1.6) box(.22, .26, D, '#5a3e2a', x, HT - .26, 0);
     // 창문 (바깥 하늘빛이 비침)
     const glass = new THREE.MeshBasicMaterial({ color: '#bcd8f0' }), windows = [];
     for (const [x, z, ry] of [[-W / 2 + .02, -D / 4, Math.PI / 2], [W / 2 - .02, D / 6, -Math.PI / 2], [W / 4, -D / 2 + .02, 0]]) {
-      const wg = new THREE.Group(); wg.position.set(x, 1.55, z); wg.rotation.y = ry; g.add(wg);
+      const wg = new THREE.Group(); wg.position.set(x, 1.45, z); wg.rotation.y = ry; g.add(wg);
       const gl = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.2), glass); gl.position.z = .01; wg.add(gl);
       const fc = st.jp ? '#5a3e2a' : '#f4f1ea';
       for (const [w, h, px, py] of [[1.3, .1, 0, .65], [1.3, .14, 0, -.66], [.1, 1.3, .6, 0], [.1, 1.3, -.6, 0], [.05, 1.2, 0, 0], [1.2, .05, 0, 0]]) { const f = new THREE.Mesh(new THREE.BoxGeometry(w, h, .08), M(fc)); f.position.set(px, py, .03); wg.add(f); }
@@ -194,7 +194,7 @@
       },
       stove(x, z) { box(1, 1.7, .8, '#3f7a5a', x, 0, z); for (let i = 0; i < 6; i++) box(1.02, .03, .82, '#2f5a42', x, .25 + i * .26, z); box(1.1, .1, .9, '#2f5a42', x, 1.7, z); solid(x, z, 1, .8); env.fire = .4; },
       cuckoo(x, z) { const c = new THREE.Group(); c.position.set(x, 2.1, z); g.add(c); LH.box(c, .4, .45, .15, '#6b4226', 0, 0, 0); LH.mesh(c, LH.gableGeo(.4, .15, .2, .06), '#4a2a18', 0, .45, 0); const face = new THREE.Mesh(new THREE.CircleGeometry(.12, 16), M('#f4ecd8')); face.position.set(0, .22, .08); c.add(face); for (const s of [-.08, .08]) LH.cyl(c, .025, .03, .25, 6, '#c9a24a', s, -.45, 0); env.clock = 1; },
-      lamp(x, z, h = 2.3) { LH.cyl(g, .01, .01, HT - h, 4, '#333', x, h, z); const shade = LH.cone(g, .32, .3, 12, st.jp ? '#f4ecd0' : '#e8d7a8', x, h - .2, z); const bulb = new THREE.Mesh(new THREE.SphereGeometry(.08, 8, 6), new THREE.MeshBasicMaterial({ color: '#fff3c9' })); bulb.position.set(x, h - .22, z); g.add(bulb); return bulb; },
+      lamp(x, z, h = HT - .55) { LH.cyl(g, .01, .01, HT - h, 4, '#333', x, h, z); const shade = LH.cone(g, .32, .3, 12, st.jp ? '#f4ecd0' : '#e8d7a8', x, h - .2, z); const bulb = new THREE.Mesh(new THREE.SphereGeometry(.08, 8, 6), new THREE.MeshBasicMaterial({ color: '#fff3c9' })); bulb.position.set(x, h - .22, z); g.add(bulb); return bulb; },
       lowtable(x, z) { box(1.2, .08, .8, '#5a3826', x, .3, z); for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(.07, .3, .07, '#5a3826', x + sx * .5, 0, z + sz * .32); solid(x, z, 1.2, .8); LH.cyl(g, .05, .06, .08, 10, '#e9e4d8', x + .2, .38, z); LH.cyl(g, .09, .07, .12, 10, '#3f5f4a', x - .2, .38, z); for (const [cx, cz] of [[0, .85], [0, -.85], [.95, 0], [-.95, 0]]) { box(.55, .1, .55, '#8f3b4a', x + cx, 0, z + cz); inter.push({ x: x + cx, z: z + cz, r: .8, label: '🧘 방석에 앉기', act: 'sit', seat: { x: x + cx, z: z + cz, ry: Math.atan2(-cx, -cz), y: .05 } }); } },
       tokonoma(x, z) { box(1.6, .15, .7, '#4e3626', x, 0, z); const t = ISL.LH.canvasTex(32, 96, (k, w, h) => { k.fillStyle = '#efe6cf'; k.fillRect(0, 0, w, h); k.fillStyle = '#e59ab0'; for (let i = 0; i < 9; i++) { k.beginPath(); k.arc(6 + Math.random() * 20, 30 + Math.random() * 40, 2.5, 0, 7); k.fill(); } k.strokeStyle = '#3a2a20'; k.lineWidth = 2; k.beginPath(); k.moveTo(4, 70); k.quadraticCurveTo(16, 40, 28, 28); k.stroke(); }); const s = new THREE.Mesh(new THREE.PlaneGeometry(.45, 1.3), new THREE.MeshStandardMaterial({ map: t })); s.position.set(x, 1.4, z - .33); g.add(s); LH.cyl(g, .1, .08, .3, 10, '#3a4a5a', x + .45, .15, z); const c = ISL.canopy([[0, .6, 0, .2], [.12, .5, 0, .15]], '#e292ab', '#ffe3ec', 9)[0]; const b = new THREE.Mesh(c, ISL.treeMaterial()); b.position.set(x + .45, 0, z); g.add(b); solid(x, z, 1.6, .7); },
       andon(x, z) { box(.3, .5, .3, '#efe6cf', x, .1, z); const l = new THREE.PointLight('#ffcf8a', 1.5, 5, 2); l.position.set(x, .4, z); g.add(l); return l; },
@@ -212,21 +212,21 @@
       andonLight = items.andon(R - .5, B + .5);
       items.plant(R - .5, F - .6);
       items.musicbox(R - .6, 0, -.2);
-      lampBulb = items.lamp(0, .2, 2.4);
+      lampBulb = items.lamp(0, .2);
     } else {
-      items.bed(L + .9, B + 1.2, 0, ['#c0392b', '#2e6f9e', '#7a8f4a', '#d9a83a', '#7a4a8f'][ri]);
+      items.bed(L + .8, B + 1.2, 0, ['#c0392b', '#2e6f9e', '#7a8f4a', '#d9a83a', '#7a4a8f'][ri]);
       items.table(R - 1.4, .1, 1.3, .85, st.floor === 'pine' ? '#a8784a' : '#7a5236');
       items.chair(R - 1.4, .85, Math.PI); items.chair(R - 1.4, -.65, 0);
-      items.kitchen(R - 1.1, B + .4, Math.min(2, W / 2 - .2));
+      items.kitchen(R - .85, B + .4, 1.5);
       items.wardrobe(L + .45, .6, Math.PI / 2);
       items.rug(-.2, .4, 1.8, 1.3, ['#c9a24a', '#c0392b', '#7b8fb3', '#2a5ea8', '#8f3b4a'][ri], '#f4ecd8');
-      if (st.fire && ri !== 1) items.fireplace(0, B + .45, 0);
+      if (st.fire && ri !== 1) items.fireplace(-.05, B + .45, 0);
       if (ri === 1) { items.stove(-.4, B + .5); items.cuckoo(R - .1 - .02, -.8); }
       items.shelf(R - .25, F - 1.4, -Math.PI / 2);
       items.plant(L + .4, F - .5);
-      items.picture(L + .03, 1.7, -.6 + D / 4, Math.PI / 2); items.picture(0, 1.9, B + .03, 0);
+      items.picture(L + .03, 1.6, -.6 + D / 4, Math.PI / 2); items.picture(-W / 4, 1.75, B + .03, 0);
       items.musicbox(R - 1.6, .76, .1);
-      lampBulb = items.lamp(0, 0, 2.3);
+      lampBulb = items.lamp(0, 0);
       if (ri === 2) { LH.cyl(g, .08, .1, .25, 10, '#e9e4d8', R - 1.2, .76, .1); for (let i = 0; i < 6; i++) LH.cyl(g, .01, .01, .3, 3, '#7a5ab0', R - 1.2 + (rnd() - .5) * .1, 1.01, .1 + (rnd() - .5) * .1); }
       if (ri === 3) for (let i = 0; i < 4; i++) LH.sphere(g, .06, '#f0902a', R - 1.5 + i * .09, .82, .1);
       if (ri === 0) for (let i = 0; i < 3; i++) { LH.cyl(g, .04, .04, .18, 8, '#f4f1ea', R - .9 + i * .1, .76, -.1); }
@@ -234,7 +234,7 @@
     // 조명
     scene.add(new THREE.AmbientLight('#ffe9cf', .35));
     const hemi = new THREE.HemisphereLight('#cfe0ff', '#6b5040', .4); scene.add(hemi);
-    const lamp = new THREE.PointLight('#ffd9a0', 9, 14, 2); lamp.position.set(0, 2.35, st.jp ? .2 : 0); lamp.castShadow = true; lamp.shadow.mapSize.set(512, 512); lamp.shadow.bias = -.002; scene.add(lamp);
+    const lamp = new THREE.PointLight('#ffd9a0', 9, 14, 2); lamp.position.set(0, HT - .6, st.jp ? .2 : 0); lamp.castShadow = true; lamp.shadow.mapSize.set(512, 512); lamp.shadow.bias = -.002; scene.add(lamp);
     const winLight = new THREE.PointLight('#cfe3ff', 0, 9, 2); winLight.position.set(L + .6, 1.6, -D / 4); scene.add(winLight);
     const winLight2 = new THREE.PointLight('#cfe3ff', 0, 9, 2); winLight2.position.set(R - .6, 1.6, D / 6); scene.add(winLight2);
     let lampOn = true;
@@ -249,7 +249,7 @@
     // 주민
     let resident = null;
     if (rnd() < .75) {
-      const m = ISL.person(LOOKS[ri]); const rx = st.jp ? -.9 : -.6, rz = st.jp ? .2 : .2; m.g.position.set(rx, 0, rz); m.g.rotation.y = Math.PI / 4; g.add(m.g);
+      const m = ISL.person(LOOKS[ri]); const rx = st.jp ? -1.5 : -.6, rz = st.jp ? 1.3 : .2; m.g.position.set(rx, 0, rz); m.g.rotation.y = Math.PI / 4; g.add(m.g);
       phys.add({ t: 'c', x: rx, z: rz, r: .45, y0: -1, y1: 3 });
       resident = { m, x: rx, z: rz, lines: RESIDENT_LINES[ri], i: Math.floor(rnd() * 4), name: ['이웃 아주머니', '이웃 할아버지', '집주인', '이웃 아저씨', '집주인 할머니'][Math.floor(rnd() * 5)], hello: ISL.REGIONS[ri].hello };
       inter.push({ x: rx, z: rz, r: 1.8, label: `💬 ${resident.name}와(과) 이야기하기`, act: 'resident' });

@@ -42,7 +42,7 @@
     if (o.scarf) part(new THREE.TorusGeometry(.22, .07, 6, 12), M(o.scarf), 0, 1.73, 0).rotation.x = Math.PI / 2;
     if (o.pattern) part(new THREE.TorusGeometry(.31, .05, 6, 16), M(o.pattern), 0, 1.62, 0).rotation.x = Math.PI / 2;
     if (o.backpack) { part(new THREE.BoxGeometry(.5, .6, .26), M(o.backpack), 0, 1.4, -.38); part(new THREE.CylinderGeometry(.1, .1, .5, 8), M('#5b6b7a'), 0, 1.78, -.38).rotation.z = Math.PI / 2; }
-    body.scale.setScalar(.78); // 키 약 1.8m
+    body.scale.setScalar(.747); // 키 174cm
     return { g, body, legL, legR, armL, armR, emote: null };
   }
   ISL.person = person;
@@ -66,7 +66,7 @@
       const m = person(d.look); let [x, z] = pos[d.id];
       for (let k = 0; k < 80 && (ISL.world.solidAt(x, ISL.H(x, z) + 1, z) || ISL.waterAt(x, z).level > ISL.H(x, z)); k++) { const a = k * 2.4, r = 1 + k * .35; x = pos[d.id][0] + Math.cos(a) * r; z = pos[d.id][1] + Math.sin(a) * r; } // 막힌 곳이면 근처 빈자리로
       m.g.position.set(x, ISL.H(x, z), z); scene.add(m.g);
-      const tag = label(d.name, '#ffd166'); tag.position.set(0, 2.35, 0); m.g.add(tag);
+      const tag = label(d.name, '#ffd166'); tag.position.set(0, 2.25, 0); m.g.add(tag);
       (ISL.debug.npcPos = ISL.debug.npcPos || []).push([d.id, x, z]); npcs.push({ d, m, x, z, tag, face: 0 }); ISL.colCircle(x, z, .35);
     }
     const spots = [[PL.eiffel.x - 14, PL.eiffel.z + 110], [260, 430], [PL.hallgrim.x - 16, PL.hallgrim.z + 30], [PL.belem.x + 20, PL.belem.z], [PL.chillon.x - 10, PL.chillon.z + 30], [PL.msm.x + 40, PL.msm.z + 10], [470, 380], [180, -30]];

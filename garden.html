@@ -80,12 +80,13 @@
   const sndLabel = () => $snd.textContent = soundOn ? '🔔 소리' : '🔕 소리';
   sndLabel();
   $snd.addEventListener('pointerdown', e => { e.stopPropagation(); soundOn = !soundOn; store.set('garden.sound', soundOn); sndLabel(); chime(4); });
+  let clearArmed = 0;
   document.getElementById('clear').addEventListener('pointerdown', e => {
     e.stopPropagation();
     if (!plants.length) return;
-    if (confirm('정원을 비우고 새로 시작할까요? (피운 꽃 기록은 남아요)')) {
-      plants.forEach(p => leaves(p.x * W, GY + p.y, 6)); plants = []; save(); say('땅이 다시 쉬어 가요');
-    }
+    if (performance.now() - clearArmed > 3000) { clearArmed = performance.now(); say('🍂 한 번 더 누르면 정원을 비워요 (피운 꽃 기록은 남아요)'); return; }
+    clearArmed = 0;
+    plants.forEach(p => leaves(p.x * W, GY + p.y, 6)); plants = []; save(); say('땅이 다시 쉬어 가요');
   });
 
   // ---------- messages ----------

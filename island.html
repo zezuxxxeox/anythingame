@@ -138,6 +138,9 @@
   #wheel button span { font-size:32px; } #wheel button em { font-style:normal; font-size:12px; opacity:.85; }
   #wheel button:hover { background:rgba(255,209,102,.25); }
   body.inside #flyBtn, body.inside #timeBtn { opacity:.4; }
+  #more { position:absolute; top:46px; right:0; display:none; flex-direction:column; gap:6px; align-items:stretch; }
+  #more.open { display:flex; } #more .ib { text-align:left; }
+  #topR { position:fixed; } @media (pointer:coarse) { .deskonly { display:none; } }
   .hint-mobile { display:none; }
   @media (pointer:coarse) { .hint-desk { display:none; } .hint-mobile { display:block; } #prompt kbd { display:none; } }
 </style>
@@ -169,13 +172,16 @@
 <div id="topR" class="hud">
   <button class="ib" id="mapBtn">🗺️ 지도<small class="kb">M</small></button>
   <button class="ib" id="ppBtn">📔 수첩<small class="kb">J</small></button>
-  <button class="ib" id="timeBtn">🌗 시간<small class="kb">T</small></button>
   <button class="ib" id="flyBtn">🪂 비행<small class="kb">F</small></button>
-  <button class="ib" id="emoBtn">😊<small class="kb">G</small></button>
-  <button class="ib" id="chatBtn">💭<small class="kb">↵</small></button>
-  <button class="ib" id="photoBtn">📷<small class="kb">H</small></button>
-  <button class="ib mobonly" id="fsBtn">⛶</button>
-  <button class="ib" id="sndBtn">🔊</button>
+  <button class="ib" id="moreBtn">⋯</button>
+  <div id="more">
+    <button class="ib" id="timeBtn">🌗 시간 바꾸기<small class="kb">T</small></button>
+    <button class="ib deskonly" id="emoBtn">😊 감정표현<small class="kb">G</small></button>
+    <button class="ib deskonly" id="chatBtn">💭 채팅<small class="kb">↵</small></button>
+    <button class="ib" id="photoBtn">📷 사진 모드<small class="kb">H</small></button>
+    <button class="ib mobonly" id="fsBtn">⛶ 전체 화면</button>
+    <button class="ib" id="sndBtn">🔊 소리</button>
+  </div>
 </div>
 <button class="ib" id="unphoto">UI 보이기</button>
 <div id="banner"></div>

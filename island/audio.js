@@ -106,5 +106,63 @@
       tunes[region].forEach((s, k) => setTimeout(() => { const f = 523.25 * Math.pow(2, s / 12); this.tone(f, 'sine', 1.2, .07, this.master); this.tone(f * 3, 'sine', .6, .015, this.master); }, k * 380));
     },
   };
+  // ---------- 지역별 배경 음악 (브라우저에서 직접 연주) ----------
+  // step = 박의 1/2. mel: 반음(으뜸음 기준) 또는 null, ch: 마디별 [근음, 장(1)/단(0)]
+  const N_ = null;
+  const TUNES = {
+    france: { bpm: 104, beats: 3, root: 220, lead: 'accordion', comp: 'accordion', // 뮈제트 왈츠
+      mel: [12, N_, 11, N_, 12, N_, 16, N_, 12, N_, 9, N_, 8, N_, 9, N_, 11, N_, 14, N_, 11, N_, 8, N_, 9, N_, 12, N_, 16, N_, 21, N_, 19, N_, 17, N_, 16, N_, 14, N_, 12, N_, 11, N_, 8, N_, 4, N_, 9, N_, N_, N_, N_, N_],
+      ch: [[0, 0], [0, 0], [7, 1], [7, 1], [0, 0], [5, 0], [7, 1], [0, 0], [0, 0]] },
+    kyoto: { bpm: 66, beats: 4, root: 293.66, lead: 'koto', comp: 'kotoLow', // 미야코부시 음계
+      mel: [12, N_, N_, 8, 7, N_, 5, N_, 7, N_, N_, N_, 1, N_, 0, N_, 5, N_, 7, 8, 7, N_, 5, N_, 1, N_, 0, N_, N_, N_, N_, N_, 12, 13, 12, N_, 8, N_, 7, N_, 5, N_, 7, N_, 0, N_, N_, N_],
+      ch: [[0, 2], [0, 2], [5, 2], [0, 2], [0, 2], [5, 2]] },
+    portugal: { bpm: 84, beats: 3, root: 146.83, lead: 'guitar', comp: 'guitarLow', // 파두풍 단조
+      mel: [12, 15, 19, 24, 19, 15, 12, 15, 19, 24, 19, 15, 10, 14, 17, 22, 17, 14, 10, 14, 17, 22, 17, 14, 8, 12, 15, 20, 15, 12, 7, 11, 14, 19, 14, 11, 12, 15, 19, 24, 22, 20, 19, N_, N_, N_, N_, N_],
+      ch: [[0, 0], [0, 0], [10, 1], [10, 1], [8, 1], [7, 1], [0, 0], [0, 0]] },
+    iceland: { bpm: 78, beats: 3, root: 196, lead: 'bells', comp: 'pad', // 고요한 밤 (1818, 공유 저작물)
+      mel: [7, N_, N_, 9, 7, N_, 4, N_, N_, N_, N_, N_, 7, N_, N_, 9, 7, N_, 4, N_, N_, N_, N_, N_, 14, N_, N_, N_, 14, N_, 11, N_, N_, N_, N_, N_, 12, N_, N_, N_, 12, N_, 7, N_, N_, N_, N_, N_],
+      ch: [[0, 1], [0, 1], [0, 1], [0, 1], [7, 1], [7, 1], [0, 1], [0, 1]] },
+    swiss: { bpm: 132, beats: 3, root: 261.63, lead: 'accordionBright', comp: 'accordion', // 랜들러
+      mel: [7, N_, 12, N_, 16, N_, 19, N_, 16, N_, 12, N_, 9, N_, 14, N_, 17, N_, 21, N_, 17, N_, 14, N_, 11, N_, 14, N_, 17, N_, 19, N_, 17, N_, 14, N_, 12, N_, 16, N_, 19, N_, 24, N_, N_, N_, N_, N_],
+      ch: [[0, 1], [0, 1], [5, 1], [5, 1], [7, 1], [7, 1], [0, 1], [0, 1]] },
+    italy: { bpm: 126, beats: 2, root: 220, lead: 'mandolin', comp: 'guitarLow', // 타란텔라풍 (step = 셋잇단)
+      trip: true, mel: [12, 11, 12, 16, 12, 9, 12, 11, 12, 16, 12, 9, 11, 9, 11, 14, 11, 8, 11, 9, 11, 14, 11, 8, 9, 11, 12, 14, 16, 17, 16, 14, 12, 11, 9, 8, 9, N_, 9, 9, N_, N_],
+      ch: [[0, 0], [0, 0], [7, 1], [7, 1], [0, 0], [7, 1], [0, 0]] },
+  };
+  Object.assign(A, {
+    music: null, musicId: null, musicGain: null,
+    setMusic(id) {
+      if (!this.ctx || id === this.musicId) { this.pendingMusic = id; return; }
+      this.musicId = id; const c = this.ctx;
+      if (!this.musicGain) { this.musicGain = c.createGain(); this.musicGain.gain.value = 0; this.musicLP = c.createBiquadFilter(); this.musicLP.type = 'lowpass'; this.musicLP.frequency.value = 5200; this.musicGain.connect(this.musicLP).connect(this.master); setInterval(() => this.musicTick(), 120); }
+      const t = c.currentTime; this.musicGain.gain.cancelScheduledValues(t); this.musicGain.gain.setTargetAtTime(0, t, .5);
+      setTimeout(() => { if (this.musicId !== id) return; this.music = TUNES[id] ? { def: TUNES[id], step: 0, next: c.currentTime + .1 } : null; this.musicGain.gain.setTargetAtTime(this.on ? .5 : 0, c.currentTime, .8); }, 1400);
+    },
+    musicTick() {
+      const m = this.music, c = this.ctx; if (!c) return; if (this.musicGain) this.musicGain.gain.setTargetAtTime(this.on && m ? (this.inside ? .28 : .5) : 0, c.currentTime, .6);
+      if (!m || !this.on || c.state !== 'running') { if (m) m.next = c.currentTime + .1; return; }
+      const d = m.def, sub = d.trip ? 3 : 2, stepDur = 60 / d.bpm / sub, perBar = d.beats * sub;
+      while (m.next < c.currentTime + .35) {
+        const i = m.step % d.mel.length, bar = Math.floor(m.step / perBar) % d.ch.length, inBar = m.step % perBar, t = m.next, [cr, q] = d.ch[bar];
+        const s = d.mel[i]; if (s !== null) this.voice(d.lead, d.root * Math.pow(2, s / 12), t, stepDur * (d.lead === 'bells' ? 6 : 1.9));
+        const third = q === 1 ? 4 : q === 0 ? 3 : 5, low = d.root / 2;
+        if (inBar === 0) this.voice(d.comp, low * Math.pow(2, cr / 12) / (cr > 6 ? 2 : 1), t, stepDur * sub * 1.6, .9);
+        else if (inBar % sub === 0 && d.comp !== 'pad') for (const k of [third, 7]) this.voice(d.comp, low * Math.pow(2, (cr + k) / 12), t, stepDur * sub * .8, .45);
+        if (d.comp === 'pad' && inBar === 0) for (const k of [0, third, 7]) this.voice('pad', d.root * Math.pow(2, (cr + k) / 12) / 2, t, stepDur * perBar, .5);
+        m.step++; m.next += stepDur;
+      }
+    },
+    voice(kind, f, t, dur, vol = 1) {
+      const c = this.ctx, g = c.createGain(), out = this.musicGain, o = (type, fr, det) => { const x = c.createOscillator(); x.type = type; x.frequency.value = fr; if (det) x.detune.value = det; x.start(t); x.stop(t + dur + .6); return x; };
+      const env = (a, peak, rel) => { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak * vol, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + rel); };
+      const lp = (fr) => { const l = c.createBiquadFilter(); l.type = 'lowpass'; l.frequency.value = fr; l.connect(g); return l; };
+      g.connect(out);
+      if (kind === 'accordion' || kind === 'accordionBright') { const l = lp(kind === 'accordion' ? 1500 : 2600); o('sawtooth', f, -7).connect(l); o('sawtooth', f, 8).connect(l); o('square', f * 2, 3).connect(l); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.045 * vol, t + .04); g.gain.setValueAtTime(.04 * vol, t + dur * .8); g.gain.linearRampToValueAtTime(0.0001, t + dur + .05); }
+      else if (kind === 'koto' || kind === 'kotoLow') { const l = lp(3200), x = o('triangle', f); x.frequency.setValueAtTime(f * 1.012, t); x.frequency.exponentialRampToValueAtTime(f, t + .06); x.connect(l); o('sine', f * 2).connect(l); env(.004, kind === 'koto' ? .16 : .1, .9); }
+      else if (kind === 'guitar' || kind === 'guitarLow' || kind === 'mandolin') { const l = lp(kind === 'guitarLow' ? 1300 : 3000); l.frequency.setValueAtTime(kind === 'guitarLow' ? 1800 : 4200, t); l.frequency.exponentialRampToValueAtTime(700, t + dur + .3); o('sawtooth', f).connect(l); o('triangle', f * 2, 4).connect(l); env(.004, kind === 'mandolin' ? .09 : .1, kind === 'guitar' ? .5 : .3); }
+      else if (kind === 'bells') { o('sine', f * 2).connect(g); const g2 = c.createGain(); g2.gain.value = .35; o('sine', f * 2 * 2.76).connect(g2).connect(g); const g3 = c.createGain(); g3.gain.value = .2; o('sine', f * 2 * 5.4).connect(g3).connect(g); env(.004, .13, .5); }
+      else if (kind === 'pad') { const l = lp(900); o('sine', f).connect(l); o('triangle', f, 6).connect(l); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.035 * vol, t + .5); g.gain.linearRampToValueAtTime(0.0001, t + dur + .5); }
+    },
+  });
   ISL.Audio = A;
 })();

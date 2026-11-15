@@ -413,7 +413,7 @@
   }
 
   // ---------- 장면 ----------
-  let envDirty = true, envT = 0;
+  let envDirty = true, envT = 0, xmasK = 0;
   function initScene() {
     renderer = new THREE.WebGLRenderer({ antialias: LQ || MOBILE, powerPreference: 'high-performance' });
     renderer.setPixelRatio(LQ ? .5 : Math.min(devicePixelRatio || 1, MOBILE ? 1.3 : 1.75)); renderer.setSize(innerWidth, innerHeight);
@@ -441,7 +441,10 @@
   const tmpV = new THREE.Vector3(), fogC = new THREE.Color(), lightC = new THREE.Color();
   function updateSky(dt) {
     tDay = (tDay + dt / DAY_SECONDS) % 1;
-    const a = (tDay - .25) * Math.PI * 2;
+    // 크리스마스 마을(할그림스키르캬 주변)은 한겨울 아이슬란드처럼 늘 푸르스름한 해 질 녘
+    { const hp = ISL.P.hallgrim, px = state.inside ? state.inside.outside.x : player.x, pz = state.inside ? state.inside.outside.z : player.z, target = hp ? 1 - ISL.sstep(190, 300, Math.hypot(px - hp.x, pz - hp.z)) : 0; xmasK += (target - xmasK) * Math.min(1, dt * .8); }
+    let dd = .772 - tDay; if (dd > .5) dd -= 1; if (dd < -.5) dd += 1; const tEff = (tDay + dd * xmasK + 1) % 1;
+    const a = (tEff - .25) * Math.PI * 2;
     const sun = ISL.U.uSun.value.set(Math.cos(a) * .85, Math.sin(a), -.38).normalize();
     const day = ISL.sstep(-.14, .22, sun.y), night = 1 - ISL.sstep(-.25, .03, sun.y), low = Math.exp(-Math.pow(sun.y * 4, 2));
     ISL.U.uDay.value = day; ISL.U.uNight.value = night;
@@ -463,14 +466,15 @@
     for (const m of ISL.waterMats) { m.uniforms.uSunCol.value.copy(lightC).multiplyScalar(isSun ? 1 : .4); m.uniforms.uCam.value.copy(camera.position); }
     if (ISL.sea && !state.inside) { const st = ISL.sea.step; ISL.sea.sea.position.set(Math.round(camera.position.x / st) * st, 0, Math.round(camera.position.z / st) * st); ISL.sea.far.position.set(ISL.sea.sea.position.x, -.02, ISL.sea.sea.position.z); }
     if (ISL.clouds) { const cc = new THREE.Color().setRGB(.05 + .95 * day + low * .25, .06 + .9 * day + low * .02, .1 + .85 * day - low * .15); for (const m of ISL.clouds.mats) m.color.copy(cc); ISL.clouds.group.position.x = (performance.now() * .002) % 400; }
-    for (const m of ISL.nightMats) m.emissiveIntensity = night * 1.1;
+    for (const m of ISL.nightMats) m.emissiveIntensity = Math.min(1.3, night * 1.6);
+    for (const m of ISL.glowMats || []) m.opacity = night * .55;
     if (ISL.eiffelLights) { const L2 = ISL.eiffelLights, on = night > .25, tt = performance.now() * .001; L2.im.visible = on; L2.beacon.visible = on; L2.beacon.rotation.y = tt * .6;
       const sp = on && (tt % 60) < 10; L2.sm.visible = sp; if (sp) { L2.sparkle.opacity = .5 + .5 * Math.sin(tt * 40); L2.sm.rotation.y = Math.floor(tt * 12) * 1.7; } }
     ISL.U.uTime.value += dt;
     sky.position.copy(camera.position);
     if (!state.inside) for (const c of ISL.chunks) { const bs = c.boundingSphere; c.visible = bs.center.distanceTo(camera.position) - bs.radius < c.userData.lod; }
     envT -= dt; if (envDirty || envT < 0) { envT = 3; envDirty = false; updateEnv(); }
-    $('clock').textContent = (() => { const h = Math.floor(tDay * 24), m = Math.floor((tDay * 24 - h) * 60); return `${night > .5 ? '🌙' : low > .5 ? '🌅' : '☀️'} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`; })();
+    $('clock').textContent = (() => { const h = Math.floor(tEff * 24), m = Math.floor((tEff * 24 - h) * 60); return `${night > .5 ? '🌙' : low > .5 ? '🌅' : '☀️'} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`; })();
   }
 
   // ---------- 물 효과: 물결 고리와 물방울 ----------
@@ -523,7 +527,9 @@
       }
     }
     if (Math.hypot(nx, nz) < 930) {
-      if (!player.fly || player.y < groundAt(nx, nz) + 25) [nx, nz] = ISL.world.resolve(nx, nz, .32, player.y);
+      // 다리 위에서는 난간 밖으로 떨어지지 않게
+      for (const w of ISL.walkables) { const q0 = ISL.segDist(player.x, player.z, w.ax, w.az, w.bx, w.bz); if (player.fly || q0.d > w.hw || Math.abs(player.y - ISL.deckY(w, q0.t)) > .6) continue; const q1 = ISL.segDist(nx, nz, w.ax, w.az, w.bx, w.bz); if (q1.t > .03 && q1.t < .97 && q1.d > w.hw - .3) { const px = w.ax + (w.bx - w.ax) * q1.t, pz = w.az + (w.bz - w.az) * q1.t, k = (w.hw - .3) / q1.d; nx = px + (nx - px) * k; nz = pz + (nz - pz) * k; } }
+      [nx, nz] = ISL.world.resolve(nx, nz, player.fly ? .9 : .32, player.y, player.fly ? 6 : 1.8);
       player.x = nx; player.z = nz;
     }
     // 문이 열린 집 안으로 걸어 들어가면 실내로
@@ -556,7 +562,7 @@
       walkPose(pm, player.phase, player.fly ? 0 : Math.min(.85, player.speed * .1));
       if (player.swim) { const sw = Math.sin(player.phase * 1.5); pm.armL.rotation.x = -2.2 + sw; pm.armR.rotation.x = -2.2 - sw; }
       if (player.fly) { // 하네스에 앉아 브레이크 줄을 잡은 자세
-        pm.armL.rotation.set(-2.75, 0, -.25); pm.armR.rotation.set(-2.75, 0, .25); pm.legL.rotation.x = pm.legR.rotation.x = -1.35; pm.body.position.y = .12;
+        pm.armL.rotation.set(-2.75, 0, -.25); pm.armR.rotation.set(-2.75, 0, .25); pm.legL.rotation.x = -.35; pm.legR.rotation.x = -.2; pm.body.position.y = .3; // 줄에 매달린 자세 (의자 없음)
         const t = performance.now() * .001; glider.rotation.z = Math.sin(t * .9) * .04 - turnRate * .25; glider.rotation.x = Math.sin(t * .7) * .02 + .05; }
     }
   }
@@ -719,14 +725,10 @@
     const lp = [];
     for (let i = 1; i < NS; i += 3) for (const fx of [.15, .55, .9]) {
       const u = i / NS, a = (u - .5) * SPAN * 2, ch = chord * (1 - .45 * Math.pow(Math.abs(u - .5) * 2, 2.2));
-      lp.push(Math.sin(a) * R, Math.cos(a) * R - R + 6.6 - .05, (.5 - fx) * ch, (u < .5 ? -.22 : .22), 1.5, .05);
+      lp.push(Math.sin(a) * R, Math.cos(a) * R - R + 6.6 - .05, (.5 - fx) * ch, (u < .5 ? -.2 : .2), 1.62, 0);
     }
     const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
     G.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: '#d9d4c8', transparent: true, opacity: .75 })));
-    const hm = new THREE.MeshStandardMaterial({ color: '#2b2f38', roughness: .7 });
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(.55, .14, .7), hm); seat.position.set(0, .62, .05); G.add(seat);
-    const back = new THREE.Mesh(new THREE.BoxGeometry(.55, .75, .16), hm); back.position.set(0, 1.0, -.32); back.rotation.x = -.25; G.add(back);
-    for (const s of [-1, 1]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .9, 6), hm); st.position.set(s * .22, 1.05, .02); G.add(st); }
     return G;
   }
 
@@ -753,7 +755,7 @@
       else { updatePlayer(dt); updateCamera(dt); updateWorld(dt); }
       if (state.freeCam) { const f = state.freeCam; camera.position.set(f[0], f[1], f[2]); camera.lookAt(f[3], f[4], f[5]); }
       if (state.dlg) { const d = state.dlg, txt = d.choices ? d.menuText : d.pages[d.i]; if (d.shown < txt.length) { d.shown = Math.min(txt.length, d.shown + dt * 45); renderDlg(); } }
-      if (!state.inside && (regionT -= dt) < 0) { regionT = .4; const r = ISL.regionAt(player.x, player.z), sk = r.id === 'kyoto' ? (ISL.kyotoAutumn(player.x, player.z) ? '교토 · 가을 🍁' : '교토 · 봄 🌸') : r.id === 'iceland' ? '아이슬란드 · 크리스마스 🎄' : r.name; if (sk !== seasonKey) { seasonKey = sk; state.region = r; banner(Object.assign({}, r, { name: sk, hello: r.id === 'iceland' ? 'Gleðileg jól!' : r.hello })); state.region = r; } checkDiscover(); }
+      if (!state.inside && (regionT -= dt) < 0) { regionT = .4; const r = ISL.regionAt(player.x, player.z), sk = r.id === 'kyoto' ? (ISL.kyotoAutumn(player.x, player.z) ? '교토 · 가을 🍁' : '교토 · 봄 🌸') : r.id === 'iceland' ? '아이슬란드 · 크리스마스 🎄' : r.name; A.setMusic(r.id); if (sk !== seasonKey) { seasonKey = sk; state.region = r; banner(Object.assign({}, r, { name: sk, hello: r.id === 'iceland' ? 'Gleðileg jól!' : r.hello })); state.region = r; } checkDiscover(); }
       soundEnv(dt);
       ISL.updateBubbles(camera);
     }
@@ -764,7 +766,8 @@
   window.addEventListener('DOMContentLoaded', () => {
     $('startBtn').onclick = startGame;
     $('mapBtn').onclick = toggleMap; $('ppBtn').onclick = togglePassport; $('timeBtn').onclick = cycleTime; $('flyBtn').onclick = toggleFly; $('photoBtn').onclick = toggleUI; $('unphoto').onclick = toggleUI;
-    $('sndBtn').onclick = () => { A.init(); A.on = !A.on; $('sndBtn').textContent = A.on ? '🔊' : '🔈'; };
+    $('sndBtn').onclick = () => { A.init(); A.on = !A.on; $('sndBtn').textContent = A.on ? '🔊 소리' : '🔈 소리 꺼짐'; };
+    $('moreBtn').onclick = () => $('more').classList.toggle('open'); $('more').addEventListener('click', () => $('more').classList.remove('open'));
     $('emoBtn').onclick = () => toggleWheel(); $('chatBtn').onclick = openChat; $('mEmo').onclick = () => toggleWheel(); $('mChat').onclick = openChat;
     $('chatSend').onclick = sendChat; $('chatIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
     $('fsBtn').onclick = () => { if (!document.fullscreenElement) { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); } else document.exitFullscreen(); };
@@ -778,5 +781,5 @@
     document.querySelectorAll('#passport .tabs button').forEach(b => b.onclick = () => { ppTab = b.dataset.tab; renderPassport(); });
     boot().catch(err => { console.error(err); $('loadText').textContent = '앗, 불러오다 문제가 생겼어요: ' + err.message; });
   });
-  ISL.debug = { look: a => { state.freeCam = a; }, player, cam, state, S, setTime: t => { tDay = t; envDirty = true; }, teleport: (x, z) => { player.x = x; player.z = z; player.y = groundAt(x, z); cam.curDist = undefined; }, startGame, enterHouse, exitHouse, doEmote, interact, get camera() { return camera; } };
+  ISL.debug = { xmas: v => { xmasK = v; envDirty = true; }, look: a => { state.freeCam = a; }, player, cam, state, S, setTime: t => { tDay = t; envDirty = true; }, teleport: (x, z) => { player.x = x; player.z = z; player.y = groundAt(x, z); cam.curDist = undefined; }, startGame, enterHouse, exitHouse, doEmote, interact, get camera() { return camera; } };
 })();

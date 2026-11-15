@@ -585,7 +585,7 @@
       const W = ISL.weights(x, z), ri = ISL.pickRegion(W, rng());
       const forest = ISL.fbm(x * .007 + ri * 5, z * .007, 3), h = ISL.H(x, z);
       let t = null;
-      if (ri === 0) { if (Math.hypot(x - ISL.P.hallgrim.x, z - ISL.P.hallgrim.z) < 140 && rng() < .15) t = 'birch'; }
+      if (ri === 0) { /* 겨울 아이슬란드: 잎 달린 나무 없음 */ }
       else if (ri === 1) { if (forest > .16 && h > 14 && h < 135) t = h > 55 || rng() < .75 ? 'conifer' : 'broad'; else if (rng() < .012) t = 'broad'; }
       else if (ri === 2) { if (forest > .42) t = rng() < .8 ? 'broad' : 'poplar'; else if (rng() < .008) t = 'poplar'; }
       else if (ri === 3) { if (forest > .46) t = rng() < .55 ? 'stonepine' : 'cork'; else if (rng() < .03) t = rng() < .5 ? 'cork' : 'olive'; }

@@ -328,7 +328,7 @@
       const gab = new THREE.Shape(); gab.moveTo(-w / 2, 0); gab.lineTo(w / 2, 0); gab.lineTo(w / 2, 1.6); gab.lineTo(0, 3.6); gab.lineTo(-w / 2, 1.6);
       const front = once('turfF', () => LH.facade({ wall: '#f2efe6', win: '#2f3a44', frame: '#b03a2e', planks: '#d8d2c4', cols: 2, rows: 1, doorGap: true, lit: .8 }));
       const gm = new THREE.Mesh(new THREE.ShapeGeometry(gab), front); gm.position.set(0, 0, d / 2 + .02); g.add(gm);
-      LH.mesh(g, LH.gableGeo(w + 1.2, d, 2.2, .3), roofMat('#5f8f3c', 'grass'), 0, 1.6, 0);
+      LH.mesh(g, LH.gableGeo(w + 1.2, d, 2.2, .3), roofMat('#eef2f5', 'grass'), 0, 1.6, 0); // 눈 덮인 잔디 지붕
       const fg = new THREE.Group(); fg.position.set(0, 0, d / 2); g.add(fg);
       for (const sx of [-1, 1]) LH.box(fg, .14, 2.35, .16, '#b03a2e', sx * .64, 0, .04); LH.box(fg, 1.42, .16, .16, '#b03a2e', 0, 2.3, .04);
       LH.box(fg, 1.5, .18, .5, '#7a746a', 0, -.18, .3);

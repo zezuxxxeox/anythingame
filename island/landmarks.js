@@ -131,7 +131,7 @@
     const ax = q.x - dx * half, az = q.z - dz * half, bx = q.x + dx * half, bz = q.z + dz * half;
     const yA = H(ax, az) + .25, yB = H(bx, bz) + .25;
     const need = q.level + (opts.clear || 2.6), arch = Math.max(0, need - (yA + yB) / 2);
-    const w = { ax, az, bx, bz, hw: (opts.width || 4) / 2, yA, yB, arch, cx: q.x, cz: q.z, dx, dz, len: half * 2, level: q.level };
+    const w = { ax, az, bx, bz, hw: Math.max(4.4, opts.width || 4) / 2, yA, yB, arch, cx: q.x, cz: q.z, dx, dz, len: half * 2, level: q.level };
     ISL.walkables.push(w); return w;
   }
   ISL.deckY = function (w, t) { return w.yA + (w.yB - w.yA) * t + w.arch * Math.sin(Math.PI * t); };
@@ -253,7 +253,7 @@
     const add = geo => mesh(g, geo, lat);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
       add(slantGeo([sx * 14.5, 0, sz * 14.5], 5.6, [sx * 8.4, 13, sz * 8.4], 3.4, 1.6));
-      box(g, 6.2, .32, 6.2, ISL.blockMat('#c9bfae', .5, .3), sx * 14.5, -.1, sz * 14.5); ISL.colCircle(x + sx * 14.5 * S, z + sz * 14.5 * S, 3.6 * S, -1e9, H(x, z) + 30);
+      box(g, 6.2, .32, 6.2, ISL.blockMat('#c9bfae', .5, .3), sx * 14.5, -.1, sz * 14.5); ISL.colCircle(x + sx * 14.5 * S, z + sz * 14.5 * S, 3.4 * S, -1e9, H(x, z) + 6);
       add(slantGeo([sx * 7.8, 14.4, sz * 7.8], 3.1, [sx * 4.6, 27.2, sz * 4.6], 2.1, 1.4));
     }
     // 1층 아치
@@ -284,6 +284,14 @@
     ISL.eiffelLights = { im, sm, sparkle, sm2: sm };
     const beacon = new THREE.Mesh(new THREE.ConeGeometry(.8, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: '#fff4d0', transparent: true, opacity: .08, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
     beacon.position.set(0, 72, 30); beacon.rotation.x = Math.PI / 2; const bg = new THREE.Group(); bg.position.y = 0; bg.add(beacon); bg.visible = false; g.add(bg); ISL.eiffelLights.beacon = bg;
+    { // 충돌체: 높이별로 다리 4개, 전망대 판, 첨탑을 근사 (걸어서도 날아서도 통과 못 함)
+      const y0 = H(x, z), leg = (my0, my1, o0, o1, s0, s1) => { for (let k = 0; k < 6; k++) { const t0 = k / 6, t1 = (k + 1) / 6, tm = (t0 + t1) / 2, o = (o0 + (o1 - o0) * tm) * S, r = (s0 + (s1 - s0) * tm) * .62 * S; for (const sx of [-1, 1]) for (const sz of [-1, 1]) ISL.colCircle(x + sx * o, z + sz * o, r, y0 + (my0 + (my1 - my0) * t0) * S, y0 + (my0 + (my1 - my0) * t1) * S); } };
+      leg(1.3, 13, 14.5, 8.4, 5.6, 3.4); leg(14.4, 27.2, 7.8, 4.6, 3.1, 2.1);
+      const slab = (my0, my1, hw) => ISL.world.add({ t: 'b', x, z, hw: hw * S, hd: hw * S, a: 0, y0: y0 + my0 * S, y1: y0 + my1 * S });
+      slab(12.4, 15.7, 10); slab(26.8, 29.4, 5.7);
+      for (let k = 0; k < 8; k++) { const t0 = k / 8, t1 = (k + 1) / 8, tm = (t0 + t1) / 2; slab(30.4 + (61 - 30.4) * t0, 30.4 + (61 - 30.4) * t1, (4.8 - 3.6 * tm)); }
+      slab(63.8, 72, .5);
+    }
     landmark('eiffel', '에펠탑', 'france', x, z, 150, '1889년 파리 만국박람회 때 세워진 철탑. 약 7,300톤의 연철로 만들어졌고, 밤마다 반짝이는 조명 쇼를 해요.');
 
     // 이에나 다리
@@ -628,18 +636,45 @@
     // 스코가포스 폭포 — 강이 절벽에서 떨어지는 곳
     const r = ISL.rivers[1]; let fi = 0, drop = 0;
     for (let i = 1; i < r.pts.length; i++) if (r.lv[i - 1] - r.lv[i] > drop) { drop = r.lv[i - 1] - r.lv[i]; fi = i; }
-    const fx = r.pts[fi][0], fz = r.pts[fi][1], top = r.lv[fi - 1], bot = r.lv[Math.min(r.pts.length - 1, fi + 3)];
+    let i0 = fi - 1, i1 = fi; while (i0 > 1 && r.lv[i0 - 1] - r.lv[i0] > .8) i0--; while (i1 < r.pts.length - 2 && r.lv[i1] - r.lv[i1 + 1] > .8) i1++;
+    const top = r.lv[i0], bot = r.lv[i1], fx = r.pts[i1][0], fz = r.pts[i1][1], lx = r.pts[i0][0], lz = r.pts[i0][1];
+    let tx = fx - lx, tz = fz - lz; { const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l; }
     plan.foss = { x: fx, z: fz, top, bot };
-    emit.mist = new ISL.Emitter(scene, 260, { size: 8, opacity: .18, life: 3.5 });
-    // 무지개
-    const rb = new THREE.Mesh(new THREE.TorusGeometry(14, 1.6, 8, 48, Math.PI), new THREE.ShaderMaterial({
-      uniforms: { uDay: ISL.U.uDay }, transparent: true, depthWrite: false,
-      vertexShader: 'varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
-      fragmentShader: `varying vec3 vP; uniform float uDay; void main(){ float t=clamp((length(vP.xy)-12.4)/3.2,0.0,1.0);
-        vec3 c=clamp(abs(mod(t*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0); gl_FragColor=vec4(c,0.22*uDay*sin(t*3.14)); }`,
-    }));
-    const tx = r.pts[fi + 1][0] - r.pts[fi - 1][0], tz = r.pts[fi + 1][1] - r.pts[fi - 1][1];
-    rb.position.set(fx + tx * 2, bot, fz + tz * 2); rb.rotation.y = Math.atan2(tx, tz) + Math.PI / 2; scene.add(rb);
+    // 물줄기: 폭 24m의 물 커튼이 절벽 끝에서 포물선으로 떨어짐 (아래로 갈수록 퍼지고 하얗게 부서짐)
+    { const Wd = 24, NX = 24, NY = 28, pos = [], uv = [], idx = [], px = -tz, pz = tx, hgt = top - bot;
+      for (let j = 0; j <= NY; j++) { const t = j / NY, out = 1.5 + 7 * t * t + 2.5 * t, y = top + .3 - hgt * t; for (let i = 0; i <= NX; i++) { const u = i / NX - .5, w2 = Wd * (.82 + .25 * t), bow = (1 - 4 * u * u) * 1.6; pos.push(lx + tx * (out + bow) + px * u * w2, y, lz + tz * (out + bow) + pz * u * w2); uv.push(i / NX, t); } }
+      for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) { const a = j * (NX + 1) + i; idx.push(a, a + NX + 1, a + 1, a + 1, a + NX + 1, a + NX + 2); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+      const m = new THREE.ShaderMaterial({ uniforms: { uTime: ISL.U.uTime, uDay: ISL.U.uDay }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+        fragmentShader: `varying vec2 vUv; uniform float uTime; uniform float uDay;
+          float h(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+          float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+          void main(){ float fall = vUv.y*vUv.y*5.0 + vUv.y*2.0 - uTime*1.3;
+            float s = n(vec2(vUv.x*46.0, fall*3.0))*.6 + n(vec2(vUv.x*110.0, fall*7.0))*.4;
+            float edge = smoothstep(0.,.1,vUv.x)*smoothstep(1.,.9,vUv.x);
+            float a = (.55 + .45*s) * edge * (.75 + .25*smoothstep(0.,.25,vUv.y)) * smoothstep(1.02,.9,vUv.y);
+            a *= .7 + .3*n(vec2(vUv.x*9.0, 1.3));
+            vec3 c = mix(vec3(.72,.86,.92), vec3(1.), smoothstep(.35,.8,s) + vUv.y*.4) * (.25 + .75*uDay);
+            gl_FragColor = vec4(c, clamp(a,0.,1.)*.93); }` });
+      const me = new THREE.Mesh(g, m); me.renderOrder = 3; me.frustumCulled = false; scene.add(me);
+      // 떨어진 자리의 하얀 물거품
+      const foam = new THREE.Mesh(new THREE.CircleGeometry(17, 32), new THREE.ShaderMaterial({ uniforms: { uTime: ISL.U.uTime, uDay: ISL.U.uDay }, transparent: true, depthWrite: false,
+        vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+        fragmentShader: `varying vec2 vUv; uniform float uTime; uniform float uDay; float h(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+          float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+          void main(){ float d = length(vUv-.5)*2.; float a = smoothstep(1.,.2,d) * (.55 + .45*n(vUv*14. - d*3. + uTime*.9)); gl_FragColor = vec4(vec3(.95,.98,1.)*(.25+.75*uDay), a*.85); }` }));
+      foam.rotation.x = -Math.PI / 2; foam.position.set(lx + tx * 12, bot + .12, lz + tz * 12); foam.renderOrder = 3; scene.add(foam);
+      plan.fossMist = { x: lx + tx * 12, z: lz + tz * 12, px, pz };
+    }
+    emit.mist = new ISL.Emitter(scene, 420, { size: 13, opacity: .2, life: 4.5 });
+    // 무지개: 물보라 앞에 양 끝이 땅에 닿는 완전한 호 (햇빛 있을 때만)
+    { const R0 = 30, rb = new THREE.Mesh(new THREE.RingGeometry(R0 - 3, R0, 72, 1, 0, Math.PI), new THREE.ShaderMaterial({ uniforms: { uDay: ISL.U.uDay }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        vertexShader: 'varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+        fragmentShader: `varying vec3 vP; uniform float uDay; void main(){ float t=clamp((length(vP.xy)-${(R0 - 3).toFixed(1)})/3.0,0.0,1.0);
+          vec3 c=clamp(abs(mod((1.0-t)*4.6+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0); float ground=smoothstep(0.0,5.0,vP.y);
+          gl_FragColor=vec4(c,0.34*uDay*sin(t*3.14159)*ground); }` }));
+      rb.position.set(lx + tx * 24, bot - 1, lz + tz * 24); rb.rotation.y = Math.atan2(tx, tz); rb.renderOrder = 4; scene.add(rb); }
     landmark('skogafoss', '스코가포스 폭포', 'iceland', fx, fz, 40, '높이 60m, 폭 25m의 장대한 폭포. 맑은 날엔 물보라 속에 무지개가 자주 걸려요. 전설에 따르면 폭포 뒤에 바이킹의 보물상자가 숨겨져 있대요.');
 
     // 게이시르 / 스트로퀴르
@@ -658,7 +693,7 @@
       // 블루라군 김
       const L = P.lagoon; if (rng() < .7) { const a = rng() * 6.28, rr = rng() * 24; emit.steam.emit(L.x + Math.cos(a) * rr, L.y + .3, L.z + Math.sin(a) * rr, (rng() - .5), 1.2 + rng(), (rng() - .5), 5); }
       // 폭포 물보라
-      for (let i = 0; i < 3; i++) emit.mist.emit(fx + (rng() - .5) * 10, bot + rng() * 3, fz + (rng() - .5) * 10, (rng() - .5) * 4, 2 + rng() * 3, (rng() - .5) * 4, 3.5);
+      { const fm = plan.fossMist; for (let i = 0; i < 4; i++) { const u = (rng() - .5) * 26; emit.mist.emit(fm.x + fm.px * u + (rng() - .5) * 6, bot + rng() * 4, fm.z + fm.pz * u + (rng() - .5) * 6, (rng() - .5) * 3 + tx * 2, 3 + rng() * 5, (rng() - .5) * 3 + tz * 2, 4.5); } }
       emit.geyser.update(dt, -9, .3); emit.steam.update(dt, 0, .1); emit.mist.update(dt, -.5, .5);
     });
     landmark('geysir', '게이시르 & 스트로퀴르', 'iceland', gx, gz, 35, '"간헐천(geyser)"이라는 말이 여기서 나왔어요. 스트로퀴르는 몇 분마다 뜨거운 물기둥을 20m 넘게 뿜어 올려요.');
@@ -720,7 +755,7 @@
       for (const s of [-1, 1]) { box(seg, .2, 2.6, .2, woodM, s * w.hw, 0, 0); box(seg, .5, .35, 2.6, flowerM, s * (w.hw + .3), .9, 0); }
       mesh(seg, gableGeo(w.hw * 2, w.len / n, 1.4, .4), roofM, 0, 2.6, 0);
     }
-    const tx = w.cx + Math.cos(ang) * 6, tz = w.cz - Math.sin(ang) * 6, ty = w.level - 2.5;
+    const tx = w.cx + Math.cos(ang) * 8.5, tz = w.cz - Math.sin(ang) * 8.5, ty = w.level - 2.5;
     cyl(scene, 3.2, 3.5, 17, 8, '#a99576', tx, ty, tz); cone(scene, 3.9, 6.5, 8, roofM, tx, ty + 17, tz);
     landmark('kapell', '카펠교 (루체른)', 'swiss', w.cx, w.cz, 30, '1333년에 지어진 유럽에서 가장 오래된 지붕 덮인 나무다리. 옆의 팔각형 물탑 "바서투름"과 함께 루체른의 상징이에요.');
 

@@ -272,6 +272,38 @@
     ISL.colCircle(x, z, hgt * .12, y - 1, y + 4);
     for (const [ox, oz, s] of [[hgt * .3, 2, 1], [-hgt * .3, 1.5, .8], [1, hgt * .32, .9]]) { const px = x + ox, pz = z + oz, py = H(px, pz); LH.box(scene, s, s * .8, s, M(['#c0392b', '#2e6f9e', '#e6b422'][Math.round(s * 10) % 3]), px, py, pz); LH.box(scene, s + .02, s * .82, .14, M('#f4f1ea'), px, py, pz); ISL.colCircle(px, pz, s * .6, py - 1, py + 1); }
   }
+  // 불빛이 바닥에 번지는 따뜻한 원 (밤에만 보임)
+  let glowM = null;
+  function glowPool(x, z, r) {
+    if (!glowM) { const c = cv(64, 64), k = c.getContext('2d'), gr = k.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, 'rgba(255,200,120,1)'); gr.addColorStop(1, 'rgba(255,200,120,0)'); k.fillStyle = gr; k.fillRect(0, 0, 64, 64);
+      glowM = new THREE.MeshBasicMaterial({ map: ctex(c), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }); (ISL.glowMats = ISL.glowMats || []).push(glowM); }
+    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 20), glowM); m.rotation.x = -Math.PI / 2; m.position.set(x, H(x, z) + .28, z); m.userData.dynamic = true; scene.add(m);
+  }
+  const warmM = () => mcache.get('warmglow') || (mcache.set('warmglow', new THREE.MeshBasicMaterial({ color: '#ffd9a0' })), mcache.get('warmglow'));
+  // 마켓 오두막: 통나무 벽, 열린 판매대, 눈 쌓인 박공지붕, 전나무 가랜드와 전구, 별 등
+  function stall(x, z, ry, goods, n) {
+    const y = H(x, z), g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g); const wood = M('#7a5232'), dark = M('#5a3b22');
+    LH.box(g, 3.4, .12, 2.4, dark, 0, 0, 0); LH.box(g, 3.4, 2.5, .1, wood, 0, 0, -1.15); for (const sx of [-1, 1]) LH.box(g, .1, 2.5, 2.3, wood, sx * 1.65, 0, 0);
+    LH.box(g, 3.4, .95, .12, wood, 0, 0, 1.1); LH.box(g, 3.6, .08, .6, dark, 0, .95, 1.15);
+    for (const sx of [-1, 1]) LH.box(g, .12, 2.5, .12, dark, sx * 1.65, 0, 1.1);
+    LH.mesh(g, LH.gableGeo(3.5, 2.6, .95, .35), dark, 0, 2.5, 0); LH.mesh(g, LH.gableGeo(3.3, 2.7, .9, .22), M('#f4f7fa', { roughness: 1 }), 0, 2.62, 0);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 1.4), warmM()); glow.position.set(0, 1.75, -1.08); g.add(glow); // 안쪽 따뜻한 불빛
+    for (let i = 0; i < 9; i++) { const c = goods[(i + n) % goods.length]; if (i % 3 === 0) LH.cyl(g, .1, .12, .28, 8, M(c), -1.3 + i * .32, 1.03, 1.15); else LH.box(g, .2, .16 + (i % 2) * .1, .2, M(c), -1.3 + i * .32, 1.03, 1.15); }
+    for (let i = 0; i < 5; i++) LH.box(g, .5, .32, .3, M(goods[(i + n + 2) % goods.length]), -1.2 + i * .6, 1.5, -.95);
+    LH.box(g, 3.5, .18, .16, M('#1f5a2c'), 0, 2.36, 1.14);
+    const N2 = 12, im = new THREE.InstancedMesh(new THREE.SphereGeometry(.05, 5, 4), xmasMat(), N2), mt = new THREE.Matrix4(), cc = new THREE.Color('#ffd9a0'); for (let i = 0; i < N2; i++) { mt.makeTranslation(-1.6 + i * 3.2 / (N2 - 1), 2.3 - Math.abs(Math.sin(i * .9)) * .1, 1.24); im.setMatrixAt(i, mt); im.setColorAt(i, cc); } im.userData.dynamic = true; g.add(im);
+    const star = new THREE.Mesh(new THREE.OctahedronGeometry(.22, 0), new THREE.MeshBasicMaterial({ color: '#ffe9a8' })); star.position.set(0, 2.05, 1.05); star.scale.set(1, 1.3, .35); star.userData.dynamic = true; g.add(star);
+    ISL.colBox(g, 0, 0, 3.5, 2.5, 3.4, { kind: 'stall' }); glowPool(x + Math.sin(ry) * 2.6, z + Math.cos(ry) * 2.6, 4.2);
+  }
+  // 전구를 감은 겨울 나무 (잎 없는 가지 + 따뜻한 흰 전구)
+  function lightTree(x, z) {
+    const y = H(x, z), g = new THREE.Group(); g.position.set(x, y, z); scene.add(g); const bark = M('#3a2e26'), r = ISL.mulberry32(Math.floor(x * 31 + z * 17));
+    LH.cyl(g, .1, .16, 2.4, 6, bark, 0, 0, 0); const tips = [];
+    for (let i = 0; i < 7; i++) { const a = i * .9 + r(), el = .5 + r() * .5, len = 1.6 + r() * 1.2, b = new THREE.Mesh(new THREE.CylinderGeometry(.025, .06, len, 5), bark); const dx = Math.cos(a) * Math.cos(el), dy = Math.sin(el), dz = Math.sin(a) * Math.cos(el); b.position.set(dx * len / 2, 2.2 + dy * len / 2, dz * len / 2); b.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx, dy, dz)); g.add(b); for (let k = 1; k <= 9; k++) tips.push([dx * len * k / 9 + (r() - .5) * .12, 2.2 + dy * len * k / 9, dz * len * k / 9 + (r() - .5) * .12]); }
+    for (let k = 0; k < 10; k++) tips.push([Math.cos(k * 1.9) * .13, .4 + k * .2, Math.sin(k * 1.9) * .13]);
+    const im = new THREE.InstancedMesh(new THREE.SphereGeometry(.045, 5, 4), xmasMat(), tips.length), mt = new THREE.Matrix4(), cc = new THREE.Color('#ffe2b0'); tips.forEach((p, i) => { mt.makeTranslation(p[0], p[1], p[2]); im.setMatrixAt(i, mt); im.setColorAt(i, cc); }); im.userData.dynamic = true; g.add(im);
+    ISL.colCircle(x, z, .2, y - 1, y + 3);
+  }
   function snowman(x, z) {
     const y = H(x, z), g = new THREE.Group(); g.position.set(x, y, z); scene.add(g); const w = M('#f6f8fa', { roughness: 1 });
     LH.sphere(g, .55, w, 0, .5, 0); LH.sphere(g, .4, w, 0, 1.25, 0); LH.sphere(g, .28, w, 0, 1.82, 0);
@@ -289,7 +321,7 @@
              walk: (x, w, h, r) => { x.fillStyle = '#bdb7ab'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(80,70,60,.25)'; for (let y = 0; y < h; y += 32) x.fillRect(0, y, w, 2); for (let y = 0; y < h; y += 32) for (let xx = (y / 32) % 2 * 24; xx < w; xx += 48) x.fillRect(xx, y, 2, 32); }, curb: '#8e8a84' },
     kyoto: { road: (x, w, h, r) => { x.fillStyle = '#5c5a56'; x.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 22) for (let xx = ((y / 22) % 2) * 20; xx < w; xx += 42) { const c = 98 + r() * 34; x.fillStyle = `rgb(${c},${c - 2},${c - 5})`; x.fillRect(xx + 2, y + 2, 38, 18); } x.fillStyle = '#3f3d3a'; x.fillRect(0, 0, 10, h); x.fillRect(w - 10, 0, 10, h); }, walk: null, curb: '#6b6862' },
     lisbon: { road: (x, w, h, r) => { x.fillStyle = '#efeadd'; x.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 5) for (let xx = (y % 10) ? 2 : 0; xx < w; xx += 5) { x.fillStyle = `rgba(0,0,0,${.05 + r() * .06})`; x.fillRect(xx, y, 4, 4); } x.fillStyle = '#2b2b2b'; for (let k = 0; k < 3; k++) for (let y = 0; y < h; y += 2) { const xx = w * (.2 + k * .3) + Math.sin(y / h * Math.PI * 4) * w * .08; x.fillRect(xx, y, 9, 2); } }, walk: (x, w, h, r) => { x.fillStyle = '#e6dfcf'; x.fillRect(0, 0, w, h); for (let i = 0; i < 1500; i++) { x.fillStyle = 'rgba(0,0,0,.07)'; x.fillRect(r() * w, r() * h, 3, 3); } }, curb: '#d8d1c0' },
-    reyk: { road: (x, w, h) => { const cols = ['#e63b3b', '#f08a2b', '#f5d33a', '#4dbb5a', '#3a7ad9', '#8a52c9']; for (let i = 0; i < 6; i++) { x.fillStyle = cols[i]; x.fillRect(i * w / 6, 0, w / 6 + 1, h); } x.fillStyle = 'rgba(0,0,0,.06)'; for (let y = 0; y < h; y += 8) x.fillRect(0, y, w, 1); }, walk: (x, w, h, r) => { x.fillStyle = '#9a9c9e'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(0,0,0,.15)'; for (let y = 0; y < h; y += 40) x.fillRect(0, y, w, 2); }, curb: '#7d8082' },
+    reyk: { road: (x, w, h) => { const cols = ['#e63b3b', '#f08a2b', '#f5d33a', '#4dbb5a', '#3a7ad9', '#8a52c9']; for (let i = 0; i < 6; i++) { x.fillStyle = cols[i]; x.fillRect(i * w / 6, 0, w / 6 + 1, h); } x.fillStyle = 'rgba(0,0,0,.06)'; for (let y = 0; y < h; y += 8) x.fillRect(0, y, w, 1); for (let i = 0; i < 260; i++) { x.fillStyle = `rgba(255,255,255,${.25 + Math.random() * .5})`; x.beginPath(); x.ellipse(Math.random() * w, Math.random() * h, 1 + Math.random() * 5, 1 + Math.random() * 3, 0, 0, 7); x.fill(); } }, walk: (x, w, h, r) => { x.fillStyle = '#eef2f6'; x.fillRect(0, 0, w, h); for (let i = 0; i < 500; i++) { x.fillStyle = `rgba(150,170,195,${r() * .18})`; x.beginPath(); x.ellipse(r() * w, r() * h, 2 + r() * 7, 2 + r() * 4, r() * 3, 0, 7); x.fill(); } }, curb: '#dfe6ec' }, // 눈 쌓인 인도
     luzern: { road: (x, w, h, r) => { x.fillStyle = '#6a6762'; x.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 9) for (let xx = (y / 9 % 2) * 5; xx < w; xx += 10) { const c = 120 + r() * 50; x.fillStyle = `rgb(${c},${c - 4},${c - 10})`; x.beginPath(); x.ellipse(xx + 4.5, y + 4.5, 4.2, 3.8, 0, 0, 7); x.fill(); } }, walk: (x, w, h, r) => { x.fillStyle = '#a49e94'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(0,0,0,.15)'; for (let y = 0; y < h; y += 40) x.fillRect(0, y, w, 2); }, curb: '#8a857c' },
   };
   // 땅을 따라 깔리는 띠 (도로·인도). o0~o1: 중심선에서의 가로 거리, lift: 땅 위 높이
@@ -314,7 +346,7 @@
     if (kind === 'paris') { LH.cyl(g, .07, .12, 4, 10, M('#1f3328'), 0, 0, 0); LH.cyl(g, .16, .2, .5, 10, M('#1f3328'), 0, 0, 0); LH.box(g, .38, .5, .38, L, 0, 4, 0); LH.cone(g, .3, .35, 4, M('#1f3328'), 0, 4.5, 0, Math.PI / 4); }
     else if (kind === 'kyoto') { LH.box(g, .1, 2.2, .1, M('#3b2a1d'), 0, 0, 0); LH.box(g, .36, .6, .36, M('#f2ead2', { emissive: '#ffcf8a', emissiveIntensity: .3 }), 0, 2.2, 0); LH.cone(g, .32, .2, 4, M('#2f3036'), 0, 2.8, 0, Math.PI / 4); }
     else { LH.cyl(g, .06, .08, 4.6, 8, M('#2b2b2b'), 0, 0, 0); LH.box(g, .3, .4, .3, L, 0, 4.6, 0); LH.cone(g, .25, .25, 4, M('#2b2b2b'), 0, 5, 0, Math.PI / 4); }
-    ISL.colCircle(x, z, .15, y - 1, y + 4);
+    ISL.colCircle(x, z, .15, y - 1, y + 4); glowPool(x, z, kind === 'kyoto' ? 3.5 : 6);
   }
   function cafe(x, z, ry) {
     const y = H(x, z) + .2, g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g);
@@ -435,7 +467,11 @@
         // 크리스마스: 거리를 가로지르는 줄 전구, 광장의 큰 트리, 눈사람
         const o = s.road + s.walk + .45;
         for (let t = 4; t < s.len; t += 6.5) { const a = along(t, -o), b = along(t, o); lightString([a[0], H(a[0], a[1]) + 5.2, a[1]], [b[0], H(b[0], b[1]) + 5.2, b[1]], .8, 16); }
-        { const [x, z] = along(-10, 0); xmasTree(x, z, 14); }
+        { const [x, z] = along(-16, -24); xmasTree(x, z, 14); const sg = ISL.person({ top: '#c81e1e', bottom: '#c81e1e', hat: 'knit', hatColor: '#c81e1e', hair: '#ffffff', scarf: '#ffffff' }); const sx = x + 5, sz = z + 4; sg.g.position.set(sx, H(sx, sz), sz); sg.armR.rotation.x = -2.5; scene.add(sg.g); ISL.colCircle(sx, sz, .35); }
+        // 크리스마스 마켓: 교회 앞 광장 양쪽의 나무 오두막 가게들
+        const goods = ['#c0392b', '#e6b422', '#2e6f9e', '#f4f1ea', '#3e7c5a', '#d9733a'];
+        for (const sd of [-1, 1]) for (let k = 0; k < 4; k++) { const [x, z] = along(-28 + k * 6.2, sd * 12); stall(x, z, s.ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2), goods, k + (sd > 0 ? 4 : 0)); }
+        for (const [t, o] of [[-34, 7], [-34, -7], [-8, 17], [-21, -18], [3, 15], [3, -15], [30, 12.5], [55, -12.5]]) { const [x, z] = along(t, o); if (!ISL.world.solidAt(x, H(x, z) + 1, z)) lightTree(x, z); }
         { const [x, z] = along(s.len * .45, -(s.road + 1.1)); snowman(x, z); } { const [x, z] = along(s.len * .8, s.road + 1.2); snowman(x, z); }
       } else if (s.style === 'luzern') {
         for (let t = 9; t < s.len; t += 17) { const [x, z] = along(t, (t % 2 ? 1 : -1) * (s.road + .5)); lamp(x, z, 'luzern'); }

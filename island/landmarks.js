@@ -173,7 +173,6 @@
     plan.lisbon = { x: -330, z: 452 };
     NT.push({ x: plan.lisbon.x, z: plan.lisbon.z, r: 78 });
     plan.tramR = 40;
-    T.push((x, z) => { const d = Math.hypot(x - plan.lisbon.x, z - plan.lisbon.z); return Math.abs(d - plan.tramR) < 2.6 ? [new THREE.Color('#9b958a'), .9] : null; });
     plan.ponte = addBridge('테주 강', -372, 525, { width: 6, extra: 6, clear: 9 });
     // 교토
     NT.push({ x: P.kinkaku.x, z: P.kinkaku.z, r: 52 });
@@ -183,8 +182,6 @@
     for (let i = 0; i < ip.length - 1; i++) NS.push({ ax: ip[i][0], az: ip[i][1], bx: ip[i + 1][0], bz: ip[i + 1][1], w: 4 });
     T.push((x, z) => { for (let i = 0; i < ip.length - 1; i++) if (ISL.segDist(x, z, ip[i][0], ip[i][1], ip[i + 1][0], ip[i + 1][1]).d < 1.7) return [new THREE.Color('#9c8466'), .85, 0]; return null; });
     NT.push({ x: P.pagoda.x, z: P.pagoda.z, r: 18 });
-    NS.push({ ax: 222, az: 512, bx: 222, bz: 575, w: 13 });
-    T.push((x, z) => Math.abs(x - 222) < 3.2 && z > 508 && z < 575 ? [new THREE.Color('#a49a8a'), .9] : null);
     plan.bamboo = { x: 352, z: 528 };
     NT.push({ x: plan.bamboo.x, z: plan.bamboo.z, r: 42 });
     T.push((x, z) => { const d = ISL.segDist(x, z, 322, 512, 384, 548).d; return d < 2.2 && Math.hypot(x - plan.bamboo.x, z - plan.bamboo.z) < 44 ? [new THREE.Color('#a08c6a'), .85] : null; });
@@ -387,7 +384,7 @@
     const fs = pal.map(([w, t]) => facade({ wall: w, win: '#3a4655', frame: '#fbf7ee', tiles: t || null, cols: 2, rows: 3, balcony: rng() < .5 ? '#333' : null, lit: .65 }));
     const roof = mat('#c4572e');
     let n = 0;
-    for (let k = 0; k < 900 && n < 130; k++) {
+    for (let k = 0; k < 0 && n < 130; k++) { // 옛 무작위 집 → streets.js의 알파마 골목으로 대체
       const a = rng() * Math.PI * 2, r = 8 + rng() * 68, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
       if (Math.abs(r - plan.tramR) < 6) continue;
       const h0 = H(x, z); if (h0 < 2 || ISL.slopeAt(x, z) > .45) continue;
@@ -409,8 +406,10 @@
     mesh(tram, new THREE.SphereGeometry(.22, 8, 6), head, 0, 1.2, 3.55);
     let ta = 0;
     dyn.push(dt => {
-      ta += dt * .05; const x = cx + Math.cos(ta) * plan.tramR, z = cz + Math.sin(ta) * plan.tramR;
-      tram.position.set(x, H(x, z) + .1, z); tram.rotation.y = -ta;
+      const L = ISL.tramLane; if (!L) return; ta += dt * 3.2; const per = 2 * (L.len - 10), q = ta % per, s = q < per / 2 ? q : per - q, t = 5 + s;
+      const x = L.ax + L.ux * t, z = L.az + L.uz * t, ahead = H(L.ax + L.ux * Math.min(L.len, t + 3), L.az + L.uz * Math.min(L.len, t + 3)) - H(L.ax + L.ux * Math.max(0, t - 3), L.az + L.uz * Math.max(0, t - 3));
+      tram.position.set(x, H(x, z) + .1, z); tram.rotation.set(0, L.ry + (q < per / 2 ? 0 : Math.PI), 0); tram.rotateX(-Math.atan2(ahead, 6) * (q < per / 2 ? 1 : -1));
+      if (ISL.debug && ISL.debug.player) { const pl = ISL.debug.player; if (Math.hypot(pl.x - x, pl.z - z) < 4 && Math.abs(pl.y - H(x, z)) < 3 && ISL.Audio && Math.random() < dt * .3) ISL.Audio.chime([12, 12], .04); }
     });
     ISL.tram = tram;
     landmark('lisbon', '리스본 언덕과 28번 트램', 'portugal', cx, cz, 70, '알록달록한 집과 아줄레주(파란 타일) 외벽 사이로 노란 트램이 덜컹거리며 언덕을 올라요.');
@@ -549,7 +548,7 @@
     // 니넨자카 골목의 마치야와 등롱
     const front = facade({ wall: '#4a3427', win: '#2a2017', frame: '#6a4b36', cols: 3, rows: 2, lit: .9 });
     const lanternMat = new THREE.MeshStandardMaterial({ color: '#d84a33', emissive: '#ff7a3a', emissiveIntensity: .1 }); ISL.nightMats.push(lanternMat);
-    for (let i = 0; i < 9; i++) for (const s of [-1, 1]) {
+    for (let i = 0; i < 0; i++) for (const s of [-1, 1]) { // → streets.js 기온 거리
       const hx = 222 + s * 8, hz = 516 + i * 6.6; const hy = H(hx, hz);
       const hg = group(hx, hz, s > 0 ? -Math.PI / 2 : Math.PI / 2, hy - .6);
       colOf(mesh(hg, new THREE.BoxGeometry(6, 6.5, 8), boxMats(front, '#333'), 0, 3.25, 0));
@@ -604,7 +603,7 @@
     box(g, 2.2, 3.2, 2.2, '#9b958d', 0, 0, 22); const st = cyl(g, .45, .5, 2.6, 8, '#5c6b62', 0, 3.2, 22); sphere(g, .38, '#5c6b62', 0, 6.2, 22);
     // 레이캬비크의 알록달록한 집
     const cols = ['#c0392b', '#2e6f9e', '#e6b422', '#f4f1ea', '#3e7c5a', '#8e44ad'], roofs = ['#3a3f45', '#b03a2e', '#2f5d50', '#5a5f66'];
-    for (const p of plan.reyk) {
+    for (const p of []) { // → streets.js 무지개 거리
       const hg = group(p.x, p.z, p.ry, H(p.x, p.z) - .5);
       const f = facade({ wall: cols[Math.floor(rng() * cols.length)], win: '#2f3a44', frame: '#fff', cols: 2, rows: 2, lit: .8 });
       const w = 5 + rng() * 2, d = 6 + rng() * 2, h = 4 + rng() * 3;
@@ -718,7 +717,7 @@
     // 루체른 구시가지
     const lcols = ['#f3e3c3', '#e8b7a0', '#d9e2c4', '#f2d18b', '#c9d6e8', '#f7f1e6'];
     let ln = 0;
-    for (let k = 0; k < 300 && ln < 16; k++) {
+    for (let k = 0; k < 0 && ln < 16; k++) { // → streets.js 루체른 구시가지
       const a = rng() * 6.28, rr = 12 + rng() * 26, hx = 182 + Math.cos(a) * rr, hz = -32 + Math.sin(a) * rr;
       const q = ISL.riverNearest(ISL.rivers[0], hx, hz); if (q && q.d < q.w + 4) continue;
       if (ISL.segDist(hx, hz, w.ax, w.az, w.bx, w.bz).d < 6 || ISL.slopeAt(hx, hz) > .2) continue;
@@ -913,7 +912,7 @@
   // ============================================================
   function build(sc) {
     scene = sc; autoCol = true;
-    buildEiffel(); for (const p of plan.paris) haussmann(p.x, p.z);
+    buildEiffel(); // 파리 건물은 streets.js의 오스만 대로로
     buildLavender(); buildMSM();
     buildBelem(); buildLisbon(); buildPena();
     buildKinkaku(); buildInari(); buildPagoda(); buildBamboo();

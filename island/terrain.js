@@ -292,6 +292,7 @@
     P.chillon.y = P.swissLake.y + 3.2;
     addFlat('chalets', 260, -10, 30, 50);
     addFlat('lucerne', 182, -32, 34, 72, 0, 18);
+    addFlat('luzStreet', 188, 0, 48, 84, 0, 18); // 루체른 구시가지 거리
     // 계단식 풍경
     features.push({ t: 'terrace', x: 330, z: -58, r: 26, r2: 40, step: 3 }); P.lavaux = { x: 330, z: -58 };
     features.push({ t: 'terrace', x: -255, z: 335, r: 40, r2: 56, step: 2.6 }); P.douro = { x: -255, z: 335 };

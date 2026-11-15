@@ -63,10 +63,11 @@
     const PL = ISL.P, pd = ISL.Landmarks.planData;
     const pos = { sigrid: [PL.hallgrim.x + 6, PL.hallgrim.z + 28], lukas: [300, 110], chloe: [PL.eiffel.x + 8, PL.eiffel.z + 96], joao: [pd.lisbon.x, pd.lisbon.z - 44], haruka: [300, 440] };
     for (const d of NPCS) {
-      const m = person(d.look); const [x, z] = pos[d.id];
+      const m = person(d.look); let [x, z] = pos[d.id];
+      for (let k = 0; k < 80 && (ISL.world.solidAt(x, ISL.H(x, z) + 1, z) || ISL.waterAt(x, z).level > ISL.H(x, z)); k++) { const a = k * 2.4, r = 1 + k * .35; x = pos[d.id][0] + Math.cos(a) * r; z = pos[d.id][1] + Math.sin(a) * r; } // 막힌 곳이면 근처 빈자리로
       m.g.position.set(x, ISL.H(x, z), z); scene.add(m.g);
       const tag = label(d.name, '#ffd166'); tag.position.set(0, 2.35, 0); m.g.add(tag);
-      npcs.push({ d, m, x, z, tag, face: 0 }); ISL.colCircle(x, z, .35);
+      (ISL.debug.npcPos = ISL.debug.npcPos || []).push([d.id, x, z]); npcs.push({ d, m, x, z, tag, face: 0 }); ISL.colCircle(x, z, .35);
     }
     const spots = [[PL.eiffel.x - 14, PL.eiffel.z + 110], [260, 430], [PL.hallgrim.x - 16, PL.hallgrim.z + 30], [PL.belem.x + 20, PL.belem.z], [PL.chillon.x - 10, PL.chillon.z + 30], [PL.msm.x + 40, PL.msm.z + 10], [470, 380], [180, -30]];
     const looks = [{ top: '#f4a261', hat: 'sun', hatColor: '#f6e7c1', backpack: '#2a9d8f' }, { top: '#9b5de5', bottom: '#264653', hat: 'cap', hatColor: '#f15bb5' }, { top: '#00bbf9', bottom: '#333', backpack: '#fee440' }, { top: '#e76f51', hair: '#d4a373', longHair: 1 }];
@@ -668,12 +669,12 @@
   async function boot() {
     initScene();
     await step('지형을 빚는 중… 🏔️', 5); ISL.init();
-    await step('마을과 길을 그리는 중… 🏘️', 25); ISL.Landmarks.plan(); ISL.Land.plan();
+    await step('마을과 길을 그리는 중… 🏘️', 25); ISL.Landmarks.plan(); ISL.Streets.plan(); ISL.Land.plan();
     await step('하늘과 땅과 바다를 칠하는 중… 🌊', 35);
     sky = ISL.Nature.makeSky(); scene.add(sky);
     ISL.Nature.makeTerrain(scene); ISL.Nature.makeWater(scene); ISL.Nature.makeClouds(scene); ISL.Nature.makeAurora(scene);
     await step('마을을 짓고 밭을 가꾸는 중… 🌻', 55); ISL.Land.build(scene);
-    await step('에펠탑과 금각사를 세우는 중… 🗼', 68); ISL.Landmarks.build(scene); ISL.Landmarks.mergeStatic();
+    await step('에펠탑과 금각사를 세우는 중… 🗼', 68); ISL.Landmarks.build(scene); ISL.Streets.build(scene); ISL.Landmarks.mergeStatic();
     await step('숲과 풀밭을 키우는 중… 🌿', 80);
     ISL.Nature.makeTrees(scene);
     ISL.Nature.maskGrass();

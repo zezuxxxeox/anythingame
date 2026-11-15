@@ -671,6 +671,7 @@
           // 자연스럽게 무리 지어 자라는 풀 (큰 얼룩 + 작은 얼룩)
           float ptch = vn2(base*.07)*.65 + vn2(base*.31)*.35;
           float hgt = (.1 + .72*gh) * (.55 + .75*aRnd.x) * aB.w * fade * step(.03, gh) * (.55 + .9*ptch) * (1. + isF*.35);
+          if (hgt < .015) { gl_Position = vec4(2., 2., 2., 1.); return; } // 높이 0인 풀은 아예 그리지 않음 (바닥 반짝이 방지)
           float ang = aRnd.y*6.2831 + aB.z;
           vec3 p = position;
           float w = .042*(.75 + aRnd.x*.5)*(1. + isF*1.6);
@@ -805,6 +806,7 @@
       if (c.t === 'b') { const r = c.br + .6; for (let j = Math.floor((c.z - r + E) / S); j <= Math.ceil((c.z + r + E) / S); j++) for (let i = Math.floor((c.x - r + E) / S); i <= Math.ceil((c.x + r + E) / S); i++) { const [lx, lz] = ISL.world.toLocal(c, -E + i * S, -E + j * S); if (Math.abs(lx) < c.hw + .6 && Math.abs(lz) < c.hd + .6) clear(i, j); } }
       else if (c.r > .9) { const r = c.r + .5; for (let j = Math.floor((c.z - r + E) / S); j <= Math.ceil((c.z + r + E) / S); j++) for (let i = Math.floor((c.x - r + E) / S); i <= Math.ceil((c.x + r + E) / S); i++) if (Math.hypot(-E + i * S - c.x, -E + j * S - c.z) < r) clear(i, j); }
     }
+    for (const pv of ISL.paved || []) { const r = Math.hypot(pv.bx - pv.ax, pv.bz - pv.az) / 2 + pv.hw, cx = (pv.ax + pv.bx) / 2, cz = (pv.az + pv.bz) / 2; for (let j = Math.floor((cz - r + E) / S); j <= Math.ceil((cz + r + E) / S); j++) for (let i = Math.floor((cx - r + E) / S); i <= Math.ceil((cx + r + E) / S); i++) if (ISL.segDist(-E + i * S, -E + j * S, pv.ax, pv.az, pv.bx, pv.bz).d < pv.hw + 1) clear(i, j); }
     ISL.grassTex.A.needsUpdate = true; ISL.grassTex.B.needsUpdate = true;
   }
   ISL.Nature = { maskGrass, makeSky, makeWater, makeTerrain, makeTrees, makeGrass, makeClouds, makeAurora, natural };

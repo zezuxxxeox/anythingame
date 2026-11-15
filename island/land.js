@@ -206,6 +206,7 @@
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) LH.box(g, .35, h, .35, trim, sx * (w / 2 - .1), 0, sz * (d / 2 - .1));
       LH.mesh(g, LH.hipGeo(w, d, 1.5, .35), '#c8643a', 0, h, 0);
       LH.box(g, .9, 1.9, .9, '#f6f2ea', w / 2 - 1.2, h, 0); LH.box(g, 1.3, .3, 1.3, '#f6f2ea', w / 2 - 1.2, h + 1.9, 0);
+      return { w, d, h: h + 1.6 };
     },
     // 프로방스: 베이지 돌, 파스텔 덧창, 낮은 기와지붕
     prov(g, r) {
@@ -214,12 +215,14 @@
       const w = 8 + r() * 3, d = 6 + r() * 2, h = 6.2;
       base(g, w, d, h, f, '#c46d3c'); LH.mesh(g, LH.gableGeo(w, d, 1.7, .5), '#c46d3c', 0, h, 0);
       if (r() < .5) { base(g, 4, 4.5, 3.6, f, '#c46d3c'); g.children[g.children.length - 1].position.x = w / 2 + 2; LH.mesh(g, LH.gableGeo(4, 4.5, 1.1, .3), '#c46d3c', w / 2 + 2, 3.6, 0); }
+      return { w, d, h: h + 1.7 };
     },
     // 노르망디: 반목조(콜롱바주), 가파른 초가·슬레이트 지붕
     norm(g, r) {
       const f = once('norm', () => LH.facade({ wall: '#efe7d6', win: '#2f3742', frame: '#5a3b28', timber: '#5a3b28', cols: 2, rows: 2, lit: .6 }));
       const w = 7 + r() * 2.5, d = 5.5 + r() * 1.5, h = 4.6, thatch = r() < .6;
       base(g, w, d, h, f, '#666'); LH.mesh(g, LH.gableGeo(w, d, 4.2, .6), thatch ? '#8d7b56' : '#4b4e57', 0, h, 0);
+      return { w, d, h: h + 4.2 };
     },
     // 스위스 샬레
     ch(g, r) {
@@ -230,6 +233,7 @@
       LH.mesh(g, LH.gableGeo(w, d, 2.8, 1.5), '#4a3a30', 0, 6.2, 0);
       LH.box(g, w + .6, .25, 1.3, '#6b4226', 0, 3.6, d / 2 + .6); LH.box(g, w + .4, .5, .3, '#6b4226', 0, 3.85, d / 2 + 1.2);
       LH.box(g, w + .3, .35, .35, '#d9333c', 0, 4.35, d / 2 + 1.2);
+      return { w, d, h: 9 };
     },
     // 아이슬란드: 함석집
     is(g, r) {
@@ -237,6 +241,7 @@
       const f = once('is' + col, () => LH.facade({ wall: col, win: '#2f3a44', frame: '#fff', corrugated: 1, cols: 2, rows: 2, lit: .8 }));
       const w = 5 + r() * 2, d = 6 + r() * 2, h = 4 + r() * 2.5;
       base(g, w, d, h, f, '#555'); LH.mesh(g, LH.gableGeo(w, d, 2.3, .35), ['#b03a2e', '#2f5d50', '#3a3f45'][Math.floor(r() * 3)], 0, h, 0);
+      return { w, d, h: h + 2.3 };
     },
     // 아이슬란드: 풀 지붕 잔디집
     turf(g, r) {
@@ -245,7 +250,7 @@
       LH.box(g, w, 2.4, d, '#5c5650', 0, -1, 0);
       LH.mesh(g, LH.gableGeo(w, d, 2.8, .4), '#5f8f3c', 0, 1.4, 0);
       LH.mesh(g, new THREE.BoxGeometry(w - .6, 2.6, .2), front, 0, 1.3, d / 2 + .3);
-      LH.box(g, .9, 1.6, .25, '#6b3d2b', 0, 0, d / 2 + .45);
+      return { w, d: d + .7, h: 4.2 };
     },
     // 교토 마치야: 나무 격자, 기와
     machiya(g, r) {
@@ -254,6 +259,7 @@
       const w = 6, d = 9;
       base(g, w, d, 3.2, f, '#444'); LH.mesh(g, LH.gableGeo(w, 1.4, .5, .1), '#44474e', 0, 3.1, d / 2 - .2, Math.PI / 2);
       LH.box(g, w - .6, 2.4, d - 1, up, 0, 3.2, 0); LH.mesh(g, LH.gableGeo(w - .6, d - 1, 1.8, .8), '#44474e', 0, 5.6, 0);
+      return { w, d, h: 7.4 };
     },
     // 교토 산골 초가 (가야부키)
     farm(g, r) {
@@ -261,6 +267,7 @@
       const w = 9, d = 6.5;
       base(g, w, d, 3, f, '#555'); LH.mesh(g, LH.hipGeo(w, d, 5, .9), '#8c7c5a', 0, 3, 0);
       LH.box(g, w * .55, .5, .8, '#3a3530', 0, 7.6, 0);
+      return { w, d, h: 8 };
     },
   };
   function styleFor(ri, x, z, r, farm) {
@@ -275,7 +282,7 @@
     const g = grp(x, z, -v.ang, H(x, z) - .4), B = LH.box, M = LH.mesh;
     if (ri === 4) { // 작은 신사
       for (const s of [-1.6, 1.6]) LH.cyl(g, .22, .24, 3.6, 8, '#e5482c', s, 0, 7); B(g, 4.4, .3, .5, '#1d1b1b', 0, 3.7, 7); B(g, 3.8, .25, .4, '#e5482c', 0, 3.1, 7);
-      B(g, 6, 3, 5, '#5a3b2a', 0, .4, 0); M(g, LH.jRoofGeo(8.5, 7, 2.2, .3), '#3a3633', 0, 3.4, 0);
+      B(g, 6, 3, 5, '#5a3b2a', 0, .4, 0); ISL.colBox(g, 0, 0, 6, 5, 6); M(g, LH.jRoofGeo(8.5, 7, 2.2, .3), '#3a3633', 0, 3.4, 0);
       for (const s of [-2.5, 2.5]) { B(g, .6, 1.2, .6, '#9a958c', s, 0, 4); B(g, 1, .8, 1, '#9a958c', s, 1.2, 4); B(g, 1.2, .3, 1.2, '#8a857c', s, 2, 4); }
       return;
     }
@@ -285,7 +292,7 @@
       { wall: '#cdbb98', roof: '#4b4e57', tw: 4, th: 13, sp: 8, spc: '#4b4e57', w: 9, d: 16, h: 8 },
       { wall: '#f6f2ea', roof: '#c8643a', tw: 3.6, th: 12, sp: 2.5, spc: '#c8643a', w: 8, d: 14, h: 7 },
     ][ri];
-    B(g, conf.w, conf.h + 2, conf.d, conf.wall, 0, -2, -conf.d / 2); M(g, LH.gableGeo(conf.w, conf.d, conf.w * .45, .4), conf.roof, 0, conf.h, -conf.d / 2);
+    B(g, conf.w, conf.h + 2, conf.d, conf.wall, 0, -2, -conf.d / 2); ISL.colBox(g, 0, -conf.d / 2, conf.w, conf.d, conf.h + 4); ISL.colBox(g, 0, conf.tw / 2, conf.tw, conf.tw, conf.th); M(g, LH.gableGeo(conf.w, conf.d, conf.w * .45, .4), conf.roof, 0, conf.h, -conf.d / 2);
     B(g, conf.tw, conf.th + 2, conf.tw, conf.wall, 0, -2, conf.tw / 2);
     B(g, conf.tw * .4, conf.tw * .5, .1, '#3a3d44', 0, conf.th - conf.tw * .7, conf.tw + .02);
     M(g, LH.hipGeo(conf.tw, conf.tw, conf.sp, .15), conf.spc, 0, conf.th, conf.tw / 2);
@@ -308,7 +315,7 @@
     for (const c of cells.values()) {
       const kind = c.crop.rows, cs = Math.cos(c.ang), sn = Math.sin(c.ang);
       if (kind === 'bales') {
-        for (let k = 0; k < 7; k++) { const u = (c.iu + .15 + rng() * .7) * SU, v = (c.iv + .15 + rng() * .7) * SV, x = u * cs + v * sn, z = -u * sn + v * cs; const h = H(x, z); if (h > 2) lists.bale.push({ x, y: h - .1, z, s: 1, ry: rng() * 3 }); }
+        for (let k = 0; k < 7; k++) { const u = (c.iu + .15 + rng() * .7) * SU, v = (c.iv + .15 + rng() * .7) * SV, x = u * cs + v * sn, z = -u * sn + v * cs; const h = H(x, z); if (h > 2) { lists.bale.push({ x, y: h - .1, z, s: 1, ry: rng() * 3 }); ISL.colCircle(x, z, .8, h - 1, h + 1.4); } }
         continue;
       }
       const [du, dv] = { vine: [2.6, 2.6], tea: [2.3, 2.3], sunflower: [1.15, 1.7], olive: [9, 9] }[kind];
@@ -317,6 +324,7 @@
         if (f.iu !== c.iu || f.iv !== c.iv) continue;
         const h = H(x, z); if (!farmable(x, z, h, ISL.slopeAt(x, z))) continue;
         if (kind === 'olive') { extraTrees.push({ type: 'olive', x, z }); continue; }
+        if (kind !== 'sunflower') ISL.colCircle(x, z, .45, h - 1, h + 1.3);
         lists[kind].push({ x, y: h - .05, z, s: .9 + rng() * .2, ry: c.ang, color: kind === 'vine' ? tint('#4f6e2e', .8 + rng() * .4) : kind === 'tea' ? tint('#3f6a2c', .85 + rng() * .3) : null });
       }
     }
@@ -345,8 +353,9 @@
       const ri = pickRegion(ISL.weights(h.x, h.z), r());
       const st = styleFor(ri, h.x, h.z, r, h.farm);
       const g = grp(h.x, h.z, h.ry, H(h.x, h.z) - .3);
-      STYLE[st](g, r);
-      h.style = st;
+      const dims = STYLE[st](g, r); h.style = st; h.dims = dims;
+      const door = ISL.Interior.addDoor(h, g, dims.w, dims.d, st, r);
+      h.col = ISL.colBox(g, 0, 0, dims.w, dims.d, dims.h, { pass: (lx, lz) => door.open > .55 && Math.abs(lx) < .7 && lz > -dims.d / 2 + .6, door });
     }
     for (const v of villages) if (v.church) church(v);
     buildRows(); buildSheep();

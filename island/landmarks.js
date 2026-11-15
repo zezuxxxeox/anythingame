@@ -11,8 +11,19 @@
   const MATS = {};
   function mat(c, o) { const k = c + (o ? JSON.stringify(o) : ''); return MATS[k] || (MATS[k] = new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .82 }, o || {}))); }
   function mesh(p, geo, m, x = 0, y = 0, z = 0, ry = 0) { const me = new THREE.Mesh(geo, typeof m === 'string' ? mat(m) : m); me.position.set(x, y, z); me.rotation.y = ry; me.castShadow = me.receiveShadow = true; p.add(me); return me; }
-  const box = (p, w, h, d, m, x = 0, y = 0, z = 0, ry = 0) => mesh(p, new THREE.BoxGeometry(w, h, d), m, x, y + h / 2, z, ry);
-  const cyl = (p, rt, rb, h, seg, m, x = 0, y = 0, z = 0) => mesh(p, new THREE.CylinderGeometry(rt, rb, h, seg), m, x, y + h / 2, z);
+  let autoCol = false;
+  const isDyn = o => { for (let p = o; p; p = p.parent) if (p.userData.dynamic) return true; return false; };
+  // 메시로부터 충돌체 만들기 (상자 → 회전 상자, 원기둥 → 원)
+  function colOf(me) {
+    if (isDyn(me)) return;
+    me.updateWorldMatrix(true, false);
+    const p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(); me.matrixWorld.decompose(p, q, sc);
+    const gp = me.geometry.parameters, e = new THREE.Euler().setFromQuaternion(q, 'YXZ');
+    if (gp.width !== undefined) ISL.world.add({ t: 'b', x: p.x, z: p.z, hw: gp.width * sc.x / 2, hd: gp.depth * sc.z / 2, a: e.y, y0: p.y - gp.height * sc.y / 2 - .5, y1: p.y + gp.height * sc.y / 2 });
+    else ISL.world.add({ t: 'c', x: p.x, z: p.z, r: Math.max(gp.radiusTop, gp.radiusBottom) * sc.x, y0: p.y - gp.height * sc.y / 2 - .5, y1: p.y + gp.height * sc.y / 2 });
+  }
+  const box = (p, w, h, d, m, x = 0, y = 0, z = 0, ry = 0) => { const me = mesh(p, new THREE.BoxGeometry(w, h, d), m, x, y + h / 2, z, ry); if (autoCol && w >= 1.4 && d >= 1.4 && h >= 1.2) colOf(me); return me; };
+  const cyl = (p, rt, rb, h, seg, m, x = 0, y = 0, z = 0) => { const me = mesh(p, new THREE.CylinderGeometry(rt, rb, h, seg), m, x, y + h / 2, z); if (autoCol && Math.max(rt, rb) >= .7 && h >= 1.5) colOf(me); return me; };
   const cone = (p, r, h, seg, m, x = 0, y = 0, z = 0, ry = 0) => mesh(p, new THREE.ConeGeometry(r, h, seg), m, x, y + h / 2, z, ry);
   const sphere = (p, r, m, x, y, z, sy = 1) => { const s = mesh(p, new THREE.SphereGeometry(r, 16, 10), m, x, y, z); s.scale.y = sy; return s; };
   function group(x, z, ry = 0, y) { const g = new THREE.Group(); g.position.set(x, y !== undefined ? y : H(x, z), z); g.rotation.y = ry; scene.add(g); return g; }
@@ -227,7 +238,7 @@
     const add = geo => mesh(g, geo, lat);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
       add(slantGeo([sx * 14.5, 0, sz * 14.5], 5.6, [sx * 8.4, 13, sz * 8.4], 3.4, 1.6));
-      box(g, 7, 1.2, 7, '#c9bfae', sx * 14.5, 0, sz * 14.5);
+      box(g, 7, 1.2, 7, '#c9bfae', sx * 14.5, 0, sz * 14.5); ISL.colCircle(x + sx * 13.5, z + sz * 13.5, 3.2);
       add(slantGeo([sx * 7.8, 14.4, sz * 7.8], 3.1, [sx * 4.6, 27.2, sz * 4.6], 2.1, 1.4));
     }
     // 1층 아치
@@ -263,7 +274,7 @@
     const w = 11 + rng() * 4, d = 11 + rng() * 4, h = 10 + rng() * 2;
     const g = group(x, z, Math.round(rng() * 2) * Math.PI / 2, H(x, z) - .5);
     const f = facadeCache.paris || (facadeCache.paris = facade({ wall: '#e9dfc9', win: '#3d4756', frame: '#f4efe4', cols: 4, rows: 5, balcony: '#2b2b2b', lit: .6 }));
-    mesh(g, new THREE.BoxGeometry(w, h, d), boxMats(f, '#5f6b78'), 0, h / 2, 0);
+    colOf(mesh(g, new THREE.BoxGeometry(w, h, d), boxMats(f, '#5f6b78'), 0, h / 2, 0));
     mesh(g, frustumGeo(w / 2 + .3, d / 2 + .3, w / 2 - 1.6, d / 2 - 1.6, 3.4), mat('#5f6b78', { roughness: .5, metalness: .4 }), 0, h, 0);
     for (let i = 0; i < 3; i++) box(g, .8, 1.6, 1.8, '#c4a58a', (rng() - .5) * (w - 4), h + 2.8, (rng() - .5) * (d - 4));
   }
@@ -281,7 +292,7 @@
     // 프로방스 농가 (마스)
     const g = group(cx + 68, cz - 6, -.2);
     const wall = facade({ wall: '#dcc8a2', win: '#40566b', frame: '#c9b48d', shutter: '#5f8fb3', cols: 3, rows: 2, lit: .5 });
-    mesh(g, new THREE.BoxGeometry(14, 6, 8), boxMats(wall, '#b85c35'), 0, 3, 0);
+    colOf(mesh(g, new THREE.BoxGeometry(14, 6, 8), boxMats(wall, '#b85c35'), 0, 3, 0));
     mesh(g, gableGeo(8, 14, 2.2, .7), mat('#bf6a3f'), 0, 6, 0, Math.PI / 2);
     mesh(g, new THREE.BoxGeometry(6, 4.5, 6), boxMats(wall, '#b85c35'), -8, 2.25, 2);
     mesh(g, gableGeo(6, 6, 1.6, .5), mat('#bf6a3f'), -8, 4.5, 2);
@@ -361,7 +372,7 @@
       if (Math.hypot(x - P.belem.x, z - P.belem.z) < 25) continue;
       const w = 5 + rng() * 2, d = 6 + rng() * 2, h = 6 + Math.floor(rng() * 3) * 2.6;
       const g = group(x, z, -a + Math.PI / 2, h0 - 1.2);
-      mesh(g, new THREE.BoxGeometry(w, h + 1.2, d), boxMats(fs[Math.floor(rng() * fs.length)], '#c4572e'), 0, (h + 1.2) / 2, 0);
+      colOf(mesh(g, new THREE.BoxGeometry(w, h + 1.2, d), boxMats(fs[Math.floor(rng() * fs.length)], '#c4572e'), 0, (h + 1.2) / 2, 0));
       mesh(g, hipGeo(w, d, 1.8, .4), roof, 0, h + 1.2, 0);
       n++;
     }
@@ -470,7 +481,7 @@
     const mats = []; const tmp = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
     for (let i = 0; i < path.length - 1; i += 1) {
       const [x, z] = path[i], [x2, z2] = path[i + 1], a = Math.atan2(x2 - x, z2 - z);
-      mats.push({ x, z, y: H(x, z) - .1, a });
+      mats.push({ x, z, y: H(x, z) - .1, a }); for (const ox of [-1.7, 1.7]) ISL.colCircle(x + Math.cos(a) * ox, z - Math.sin(a) * ox, .3);
     }
     for (const [geo, m, offs] of parts) {
       const im = new THREE.InstancedMesh(geo, m, mats.length * offs.length); let k = 0;
@@ -517,7 +528,7 @@
     for (let i = 0; i < 9; i++) for (const s of [-1, 1]) {
       const hx = 222 + s * 8, hz = 516 + i * 6.6; const hy = H(hx, hz);
       const hg = group(hx, hz, s > 0 ? -Math.PI / 2 : Math.PI / 2, hy - .6);
-      mesh(hg, new THREE.BoxGeometry(6, 6.5, 8), boxMats(front, '#333'), 0, 3.25, 0);
+      colOf(mesh(hg, new THREE.BoxGeometry(6, 6.5, 8), boxMats(front, '#333'), 0, 3.25, 0));
       mesh(hg, gableGeo(8, 6, 1.8, .9), mat('#36363a'), 0, 6.5, 0, Math.PI / 2);
       mesh(hg, gableGeo(8, 1.2, .5, .1), mat('#36363a'), 0, 3.2, 3.4, Math.PI / 2);
       const l = sphere(hg, .45, lanternMat, 2.2, 3, 4.4, 1.3);
@@ -534,7 +545,7 @@
       if (ISL.segDist(x, z, 322, 512, 384, 548).d < 2.6) continue;
       const q = ISL.riverNearest(ISL.rivers[2], x, z); if (q && q.d < q.w + 2) continue;
       const y = H(x, z), s = .8 + rng() * .45, lean = (rng() - .5) * .12, lz = (rng() - .5) * .12;
-      sl.push({ x, y, z, s, rx: lean, rz: lz, color: new THREE.Color().setHSL(.2 + rng() * .06, .55, .27 + rng() * .08) });
+      ISL.colCircle(x, z, .2); sl.push({ x, y, z, s, rx: lean, rz: lz, color: new THREE.Color().setHSL(.2 + rng() * .06, .55, .27 + rng() * .08) });
       ll.push({ x, y, z, s, rx: lean, rz: lz, color: new THREE.Color().setHSL(.25 + rng() * .05, .55, .24 + rng() * .08) });
     }
     ISL.placeInstances(scene, stalk, sl, { material: ISL.treeMaterial() });
@@ -573,7 +584,7 @@
       const hg = group(p.x, p.z, p.ry, H(p.x, p.z) - .5);
       const f = facade({ wall: cols[Math.floor(rng() * cols.length)], win: '#2f3a44', frame: '#fff', cols: 2, rows: 2, lit: .8 });
       const w = 5 + rng() * 2, d = 6 + rng() * 2, h = 4 + rng() * 3;
-      mesh(hg, new THREE.BoxGeometry(w, h, d), boxMats(f, '#555'), 0, h / 2, 0);
+      colOf(mesh(hg, new THREE.BoxGeometry(w, h, d), boxMats(f, '#555'), 0, h / 2, 0));
       mesh(hg, gableGeo(w, d, 2.4, .4), mat(roofs[Math.floor(rng() * roofs.length)], { roughness: .5, metalness: .3 }), 0, h, 0);
     }
     landmark('hallgrim', '할그림스키르캬 교회', 'iceland', x, z, 50, '레이캬비크의 상징. 화산이 식으며 생긴 주상절리를 본떠 계단처럼 내려오는 기둥들이 파이프 오르간처럼 보여요.');
@@ -634,7 +645,7 @@
       const x = b.x + Math.cos(ang) * lx + Math.sin(ang) * lz, z = b.z - Math.sin(ang) * lx + Math.cos(ang) * lz;
       const h = (j + 1) * 1.8 * (1 - Math.abs(i) / 18) + Math.sin(i * 1.7) * 1.2 + 2;
       const y0 = H(x, z) - 1;
-      list.push({ x, y: y0, z, s: 1, sy: Math.max(1, h), ry: 0, color: new THREE.Color('#2b2b2f').multiplyScalar(.8 + rng() * .4) });
+      if (h > 2) ISL.colCircle(x, z, .62, y0, y0 + h); list.push({ x, y: y0, z, s: 1, sy: Math.max(1, h), ry: 0, color: new THREE.Color('#2b2b2f').multiplyScalar(.8 + rng() * .4) });
     }
     ISL.placeInstances(scene, col, list, { material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85, flatShading: true }) });
     // 레이니스드랑가르 바다 기둥
@@ -643,7 +654,7 @@
       const geo = new THREE.CylinderGeometry(1.5 + rng(), 5 + rng() * 2, 26 + k * 6, 7, 5); const p = geo.attributes.position;
       for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 + ISL.noise(p.getY(i) * .3, k) * .25));
       geo.computeVertexNormals();
-      mesh(scene, geo, mat('#26262a', { flatShading: true }), sx, (26 + k * 6) / 2 - 6, sz);
+      mesh(scene, geo, mat('#26262a', { flatShading: true }), sx, (26 + k * 6) / 2 - 6, sz); ISL.colCircle(sx, sz, 4.5);
     }
     landmark('blackbeach', '레이니스피아라 검은 모래 해변', 'iceland', b.x, b.z, 50, '화산 현무암이 부서져 생긴 새까만 모래와 육각기둥 절벽. 바다 위 바위기둥은 굳어버린 트롤이라는 전설이 있어요.');
     // 폭포 아래 작은 다리
@@ -689,7 +700,7 @@
       if (ISL.segDist(hx, hz, w.ax, w.az, w.bx, w.bz).d < 6 || ISL.slopeAt(hx, hz) > .2) continue;
       const hg = group(hx, hz, -a + Math.PI / 2, H(hx, hz) - .5), hh = 7 + rng() * 4;
       const f = facade({ wall: lcols[ln % lcols.length], win: '#34404c', frame: '#fff', shutter: rng() < .5 ? '#3f6b48' : '#8a3b2b', cols: 3, rows: 3, lit: .7 });
-      mesh(hg, new THREE.BoxGeometry(6, hh, 6), boxMats(f, '#555'), 0, hh / 2, 0);
+      colOf(mesh(hg, new THREE.BoxGeometry(6, hh, 6), boxMats(f, '#555'), 0, hh / 2, 0));
       mesh(hg, gableGeo(6, 6, 4, .4), roofM, 0, hh, 0); ln++;
     }
     // 샬레와 소
@@ -745,7 +756,7 @@
     for (const [t, o, h] of spots) {
       const x = A.x + tx * t + A.dirx * o, z = A.z + tz * t + A.dirz * o;
       const r = 3 + rng() * 3, geo = rockGeo(new THREE.CylinderGeometry(r * .75, r * 1.15, h + 12, 9, 6), 1.4, t);
-      put(geo, gold, x, h / 2 - 6, z, rng() * 3);
+      put(geo, gold, x, h / 2 - 6, z, rng() * 3); ISL.colCircle(x, z, r * 1.05);
       const c = mesh(scene, new THREE.SphereGeometry(r * .8, 9, 5, 0, Math.PI * 2, 0, Math.PI / 2), cap, x, h, z); c.scale.y = .35;
     }
     for (const [t, o] of [[-20, 9], [42, 8]]) {
@@ -762,7 +773,7 @@
     mesh(scene, archGeo(8.5, 3.6, 5), chalk, ax, 6.5, az, Math.atan2(E.dirx, E.dirz) + Math.PI / 2);
     mesh(scene, rockGeo(new THREE.CylinderGeometry(3.4, 4.2, 16, 8, 4), .8, 3), chalk, ax + E.dirx * 8.5, -2, az + E.dirz * 8.5);
     const nx = E.x + E.dirx * 34 + tx * 14, nz = E.z + E.dirz * 34 + tz * 14;
-    mesh(scene, rockGeo(new THREE.CylinderGeometry(.5, 4.5, 38, 9, 8), .7, 9), chalk, nx, 9, nz);
+    mesh(scene, rockGeo(new THREE.CylinderGeometry(.5, 4.5, 38, 9, 8), .7, 9), chalk, nx, 9, nz); ISL.colCircle(nx, nz, 4); ISL.colCircle(ax + E.dirx * 8.5, az + E.dirz * 8.5, 3.6);
     landmark('etretat', '에트르타 코끼리 절벽', 'france', E.x - E.dirx * 12, E.z - E.dirz * 12, 55, '노르망디 해안의 하얀 백악 절벽. 바다로 코를 담근 코끼리 같은 아치(포르트 다발)와 뾰족한 바위 "바늘(에귀유)"은 모네가 여러 번 그린 풍경이에요.');
   }
   function buildJokul() {
@@ -803,7 +814,7 @@
 
   // ============================================================
   function build(sc) {
-    scene = sc;
+    scene = sc; autoCol = true;
     buildEiffel(); for (const p of plan.paris) haussmann(p.x, p.z);
     buildLavender(); buildMSM();
     buildBelem(); buildLisbon(); buildPena();
@@ -811,6 +822,7 @@
     buildHallgrim(); buildIcelandNature();
     buildSwiss();
     buildAlgarve(); buildEtretat(); buildJokul(); buildTerraces();
+    autoCol = false;
   }
   // 움직이지 않는 명소 부품을 재질·구역별로 합쳐 드로우콜을 줄임
   function mergeStatic() {

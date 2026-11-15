@@ -109,7 +109,7 @@
   #joy { position:fixed; width:120px; height:120px; border-radius:50%; border:2px solid rgba(255,255,255,.3); background:rgba(255,255,255,.06); display:none; z-index:12; pointer-events:none; }
   #knob { position:absolute; left:35px; top:35px; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.35); }
   .mb { position:fixed; width:62px; height:62px; border-radius:50%; border:1px solid var(--line); background:var(--panel); font-size:15px; font-weight:700; z-index:12; }
-  #talkBtn { right:22px; bottom:96px; width:74px; height:74px; }
+  #talkBtn { right:22px; bottom:96px; width:74px; height:74px; font-size:26px; }
   #talkBtn.ready { background:var(--accent); color:#222; }
   #jumpBtn { right:104px; bottom:40px; }
   #runBtn { right:22px; bottom:20px; }
@@ -118,6 +118,26 @@
   body.flying #upBtn, body.flying #downBtn { display:block; }
   body.flying #jumpBtn { display:none; }
   #upBtn { right:104px; bottom:96px; } #downBtn { right:104px; bottom:24px; }
+  #mEmo { left:22px; top:120px; width:50px; height:50px; } #mChat { left:22px; top:178px; width:50px; height:50px; }
+  .mobonly { display:none; } @media (pointer:coarse) { .mobonly { display:inline-block; } }
+  #fade { position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; transition:opacity .3s; z-index:45; }
+  #fade.on { opacity:1; }
+  #bubbles { position:fixed; inset:0; pointer-events:none; z-index:7; }
+  .bubble { position:absolute; transform:translate(-50%,-100%); max-width:240px; background:#fffdf7; color:#2b2722; padding:7px 12px; border-radius:14px; font-size:15px; line-height:1.4; box-shadow:0 4px 14px rgba(0,0,0,.25); white-space:pre-wrap; text-align:center; }
+  .bubble::after { content:''; position:absolute; left:50%; bottom:-7px; transform:translateX(-50%); border:7px solid transparent; border-top-color:#fffdf7; border-bottom:0; }
+  .bubble.emo { background:none; box-shadow:none; font-size:34px; padding:0; } .bubble.emo::after { display:none; }
+  #chatlog { position:fixed; left:16px; bottom:150px; width:min(340px,70vw); font-size:14px; z-index:8; pointer-events:none; opacity:0; transition:opacity .6s; text-shadow:0 1px 3px #000; }
+  #chatlog.show { opacity:1; } #chatlog div { margin:3px 0; } #chatlog b { color:var(--accent2); } #chatlog b.me { color:var(--accent); }
+  #chatbox { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); width:min(560px,94vw); display:none; gap:8px; z-index:31; }
+  #chatbox.open { display:flex; }
+  #chatbox input { flex:1; font:inherit; font-size:16px; padding:11px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(16,20,36,.92); color:var(--ink); outline:none; user-select:text; -webkit-user-select:text; }
+  #chatbox button { border:0; border-radius:12px; padding:0 16px; background:var(--accent); color:#222; font-weight:700; }
+  #wheel { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.9); display:grid; grid-template-columns:repeat(3,96px); gap:10px; opacity:0; pointer-events:none; transition:.18s; z-index:32; }
+  #wheel.open { opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1); }
+  #wheel button { height:86px; border-radius:18px; border:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; backdrop-filter:blur(6px); }
+  #wheel button span { font-size:32px; } #wheel button em { font-style:normal; font-size:12px; opacity:.85; }
+  #wheel button:hover { background:rgba(255,209,102,.25); }
+  body.inside #flyBtn, body.inside #timeBtn { opacity:.4; }
   .hint-mobile { display:none; }
   @media (pointer:coarse) { .hint-desk { display:none; } .hint-mobile { display:block; } #prompt kbd { display:none; } }
 </style>
@@ -137,8 +157,8 @@
   <p>교토·포르투갈·프랑스·아이슬란드·스위스가 하나로 합쳐진 섬.<br>
      강을 따라 걷고, 산에 오르고, 명소에서 스탬프를 모으고, 사람들과 이야기를 나눠 보세요.</p>
   <p class="keys hint-desk"><kbd>WASD</kbd> 걷기 · <kbd>Shift</kbd> 달리기 · <kbd>Space</kbd> 점프 · 마우스 드래그 시점 · 휠 줌<br>
-     <kbd>E</kbd> 대화/줍기 · <kbd>M</kbd> 지도 · <kbd>J</kbd> 수첩 · <kbd>T</kbd> 시간 · <kbd>F</kbd> 패러글라이딩 · <kbd>H</kbd> 사진 모드</p>
-  <p class="keys hint-mobile">왼쪽 화면 드래그로 걷기 · 오른쪽 드래그로 시점 · 💬 버튼으로 대화</p>
+     <kbd>E</kbd> 대화·줍기·문 열기 · <kbd>G</kbd> 감정표현 · <kbd>Enter</kbd> 채팅 · <kbd>M</kbd> 지도 · <kbd>J</kbd> 수첩 · <kbd>T</kbd> 시간 · <kbd>F</kbd> 패러글라이딩 · <kbd>H</kbd> 사진</p>
+  <p class="keys hint-mobile">왼쪽 화면 드래그로 걷기 · 오른쪽 드래그로 시점 · 두 손가락으로 확대 · ✋ 버튼으로 대화·문 열기<br>📱 가로 화면을 추천해요</p>
   <button id="startBtn">여행 시작 ✈️</button>
 </div>
 
@@ -151,13 +171,21 @@
   <button class="ib" id="ppBtn">📔 수첩<small class="kb">J</small></button>
   <button class="ib" id="timeBtn">🌗 시간<small class="kb">T</small></button>
   <button class="ib" id="flyBtn">🪂 비행<small class="kb">F</small></button>
+  <button class="ib" id="emoBtn">😊<small class="kb">G</small></button>
+  <button class="ib" id="chatBtn">💭<small class="kb">↵</small></button>
   <button class="ib" id="photoBtn">📷<small class="kb">H</small></button>
+  <button class="ib mobonly" id="fsBtn">⛶</button>
   <button class="ib" id="sndBtn">🔊</button>
 </div>
 <button class="ib" id="unphoto">UI 보이기</button>
 <div id="banner"></div>
 <div id="toasts"></div>
 <div id="prompt"></div>
+<div id="bubbles"></div>
+<div id="chatlog"></div>
+<div id="chatbox"><input id="chatIn" maxlength="80" placeholder="하고 싶은 말을 적어 보세요 (Enter 보내기)" autocomplete="off"><button id="chatSend">보내기</button></div>
+<div id="wheel"></div>
+<div id="fade"></div>
 
 <div id="dlg">
   <div id="dlgName"></div>
@@ -179,7 +207,9 @@
 
 <div id="mobile">
   <div id="joy"><div id="knob"></div></div>
-  <button class="mb" id="talkBtn">💬</button>
+  <button class="mb" id="talkBtn">✋</button>
+  <button class="mb" id="mEmo">😊</button>
+  <button class="mb" id="mChat">💭</button>
   <button class="mb" id="jumpBtn">점프</button>
   <button class="mb" id="runBtn">달리기</button>
   <button class="mb" id="upBtn">▲</button>
@@ -188,10 +218,15 @@
 
 <script src="vendor/three.min.js"></script>
 <script src="island/terrain.js"></script>
+<script src="island/physics.js"></script>
+<script src="island/audio.js"></script>
 <script src="island/nature.js"></script>
 <script src="island/landmarks.js"></script>
 <script src="island/land.js"></script>
 <script src="island/post.js"></script>
+<script src="island/interior.js"></script>
+<script src="island/social.js"></script>
+<script src="island/npcs.js"></script>
 <script src="island/game.js"></script>
 </body>
 </html>

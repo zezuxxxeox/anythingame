@@ -58,6 +58,19 @@
     return m;
   }
 
+  // ---------- 파도 (GLSL과 JS가 같은 식 → 헤엄칠 때 파도를 타고 출렁임) ----------
+  const WAVES = [[1, .3, 34, .34, .5], [.6, -.8, 21, .22, .45], [-.4, 1, 13, .11, .4], [.9, .5, 7.5, .05, .35]];
+  const WAVE_GLSL = `
+    vec3 gerst(vec2 p, float amp, out vec3 nrm){
+      vec3 o=vec3(0.); vec3 n=vec3(0.,1.,0.);
+      ${WAVES.map(([dx, dz, L, A, Q]) => { const l = Math.hypot(dx, dz), k = 2 * Math.PI / L, c = Math.sqrt(9.8 / k); return `{ vec2 d=vec2(${(dx / l).toFixed(4)},${(dz / l).toFixed(4)}); float ph=${k.toFixed(5)}*(dot(d,p)-${c.toFixed(4)}*uTime); float A=${A}*amp; o.x+=${Q}*A*d.x*cos(ph); o.z+=${Q}*A*d.y*cos(ph); o.y+=A*sin(ph); n.x-=d.x*${k.toFixed(5)}*A*cos(ph); n.z-=d.y*${k.toFixed(5)}*A*cos(ph); n.y-=${Q}*${k.toFixed(5)}*A*sin(ph); }`; }).join('\n')}
+      nrm=normalize(n); return o;
+    }`;
+  ISL.waveY = function (x, z, t) {
+    const depth = -ISL.H(x, z), amp = ISL.sstep(.5, 8, depth) * .85 + .15; let y = 0;
+    for (const [dx, dz, L, A] of WAVES) { const l = Math.hypot(dx, dz), k = 2 * Math.PI / L, c = Math.sqrt(9.8 / k); y += A * amp * Math.sin(k * ((dx * x + dz * z) / l - c * t)); }
+    return y;
+  };
   // ---------- 물 ----------
   let heightTex = null;
   function makeHeightTex() {
@@ -68,30 +81,43 @@
     ISL.heightTex = heightTex;
   }
   function waterMat(opts) {
-    const o = Object.assign({ river: 0, deep: '#0b3a52', shallow: '#2f9fae', milky: 0 }, opts);
+    const o = Object.assign({ river: 0, deep: '#0b3a52', shallow: '#2f9fae', milky: 0, wave: 0 }, opts);
     const uniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
       uRiver: { value: o.river }, uDeep: { value: new THREE.Color(o.deep) }, uShallow: { value: new THREE.Color(o.shallow) },
       uHeight: { value: heightTex }, uHB: { value: new THREE.Vector3(ISL.E, ISL.STEP, ISL.N) }, uMilky: { value: o.milky },
-      uSunCol: { value: new THREE.Color(1, 1, 1) },
+      uSunCol: { value: new THREE.Color(1, 1, 1) }, uWave: { value: o.wave }, uCam: { value: new THREE.Vector3() },
     }]);
     uniforms.uTime = U.uTime; uniforms.uSun = U.uSun; uniforms.uDay = U.uDay;
     return new THREE.ShaderMaterial({
       uniforms, transparent: true, fog: true,
       vertexShader: `
-        varying vec3 vW; varying vec2 vUv; varying vec3 vN;
+        varying vec3 vW; varying vec2 vUv; varying vec3 vN; varying float vSp;
+        uniform float uWave; uniform float uTime; uniform sampler2D uHeight; uniform vec3 uHB; uniform vec3 uCam;
+        attribute float aSpeed;
         #include <fog_pars_vertex>
-        void main(){ vUv=uv; vec4 w=modelMatrix*vec4(position,1.0); vW=w.xyz; vN=normalize(mat3(modelMatrix)*normal);
+        ` + WAVE_GLSL + `
+        void main(){ vUv=uv; vSp=aSpeed; vec4 w=modelMatrix*vec4(position,1.0); vN=normalize(mat3(modelMatrix)*normal);
+          if(uWave>0.5){
+            vec2 huv=((w.xz+uHB.x)/uHB.y+0.5)/uHB.z; float depth=-texture2D(uHeight,huv).r;
+            float amp=(smoothstep(0.5,8.0,depth)*0.85+0.15)*(1.0-smoothstep(380.0,700.0,length(w.xz-uCam.xz)));
+            vec3 nn; w.xyz+=gerst(w.xz, amp, nn); vN=nn;
+          }
+          vW=w.xyz;
           vec4 mvPosition=viewMatrix*w; gl_Position=projectionMatrix*mvPosition;
           #include <fog_vertex>
         }`,
       fragmentShader: SKY_GLSL + `
-        varying vec3 vW; varying vec2 vUv; varying vec3 vN;
+        varying vec3 vW; varying vec2 vUv; varying vec3 vN; varying float vSp;
         uniform float uRiver; uniform vec3 uDeep; uniform vec3 uShallow; uniform sampler2D uHeight; uniform vec3 uHB; uniform float uMilky; uniform vec3 uSunCol;
         #include <fog_pars_fragment>
         float wh(vec2 p){ return sin(p.x*0.8+uTime*1.3)*0.25+sin(p.y*0.63-uTime*1.1+p.x*0.3)*0.25+sin((p.x+p.y)*1.7+uTime*2.1)*0.12+sin((p.x*2.3-p.y*1.9)-uTime*2.7)*0.08+sin(p.x*4.1+p.y*3.3+uTime*3.3)*0.04; }
         void main(){
-          vec2 p = uRiver>0.5 ? vec2(vUv.x*5.0, vUv.y*0.9 - uTime*2.2) : vW.xz*0.32;
+          // 강은 경사에 따라 빠르기가 다른 흐름 (흐름맵 두 단계 섞기로 늘어짐 없이)
+          float ph0=fract(uTime*0.35), ph1=fract(uTime*0.35+0.5), bw=abs(ph0-0.5)*2.0;
+          vec2 p = uRiver>0.5 ? vec2(vUv.x*5.0, vUv.y*0.9 - ph0*vSp*3.0) : vW.xz*0.32 + vec2(uTime*0.05, 0.0);
+          vec2 p2 = vec2(vUv.x*5.0+0.37, vUv.y*0.9 - ph1*vSp*3.0+0.5);
           float e=0.06; float dx=wh(p+vec2(e,0.0))-wh(p-vec2(e,0.0)); float dz=wh(p+vec2(0.0,e))-wh(p-vec2(0.0,e));
+          if(uRiver>0.5){ float dx2=wh(p2+vec2(e,0.0))-wh(p2-vec2(e,0.0)); float dz2=wh(p2+vec2(0.0,e))-wh(p2-vec2(0.0,e)); dx=mix(dx,dx2,bw)*(0.7+vSp*0.25); dz=mix(dz,dz2,bw)*(0.7+vSp*0.25); }
           float camD=length(cameraPosition-vW); float amp=0.2*exp(-camD/240.0)+0.02;
           vec3 n=normalize(vec3(-dx/(2.0*e)*amp, 1.0, -dz/(2.0*e)*amp));
           vec3 gN=normalize(vN); float steep=1.0-abs(gN.y);
@@ -108,9 +134,13 @@
           vec3 L=uSun.y>-0.05?uSun:-uSun;
           col+=uSunCol*pow(max(dot(r,L),0.0),220.0)*(uSun.y>-0.05?2.5:0.5);
           float foam=smoothstep(1.1,0.0,depth)*(0.55+0.45*sin(depth*9.0-uTime*2.2+vW.x*0.15));
+          // 해안으로 밀려오는 하얀 파도 줄
+          float brk=sin(depth*1.35 - uTime*1.7 + sin(vW.x*0.05+vW.z*0.04)*2.0);
+          foam += smoothstep(0.55,0.95,brk)*smoothstep(5.0,0.6,depth)*0.75*(1.0-uRiver);
+          foam += smoothstep(0.32,0.6,vW.y)*smoothstep(0.55,0.9,sin(vW.x*0.7+vW.z*0.5+uTime)*0.5+0.5)*0.3*(1.0-uRiver);
           float fall=smoothstep(0.2,0.6,steep);
           foam+=fall*(0.75+0.25*sin(vUv.y*3.0+uTime*14.0+vUv.x*20.0));
-          if(uRiver>0.5) foam+=0.12*smoothstep(0.6,1.0,sin(p.x*3.0+p.y*2.0));
+          if(uRiver>0.5) foam+=(0.08+smoothstep(1.6,3.2,vSp)*0.5)*smoothstep(0.55,1.0,sin(p.x*3.0+p.y*2.0)*0.5+sin(p2.x*2.0-p2.y*3.0)*0.5);
           col=mix(col, vec3(0.92,0.96,1.0)*lit, clamp(foam,0.0,1.0)*0.85);
           float a = uRiver>0.5 ? mix(0.72,0.95,dk) : mix(0.35,0.97,smoothstep(0.0,3.5,depth));
           a=max(a,fall); if(uMilky>0.5) a=max(a,0.9);
@@ -122,9 +152,14 @@
     });
   }
   function makeWater(scene) {
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000, 1, 1), waterMat({ deep: '#0a3550', shallow: '#3fb5b8' }));
-    sea.rotation.x = -Math.PI / 2; sea.renderOrder = 1; scene.add(sea);
-    ISL.waterMats = [sea.material];
+    const segs = matchMedia('(pointer:coarse)').matches ? 160 : 260;
+    const sg = new THREE.PlaneGeometry(1500, 1500, segs, segs); sg.rotateX(-Math.PI / 2);
+    const seaMat = waterMat({ deep: '#0a3550', shallow: '#3fb5b8', wave: 1 });
+    const sea = new THREE.Mesh(sg, seaMat); sea.renderOrder = 1; sea.frustumCulled = false; scene.add(sea);
+    const rg = new THREE.RingGeometry(700, 7000, 64, 1); rg.rotateX(-Math.PI / 2);
+    const far = new THREE.Mesh(rg, waterMat({ deep: '#0a3550', shallow: '#3fb5b8' })); far.renderOrder = 1; far.frustumCulled = false; scene.add(far);
+    ISL.sea = { sea, far, step: 1500 / segs };
+    ISL.waterMats = [seaMat, far.material];
     for (const L of ISL.lakes) {
       const m = waterMat(L.color === 'lagoon' ? { deep: '#5fc4cf', shallow: '#a9e6e6', milky: 1 } : L.color === 'glacier' ? { deep: '#2f6f86', shallow: '#7cc3d0' } : { deep: '#0d4a5e', shallow: '#3aa5a8' });
       const mesh = new THREE.Mesh(new THREE.CircleGeometry(L.r * 1.25, 64), m);
@@ -134,9 +169,15 @@
     const rm = waterMat({ river: 1, deep: '#164f5c', shallow: '#4aa7a4' });
     ISL.waterMats.push(rm);
     for (const r of ISL.rivers) {
-      const pos = [], uv = [], idx = []; let n = 0;
+      const pos = [], uv = [], idx = [], spd = []; let n = 0;
+      r.speed = new Float32Array(r.pts.length);
+      for (let i = 0; i < r.pts.length; i++) {
+        const i0 = Math.max(0, i - 2), i1 = Math.min(r.pts.length - 1, i + 2);
+        r.speed[i] = Math.max(.6, Math.min(3.6, .75 + (r.lv[i0] - r.lv[i1]) / Math.max(1, r.s[i1] - r.s[i0]) * 28));
+      }
       for (let i = 0; i < r.pts.length; i++) {
         if (r.lv[i] < -0.3) break;
+        spd.push(r.speed[i], r.speed[i]);
         const a = r.pts[Math.max(0, i - 1)], b = r.pts[Math.min(r.pts.length - 1, i + 1)];
         let tx = b[0] - a[0], tz = b[1] - a[1]; const l = Math.hypot(tx, tz); tx /= l; tz /= l;
         const w = r.wd[i] * 1.18, x = r.pts[i][0], z = r.pts[i][1], y = Math.max(r.lv[i], 0.02);
@@ -145,7 +186,7 @@
         n++;
       }
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('aSpeed', new THREE.Float32BufferAttribute(spd, 1));
       g.setIndex(idx); g.computeVertexNormals();
       const mesh = new THREE.Mesh(g, rm); mesh.renderOrder = 2; scene.add(mesh);
     }
@@ -215,12 +256,17 @@
       if (bare < .3 && !SURF.water) ISL.Land.groundInfo(x, z, h, slope, k, c, G);
       for (const f of ISL.groundTints) { const t = f(x, z); if (t) { c.lerp(t[0], t[1]); if (t[2] !== undefined) { G.g = t[2]; G.fl = 0; } else { G.g *= 1 - t[1]; G.fl *= 1 - t[1]; } if (t[1] > .5) G.lu = Math.max(G.lu, 3); } }
       if (SURF.water) G.lu = 4;
+      if (G.g > .05) { tmpC.copy(G.gc).multiplyScalar(.62); c.lerp(tmpC, Math.min(.55, G.g * .6)); }
       col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
       A[k * 4] = srgb(G.gc.r); A[k * 4 + 1] = srgb(G.gc.g); A[k * 4 + 2] = srgb(G.gc.b); A[k * 4 + 3] = Math.round(Math.max(0, Math.min(1, G.g)) * 255);
       B[k * 4] = Math.round(Math.max(0, Math.min(1, G.fl)) * 255); B[k * 4 + 1] = G.fp * 32;
       LU[k] = G.lu;
     }
     ISL.groundColors = col; ISL.groundLU = LU;
+    const sd = new Float32Array(N * N); for (let k = 0; k < N * N; k++) sd[k] = (g[k] < -.3 && LU[k] === 4) || g[k] < -8 ? 0 : 1e9;
+    for (let pass = 0; pass < 2; pass++) for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i; if (i > 0) sd[k] = Math.min(sd[k], sd[k - 1] + S); if (j > 0) sd[k] = Math.min(sd[k], sd[k - N] + S); }
+    for (let j = N - 1; j >= 0; j--) for (let i = N - 1; i >= 0; i--) { const k = j * N + i; if (i < N - 1) sd[k] = Math.min(sd[k], sd[k + 1] + S); if (j < N - 1) sd[k] = Math.min(sd[k], sd[k + N] + S); }
+    ISL.seaDist = (x, z) => { const i = Math.round((x + E) / S), j = Math.round((z + E) / S); return (i < 0 || j < 0 || i >= N || j >= N) ? 0 : sd[j * N + i]; };
     const tA = new THREE.DataTexture(A, N, N, THREE.RGBAFormat); tA.magFilter = tA.minFilter = THREE.LinearFilter; tA.needsUpdate = true;
     const tB = new THREE.DataTexture(B, N, N, THREE.RGBAFormat); tB.magFilter = tB.minFilter = THREE.NearestFilter; tB.needsUpdate = true;
     ISL.grassTex = { A: tA, B: tB };
@@ -242,14 +288,18 @@
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
     // 지면 세부 무늬: 여러 크기의 얼룩, 바위 지층
     mat.onBeforeCompile = sh => {
+      sh.uniforms.uTime = U.uTime;
       sh.vertexShader = 'varying vec3 vWP; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vWP = (modelMatrix*vec4(transformed,1.0)).xyz; vWN = normal;');
-      sh.fragmentShader = `varying vec3 vWP; varying vec3 vWN;
+      sh.fragmentShader = `varying vec3 vWP; varying vec3 vWN; uniform float uTime;
         float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
         float vn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h21(i),h21(i+vec2(1,0)),f.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x), f.y); }
         ` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
         float camD = length(cameraPosition - vWP);
         float n1 = vn(vWP.xz*0.045)*0.5 + vn(vWP.xz*0.21)*0.3 + vn(vWP.xz*1.1)*0.2*smoothstep(160.0,40.0,camD);
         diffuseColor.rgb *= mix(0.86, 1.12, n1);
+        float swash = sin(uTime*0.9 + vn(vWP.xz*0.04)*6.0)*0.5+0.5;
+        float wet = smoothstep(1.5, 0.3, vWP.y - swash*0.7) * step(-3.0, vWP.y);
+        diffuseColor.rgb *= 1.0 - wet*0.38;
         float steep = 1.0 - clamp(normalize(vWN).y, 0.0, 1.0);
         float strata = sin(vWP.y*1.6 + vn(vWP.xz*0.04)*6.0)*0.5+0.5;
         float strata2 = sin(vWP.y*5.3 + vn(vWP.xz*0.2)*3.0)*0.5+0.5;
@@ -412,6 +462,8 @@
       mesh.castShadow = opts.shadow !== false; mesh.receiveShadow = true;
       mesh.userData.lod = opts.lod || 1200;
       scene.add(mesh); out.push(mesh); ISL.chunks.push(mesh);
+      const cr = opts.collide !== undefined ? opts.collide : (typeof type === 'string' && type !== 'bush' ? (type === 'cypress' || type === 'birch' ? .3 : .45) : 0);
+      if (cr && ISL.world) for (const t of part) { const c = ISL.colCircle(t.x, t.z, cr * t.s, t.y - 1, t.y + 2.2 * t.s); c.canopy = [2.4 * t.s, t.y + 2.2 * t.s, t.y + 8 * t.s]; }
     }
     return out;
   }
@@ -458,16 +510,22 @@
       const W = ISL.weights(x, z); if (h > 52 * W[0] + 120 * W[1] + 400 * (W[2] + W[3] + W[4])) continue;
       rocks.push({ x, y: h - .4, z, s: .7 + rng() * 1.6, color: new THREE.Color(W[0] > .5 ? '#3c3b3e' : '#8a857d').multiplyScalar(.85 + rng() * .3) });
     }
-    placeInstances(scene, rock, rocks, { material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }) });
+    placeInstances(scene, rock, rocks, { collide: 1.3, material: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true }) });
   }
 
   // ---------- 풀밭: 플레이어 주변에서 바람에 흔들리는 풀과 들꽃 ----------
   function makeGrass(scene, count) {
-    const blade = new THREE.BufferGeometry();
-    blade.setAttribute('position', new THREE.Float32BufferAttribute([-.5, 0, 0, .5, 0, 0, -.36, .48, 0, .36, .48, 0, -.18, .82, 0, .18, .82, 0, 0, 1, 0], 3));
-    blade.setIndex([0, 1, 2, 2, 1, 3, 2, 3, 4, 4, 3, 5, 4, 5, 6]);
-    const geo = new THREE.InstancedBufferGeometry(); geo.index = blade.index; geo.setAttribute('position', blade.attributes.position);
-    const SZ = 96, off = new Float32Array(count * 2), rnd = new Float32Array(count * 2);
+    // 한 포기 = 잎 5장 (각자 방향·높이·휘어짐이 다름)
+    const BV = [-.5, 0, .5, 0, -.36, .48, .36, .48, -.18, .82, .18, .82, 0, 1], BI = [0, 1, 2, 2, 1, 3, 2, 3, 4, 4, 3, 5, 4, 5, 6];
+    const NB = 6, bpos = [], bb = [], bidx = [], br = ISL.mulberry32(31);
+    for (let b = 0; b < NB; b++) {
+      const a = br() * 6.28, r = Math.sqrt(br()) * .5, hf = .55 + br() * .6, rot = br() * 6.28;
+      for (let v = 0; v < 7; v++) { bpos.push(BV[v * 2], BV[v * 2 + 1], 0); bb.push(Math.cos(a) * r, Math.sin(a) * r, rot, hf); }
+      for (const i of BI) bidx.push(i + b * 7);
+    }
+    const geo = new THREE.InstancedBufferGeometry(); geo.setIndex(bidx);
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(bpos, 3)); geo.setAttribute('aB', new THREE.Float32BufferAttribute(bb, 4));
+    const SZ = 104, off = new Float32Array(count * 2), rnd = new Float32Array(count * 2);
     for (let i = 0; i < count; i++) { off[i * 2] = (rng() - .5) * SZ * 4; off[i * 2 + 1] = (rng() - .5) * SZ * 4; rnd[i * 2] = rng(); rnd[i * 2 + 1] = rng(); }
     geo.setAttribute('aOff', new THREE.InstancedBufferAttribute(off, 2)); geo.setAttribute('aRnd', new THREE.InstancedBufferAttribute(rnd, 2));
     geo.instanceCount = count;
@@ -481,10 +539,11 @@
     const mat = new THREE.ShaderMaterial({
       uniforms, fog: true, side: THREE.DoubleSide,
       vertexShader: `
-        attribute vec2 aOff; attribute vec2 aRnd;
+        attribute vec2 aOff; attribute vec2 aRnd; attribute vec4 aB;
         uniform vec2 uCenter; uniform float uS; uniform float uTime; uniform sampler2D tA; uniform sampler2D tB; uniform sampler2D tH; uniform vec3 uHB;
-        varying vec3 vCol; varying float vY;
+        varying vec3 vCol; varying float vY; varying float vBack;
         #include <fog_pars_vertex>
+        float vn2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); float a=fract(sin(dot(i,vec2(127.1,311.7)))*43758.5), b=fract(sin(dot(i+vec2(1,0),vec2(127.1,311.7)))*43758.5), c=fract(sin(dot(i+vec2(0,1),vec2(127.1,311.7)))*43758.5), d=fract(sin(dot(i+vec2(1,1),vec2(127.1,311.7)))*43758.5); return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
         float hh(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
         vec3 flower(float pal, float r){
           if(pal<1.5) return r<.33? vec3(1.,1.,.94) : r<.66? vec3(1.,.82,.18) : vec3(.62,.45,.95);
@@ -502,34 +561,42 @@
           float gh = A.a;
           float dist = length(base - uCenter);
           float fade = 1. - smoothstep(uS*.3, uS*.48, dist);
-          float isF = step(hh(base*1.7), B.r);
-          float hgt = (.22 + 1.2*gh) * (.65 + .7*aRnd.x) * fade * step(.03, gh) * (1. + isF*.15);
-          float ang = aRnd.y*6.2831;
+          float bladeR = hh(base*1.7 + aB.xy*13.1);
+          float isF = step(bladeR, B.r) * step(aB.w, .9);
+          // 자연스럽게 무리 지어 자라는 풀 (큰 얼룩 + 작은 얼룩)
+          float ptch = vn2(base*.07)*.65 + vn2(base*.31)*.35;
+          float hgt = (.2 + 1.25*gh) * (.55 + .75*aRnd.x) * aB.w * fade * step(.03, gh) * (.55 + .9*ptch) * (1. + isF*.2);
+          float ang = aRnd.y*6.2831 + aB.z;
           vec3 p = position;
-          float w = .1*(.7 + aRnd.x*.6)*(1. + isF*.6);
-          vec3 l = vec3(p.x*w*cos(ang), p.y*hgt, p.x*w*sin(ang));
+          float w = .085*(.75 + aRnd.x*.5)*(1. + isF*.7);
+          vec3 l = vec3(p.x*w*cos(ang) + aB.x*(.6 + gh), p.y*hgt, p.x*w*sin(ang) + aB.y*(.6 + gh));
+          float lean = (hh(base + aB.zw) - .5) * .5 * p.y*p.y*hgt; l.x += lean*cos(aB.z); l.z += lean*sin(aB.z);
           float gust = sin(uTime*1.1 + base.x*.05 + base.y*.035)*.5+.5;
           float sway = (sin(uTime*2.3 + base.x*.7 + base.y*.5)*.22 + gust*.6) * p.y*p.y * hgt * .42;
           l.x += sway*.85; l.z += sway*.4; l.y -= sway*sway*.35*p.y;
           vec3 wp = vec3(base.x, texture2D(tH, tuv).r - .06, base.y) + l;
           vec3 g = pow(A.rgb, vec3(2.2));
-          vec3 col = g * mix(.42, 1.08, p.y);
-          col = mix(col, g*1.3 + vec3(.05,.05,.0), smoothstep(.6,1.,p.y)*.45);
+          float shade = .82 + .36*hh(base*.9 + aB.xy);
+          vec3 col = g * mix(.38, 1.05, p.y) * shade * (.85 + .3*ptch);
+          col = mix(col, g*1.25 + vec3(.06,.05,-.01), smoothstep(.6,1.,p.y)*.4);
+          col = mix(col, col*vec3(1.15,1.05,.7), smoothstep(.75,.95,hh(base*2.3))*p.y*.5); // 마른 잎끝
           float vF = isF*smoothstep(.7,.95,p.y);
           col = mix(col, flower(floor(B.g*255./32.+.5), hh(base*3.1)), vF);
           vCol = col; vY = p.y;
+          vBack = p.y;
           vec4 mvPosition = viewMatrix*vec4(wp,1.);
           gl_Position = projectionMatrix*mvPosition;
           #include <fog_vertex>
         }`,
       fragmentShader: `
         uniform vec3 uL; uniform vec3 uLC; uniform vec3 uSkyC; uniform vec3 uGndC;
-        varying vec3 vCol; varying float vY;
+        varying vec3 vCol; varying float vY; varying float vBack;
         #include <fog_pars_fragment>
         void main(){
           vec3 amb = mix(uGndC, uSkyC, .35 + .65*vY);
           float d = max(uL.y, 0.)*.7 + .3;
           vec3 c = vCol * (amb + uLC*d*(.75 + .35*vY)) / 3.14159;
+          c += vCol * uLC * vBack*vBack * .06 * (1. - uL.y); // 해를 등지면 잎이 비쳐 보임
           gl_FragColor = vec4(c, 1.);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>

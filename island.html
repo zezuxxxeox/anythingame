@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>다섯 나라의 섬</title>
+<style>
+  :root { --ink:#f4f1ea; --panel:rgba(18,22,38,.78); --line:rgba(255,255,255,.14); --accent:#ffd166; --accent2:#7bdff2; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#0d1220; color:var(--ink);
+    font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    user-select:none; -webkit-user-select:none; touch-action:none; }
+  #app canvas { display:block; width:100vw; height:100vh; }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  kbd { display:inline-block; padding:1px 7px; border-radius:6px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.3); font-size:.9em; font-family:inherit; }
+
+  /* 로딩 & 타이틀 */
+  #loading { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    background:radial-gradient(circle at 50% 40%, #24345a, #0d1220); z-index:50; transition:opacity 1s; }
+  #loading.done { opacity:0; pointer-events:none; }
+  #loading h1 { margin:0; font-size:clamp(30px,6vw,52px); letter-spacing:2px; }
+  #loading .flags { font-size:28px; letter-spacing:6px; }
+  .bar { width:min(320px,80vw); height:8px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; }
+  #loadBar { height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width .3s; }
+  #title { position:fixed; inset:0; display:none; flex-direction:column; align-items:center; justify-content:flex-end; padding:16px 16px 9vh;
+    background:linear-gradient(180deg, rgba(10,14,28,0) 30%, rgba(10,14,28,.75)); z-index:40; text-align:center; }
+  #title.open { display:flex; }
+  #title h1 { margin:0 0 6px; font-size:clamp(34px,7vw,64px); letter-spacing:3px; text-shadow:0 4px 24px rgba(0,0,0,.5); }
+  #title p { margin:4px 0; opacity:.9; line-height:1.6; max-width:560px; }
+  #title .keys { font-size:14px; opacity:.8; margin-top:10px; }
+  #startBtn { margin-top:20px; padding:14px 38px; border-radius:99px; border:0; background:var(--accent); color:#2b2110; font-size:20px; font-weight:800;
+    box-shadow:0 8px 30px rgba(255,209,102,.35); }
+  #startBtn:hover { transform:translateY(-1px); }
+
+  /* HUD */
+  .hud { display:none; }
+  body.playing .hud { display:flex; }
+  body.photo .hud, body.photo #prompt, body.photo #toasts, body.photo #mobile { display:none !important; }
+  #topL { position:fixed; top:12px; left:16px; gap:8px; flex-direction:column; z-index:10; }
+  .chip { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:7px 12px; font-weight:700; font-size:15px; backdrop-filter:blur(6px); }
+  #topR { position:fixed; top:12px; right:16px; gap:6px; z-index:10; flex-wrap:wrap; justify-content:flex-end; max-width:60vw; }
+  .ib { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:7px 10px; font-size:15px; backdrop-filter:blur(6px); white-space:nowrap; }
+  .ib:hover { background:rgba(40,48,80,.9); }
+  .ib small { opacity:.65; margin-left:3px; }
+  #unphoto { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); display:none; z-index:10; opacity:.5; }
+  body.photo #unphoto { display:block; }
+  #banner { position:fixed; top:70px; left:50%; transform:translate(-50%,-10px); display:flex; gap:12px; align-items:center; opacity:0; pointer-events:none;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:10px 20px; z-index:9; }
+  #banner .flag { font-size:34px; }
+  #banner b { display:block; font-size:20px; }
+  #banner span { opacity:.8; }
+  #banner.show { animation:ban 4s ease forwards; }
+  @keyframes ban { 0%{opacity:0;transform:translate(-50%,-10px)} 10%,75%{opacity:1;transform:translate(-50%,0)} 100%{opacity:0;transform:translate(-50%,0)} }
+  #toasts { position:fixed; top:130px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; align-items:center; z-index:20; width:min(460px,92vw); pointer-events:none; }
+  .toast { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 16px; text-align:center; line-height:1.5; animation:tin .4s ease; transition:opacity .6s, transform .6s; backdrop-filter:blur(6px); }
+  .toast small { opacity:.8; }
+  .toast .stamp { color:var(--accent); font-weight:800; font-size:17px; }
+  .toast.out { opacity:0; transform:translateY(-8px); }
+  @keyframes tin { from{opacity:0;transform:translateY(8px)} }
+  #prompt { position:fixed; bottom:24%; left:50%; transform:translateX(-50%); display:none; background:var(--panel); border:1px solid var(--line); padding:8px 16px; border-radius:99px; z-index:8; font-weight:600; }
+
+  /* 대화 */
+  #dlg { position:fixed; left:50%; bottom:16px; transform:translate(-50%,20px); width:min(720px,94vw); background:rgba(16,20,36,.9); border:1px solid var(--line);
+    border-radius:18px; padding:16px 20px 14px; opacity:0; pointer-events:none; transition:.25s; z-index:30; backdrop-filter:blur(8px); }
+  #dlg.open { opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  #dlgName { color:var(--accent); font-weight:800; margin-bottom:6px; font-size:17px; }
+  #dlgText { font-size:17px; line-height:1.65; min-height:56px; white-space:pre-wrap; }
+  #dlgChoices { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+  #dlgChoices button { text-align:left; padding:9px 14px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.06); }
+  #dlgChoices button:hover { background:rgba(255,209,102,.18); border-color:rgba(255,209,102,.5); }
+  #dlgNext { text-align:right; opacity:.7; font-size:13px; animation:blink 1.2s infinite; }
+  @keyframes blink { 50%{opacity:.25} }
+
+  /* 모달 */
+  .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(5,8,16,.55); z-index:35; padding:16px; }
+  .modal.open { display:flex; }
+  .sheet { background:rgba(20,25,44,.96); border:1px solid var(--line); border-radius:18px; width:min(760px,100%); max-height:92vh; display:flex; flex-direction:column; overflow:hidden; }
+  .sheet header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); }
+  .sheet header h2 { margin:0; font-size:20px; }
+  .close { background:none; border:0; font-size:22px; padding:2px 8px; }
+  #mapWrap { padding:12px; overflow:auto; }
+  #mapBox { position:relative; width:min(78vh,100%); aspect-ratio:1; margin:0 auto; background-size:cover; border-radius:12px; image-rendering:auto; }
+  .pin { position:absolute; transform:translate(-50%,-100%); background:none; border:0; padding:0; display:flex; flex-direction:column; align-items:center; }
+  .pin span { font-size:20px; filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+  .pin em { font-style:normal; font-size:11px; background:rgba(0,0,0,.55); padding:1px 6px; border-radius:6px; white-space:nowrap; }
+  .pin:not(.on) em { opacity:.6; }
+  .pin:hover em { background:var(--accent); color:#222; }
+  .npcpin { position:absolute; transform:translate(-50%,-50%); font-size:15px; pointer-events:none; }
+  .rlabel { position:absolute; transform:translate(-50%,-50%); font-weight:800; font-size:13px; opacity:.75; text-shadow:0 1px 4px #000; pointer-events:none; white-space:nowrap; }
+  .me { position:absolute; color:#ff4d6d; font-size:20px; text-shadow:0 0 6px #fff; pointer-events:none; }
+  .maphelp { text-align:center; font-size:13px; opacity:.7; margin:8px 0 0; }
+  .tabs { display:flex; gap:6px; padding:10px 18px 0; }
+  .tabs button { border:1px solid var(--line); background:none; border-radius:99px; padding:6px 14px; }
+  .tabs button.on { background:var(--accent); color:#222; border-color:var(--accent); font-weight:700; }
+  #ppBody { padding:6px 18px 18px; overflow:auto; }
+  #ppBody h3 { margin:16px 0 8px; font-size:16px; }
+  .sum { opacity:.85; }
+  .stamps { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
+  .st { border:1px dashed var(--line); border-radius:12px; padding:9px 12px; opacity:.6; }
+  .st.on { opacity:1; border-style:solid; background:rgba(255,209,102,.06); border-color:rgba(255,209,102,.3); }
+  .st b { display:block; margin-bottom:3px; }
+  .st small { display:block; opacity:.8; line-height:1.45; font-size:12.5px; }
+  .st .hint { color:var(--accent2); margin-top:4px; }
+  .ghost { background:none; border:1px solid var(--line); border-radius:99px; padding:7px 16px; opacity:.8; }
+
+  /* 모바일 */
+  #mobile { display:none; }
+  @media (pointer:coarse) { body.playing #mobile { display:block; } #topR .kb { display:none; } }
+  #joy { position:fixed; width:120px; height:120px; border-radius:50%; border:2px solid rgba(255,255,255,.3); background:rgba(255,255,255,.06); display:none; z-index:12; pointer-events:none; }
+  #knob { position:absolute; left:35px; top:35px; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,.35); }
+  .mb { position:fixed; width:62px; height:62px; border-radius:50%; border:1px solid var(--line); background:var(--panel); font-size:15px; font-weight:700; z-index:12; }
+  #talkBtn { right:22px; bottom:96px; width:74px; height:74px; }
+  #talkBtn.ready { background:var(--accent); color:#222; }
+  #jumpBtn { right:104px; bottom:40px; }
+  #runBtn { right:22px; bottom:20px; }
+  #runBtn.on { background:var(--accent2); color:#123; }
+  #upBtn, #downBtn { display:none; }
+  body.flying #upBtn, body.flying #downBtn { display:block; }
+  body.flying #jumpBtn { display:none; }
+  #upBtn { right:104px; bottom:96px; } #downBtn { right:104px; bottom:24px; }
+  .hint-mobile { display:none; }
+  @media (pointer:coarse) { .hint-desk { display:none; } .hint-mobile { display:block; } #prompt kbd { display:none; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="loading">
+  <div class="flags">🇯🇵 🇵🇹 🇫🇷 🇮🇸 🇨🇭</div>
+  <h1>다섯 나라의 섬</h1>
+  <div class="bar"><div id="loadBar"></div></div>
+  <div id="loadText">준비 중…</div>
+</div>
+
+<div id="title">
+  <h1>다섯 나라의 섬</h1>
+  <p>교토·포르투갈·프랑스·아이슬란드·스위스가 하나로 합쳐진 섬.<br>
+     강을 따라 걷고, 산에 오르고, 명소에서 스탬프를 모으고, 사람들과 이야기를 나눠 보세요.</p>
+  <p class="keys hint-desk"><kbd>WASD</kbd> 걷기 · <kbd>Shift</kbd> 달리기 · <kbd>Space</kbd> 점프 · 마우스 드래그 시점 · 휠 줌<br>
+     <kbd>E</kbd> 대화/줍기 · <kbd>M</kbd> 지도 · <kbd>J</kbd> 수첩 · <kbd>T</kbd> 시간 · <kbd>F</kbd> 패러글라이딩 · <kbd>H</kbd> 사진 모드</p>
+  <p class="keys hint-mobile">왼쪽 화면 드래그로 걷기 · 오른쪽 드래그로 시점 · 💬 버튼으로 대화</p>
+  <button id="startBtn">여행 시작 ✈️</button>
+</div>
+
+<div id="topL" class="hud">
+  <div class="chip" id="where">🧭</div>
+  <div class="chip" id="clock">☀️</div>
+</div>
+<div id="topR" class="hud">
+  <button class="ib" id="mapBtn">🗺️ 지도<small class="kb">M</small></button>
+  <button class="ib" id="ppBtn">📔 수첩<small class="kb">J</small></button>
+  <button class="ib" id="timeBtn">🌗 시간<small class="kb">T</small></button>
+  <button class="ib" id="flyBtn">🪂 비행<small class="kb">F</small></button>
+  <button class="ib" id="photoBtn">📷<small class="kb">H</small></button>
+  <button class="ib" id="sndBtn">🔊</button>
+</div>
+<button class="ib" id="unphoto">UI 보이기</button>
+<div id="banner"></div>
+<div id="toasts"></div>
+<div id="prompt"></div>
+
+<div id="dlg">
+  <div id="dlgName"></div>
+  <div id="dlgText"></div>
+  <div id="dlgChoices"></div>
+  <div id="dlgNext">▼ 계속 (E / 탭)</div>
+</div>
+
+<div class="modal" id="map"><div class="sheet">
+  <header><h2>🗺️ 섬 지도</h2><button class="close">✕</button></header>
+  <div id="mapWrap"><div id="mapBox"></div><p class="maphelp">명소 핀을 누르면 그곳으로 바로 이동해요 · 💬 사람 · ✨ 주울 수 있는 것 · <span style="color:#ff4d6d">▲</span> 나</p></div>
+</div></div>
+
+<div class="modal" id="passport"><div class="sheet">
+  <header><h2>📔 여행 수첩</h2><button class="close">✕</button></header>
+  <div class="tabs"><button data-tab="stamps" class="on">📮 스탬프</button><button data-tab="friends">💛 친구</button><button data-tab="bag">🎒 가방</button></div>
+  <div id="ppBody"></div>
+</div></div>
+
+<div id="mobile">
+  <div id="joy"><div id="knob"></div></div>
+  <button class="mb" id="talkBtn">💬</button>
+  <button class="mb" id="jumpBtn">점프</button>
+  <button class="mb" id="runBtn">달리기</button>
+  <button class="mb" id="upBtn">▲</button>
+  <button class="mb" id="downBtn">▼</button>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="island/terrain.js"></script>
+<script src="island/nature.js"></script>
+<script src="island/landmarks.js"></script>
+<script src="island/game.js"></script>
+</body>
+</html>

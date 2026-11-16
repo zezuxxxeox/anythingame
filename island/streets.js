@@ -387,47 +387,155 @@
     ISL.colCircle(x, z, .7, y - 1, y + 3);
   }
 
-  // ---------- 거리 정의 ----------
-  const streets = []; ISL.streets = streets; ISL.paved = [];
+  // ---------- 도시 계획: 나라마다 실제 도시 구조를 따름 ----------
+  // 파리: 원형 광장에서 대로가 방사형으로 뻗는 에투알 / 교토: 바둑판 골목 / 리스본 알파마: 굽이치는 언덕길과 계단·전망대
+  // 레이캬비크: 둥근 크리스마스 광장 + 띄엄띄엄 선 집들 / 루체른: 분수 광장에서 이어지는 구시가 골목
+  const streets = [], plazas = []; ISL.streets = streets; ISL.paved = [];
+  const DIM = { paris: { road: 5.5, walk: 4, depth: 13, widths: [9, 12, 15] }, kyoto: { road: 2.7, walk: 0, depth: 10, widths: [6.4, 7.2, 8] }, lisbon: { road: 3, walk: .9, depth: 10, widths: [5.6, 6.4, 7.2] },
+    reyk: { road: 3.4, walk: 2.2, depth: 11, widths: [7, 8.5, 10] }, luzern: { road: 3.2, walk: 1.3, depth: 11, widths: [7.4, 8.2, 9] } };
   function plan() {
     const P = ISL.P, hall = P.hallgrim;
-    const defs = [
-      { id: 'paris', style: 'paris', a: [-282, 86], b: [-282, 200], road: 5.5, walk: 4, depth: 13, widths: [9, 12, 15], name: '파리 오스만 대로' },
-      { id: 'paris2', style: 'paris', a: [-40, 58], b: [-40, 162], road: 4.2, walk: 3, depth: 12, widths: [9, 12, 15] },
-      { id: 'kyoto', style: 'kyoto', a: [222, 513], b: [222, 600], road: 2.7, walk: 0, depth: 10, widths: [6.4, 7.2, 8], name: '교토 기온 거리' },
-      { id: 'lisbon', style: 'lisbon', a: [-374, 430], b: [-286, 430], road: 3, walk: .9, depth: 10, widths: [5.6, 6.4, 7.2], name: '리스본 알파마 골목' },
-      { id: 'reyk', style: 'reyk', a: [hall.x, hall.z + 40], b: [hall.x, hall.z + 122], road: 3.4, walk: 2.2, depth: 11, widths: [7, 8.5, 10], name: '레이캬비크 무지개 거리' },
-      { id: 'luzern', style: 'luzern', a: [226, -10], b: [150, 11], road: 3.2, walk: 1.3, depth: 11, widths: [7.4, 8.2, 9], name: '루체른 구시가지' },
-    ];
-    for (const d of defs) {
-      const dx = d.b[0] - d.a[0], dz = d.b[1] - d.a[1], len = Math.hypot(dx, dz), ux = dx / len, uz = dz / len;
-      const s = Object.assign(d, { ax: d.a[0], az: d.a[1], len, ux, uz, nx: uz, nz: -ux, ry: Math.atan2(ux, uz) });
-      streets.push(s);
-      const half = s.road + s.walk + s.depth + 1;
-      ISL.noTreeSeg.push({ ax: s.ax - ux * 4, az: s.az - uz * 4, bx: d.b[0] + ux * 4, bz: d.b[1] + uz * 4, w: half });
-      ISL.paved.push({ ax: s.ax, az: s.az, bx: d.b[0], bz: d.b[1], hw: s.road + s.walk + .3 });
-      const pc = new THREE.Color(s.style === 'reyk' ? '#7d7f80' : s.style === 'lisbon' ? '#e2dccc' : s.style === 'kyoto' ? '#8e8b84' : '#8f8a80');
-      ISL.groundTints.push((x, z) => ISL.segDist(x, z, s.ax, s.az, d.b[0], d.b[1]).d < s.road + s.walk + .6 ? [pc, .95, 0] : null);
+    const add = (id, style, a, b, o) => streets.push(Object.assign({ id, style, a, b }, DIM[style], o || {}));
+    const plaza = (x, z, r, style, kind) => plazas.push({ x, z, r, style, kind });
+    // 파리 에투알
+    { const C = [-292, 142]; plaza(C[0], C[1], 43, 'paris', 'etoile'); let k = 0;
+      for (const deg of [90, 150, 210, 270, 0]) { const a = deg * Math.PI / 180, L = deg === 0 ? 52 : 114; add(k ? 'paris_' + k : 'paris', 'paris', C, [C[0] + Math.cos(a) * L, C[1] + Math.sin(a) * L], { t0: deg === 0 ? 999 : 47, p0: 40, main: !k }); k++; } }
+    add('paris2', 'paris', [-40, 58], [-40, 162], { road: 4.2, walk: 3, depth: 12, main: true });
+    // 교토: 바둑판
+    for (const [k, o] of [[0, 0], [1, -27], [2, 27]]) add(k ? 'kyoto_' + k : 'kyoto', 'kyoto', [222 + o, 513], [222 + o, 600], { main: !k, breaks: [[40.5, 45.5]] });
+    add('kyoto_x', 'kyoto', [222 - 40, 556], [222 + 40, 556], { road: 2.2, t0: 999, props: false });
+    // 리스본 알파마: 굽은 언덕길 + 계단 골목 + 전망대
+    { const pts = [[-374, 432], [-346, 425], [-318, 436], [-288, 428]]; for (let k = 0; k < 3; k++) add(k ? 'lisbon_' + k : 'lisbon', 'lisbon', pts[k], pts[k + 1], { main: !k, t0: k ? 3 : 0, rails: true, joint: k < 2 });
+      add('lisbon_s', 'lisbon', [-346, 421], [-339, 394], { road: 1.6, walk: 0, depth: 9, t0: 6, stairs: true, props: false }); plaza(-338, 386, 8.5, 'lisbon', 'miradouro');
+      ISL.tramPts = pts;
+      const up = [[-330, 388], [-302, 397], [-276, 390]]; for (let k = 0; k < 2; k++) add('lisbon_u' + k, 'lisbon', up[k], up[k + 1], { t0: k ? 3 : 2 }); }
+    // 레이캬비크: 크리스마스 광장과 마을
+    { const pc = [hall.x, hall.z + 47]; plaza(pc[0], pc[1], 16.5, 'reyk', 'xmas');
+      add('reyk', 'reyk', [hall.x, hall.z + 64], [hall.x, hall.z + 138], { main: true, breaks: [[35, 42]] });
+      for (const [k, o] of [[1, -37], [2, 37]]) add('reyk_' + k, 'reyk', [hall.x + o, hall.z + 50], [hall.x + o, hall.z + 138], { gap: [2, 5], breaks: [[49, 56]], lights: true });
+      add('reyk_x', 'reyk', [hall.x - 54, hall.z + 102.5], [hall.x + 54, hall.z + 102.5], { road: 3, walk: 0, t0: 999, props: false }); }
+    // 루체른: 분수 광장(바인마르크트)에서 뻗는 골목
+    plaza(236, -13, 10.5, 'luzern', 'weinmarkt');
+    add('luzern', 'luzern', [226, -10], [150, 11], { main: true });
+    let idx = 0;
+    for (const s of streets) {
+      const dx = s.b[0] - s.a[0], dz = s.b[1] - s.a[1], len = Math.hypot(dx, dz), ux = dx / len, uz = dz / len;
+      Object.assign(s, { ax: s.a[0], az: s.a[1], len, ux, uz, nx: uz, nz: -ux, ry: Math.atan2(ux, uz), idx: idx++ });
+      const p0 = s.p0 || 0, sx = s.ax + ux * p0, sz = s.az + uz * p0, hasB = (s.t0 || 0) < len;
+      ISL.noTreeSeg.push({ ax: sx - ux * 4, az: sz - uz * 4, bx: s.b[0] + ux * 4, bz: s.b[1] + uz * 4, w: s.road + s.walk + (hasB ? s.depth : 0) + 4 });
+      ISL.paved.push({ ax: sx, az: sz, bx: s.b[0], bz: s.b[1], hw: s.road + s.walk + .3 });
+      const pc = new THREE.Color(s.style === 'reyk' ? '#dfe6ec' : s.style === 'lisbon' ? '#e2dccc' : s.style === 'kyoto' ? '#6f6c66' : '#8f8a80');
+      ISL.groundTints.push((x, z) => ISL.segDist(x, z, sx, sz, s.b[0], s.b[1]).d < s.road + s.walk + .6 ? [pc, .95, 0] : null);
+    }
+    for (const p of plazas) {
+      ISL.noTree.push({ x: p.x, z: p.z, r: p.r + 2 }); ISL.paved.push({ ax: p.x - .1, az: p.z, bx: p.x + .1, bz: p.z, hw: p.r });
+      const pc = new THREE.Color(p.style === 'reyk' ? '#e8eef3' : p.style === 'lisbon' ? '#e2dccc' : '#8f8a80');
+      ISL.groundTints.push((x, z) => Math.hypot(x - p.x, z - p.z) < p.r + .5 ? [pc, .95, 0] : null);
     }
   }
+  // 둥근 광장 바닥 (땅을 따라 깔림)
+  function disc(p, tex, tile, lift) {
+    const NR = Math.max(3, Math.ceil(p.r / 1.6)), NA = 40, pos = [], uv = [], idx = [];
+    for (let j = 0; j <= NR; j++) for (let i = 0; i <= NA; i++) { const r = p.r * j / NR, a = i / NA * Math.PI * 2, x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r; pos.push(x, H(x, z) + lift, z); uv.push(x / tile, z / tile); }
+    for (let j = 0; j < NR; j++) for (let i = 0; i < NA; i++) { const a = j * (NA + 1) + i, b = a + NA + 1; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, roughness: .9, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); m.receiveShadow = true; scene.add(m);
+  }
+  // 새 건물이 기존 건물·명소·광장과 겹치는지 (분리축 검사)
+  function free(cx, cz, w, d, ry, style) {
+    for (const p of plazas) if (Math.hypot(cx - p.x, cz - p.z) < p.r + Math.max(w, d) / 2 + .5) return false;
+    const A = { x: cx, z: cz, hw: w / 2, hd: d / 2, cs: Math.cos(ry), sn: Math.sin(ry) }, br = Math.hypot(w, d) / 2;
+    const corners = q => [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => { const lx = a * q.hw, lz = b * q.hd; return [q.x + lx * q.cs + lz * q.sn, q.z - lx * q.sn + lz * q.cs]; });
+    const ca = corners(A);
+    for (const c of ISL.world.near(cx, cz, br + 2)) {
+      if (c.t === 'c') { if (c.r > .9 && Math.hypot(c.x - cx, c.z - cz) < c.r + br * .8) return false; continue; }
+      if (c.hw < 1.2 && c.hd < 1.2) continue; if (Math.hypot(c.x - cx, c.z - cz) > c.br + br) continue;
+      const cb = corners(c); let sep = false;
+      for (const q of [A, c]) for (const ax of [[q.cs, -q.sn], [q.sn, q.cs]]) { const pa = ca.map(p => p[0] * ax[0] + p[1] * ax[1]), pb = cb.map(p => p[0] * ax[0] + p[1] * ax[1]); if (Math.max(...pa) < Math.min(...pb) + .04 || Math.max(...pb) < Math.min(...pa) + .04) sep = true; }
+      if (!sep) return false;
+    }
+    let lo = 1e9, hi = -1e9; for (const [x, z] of ca) { const h = H(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h); if (ISL.waterAt(x, z).level > h - .4) return false; }
+    return lo > 1 && hi - lo < 9;
+  }
+
+  // ---------- 거리의 사람들 (가벼운 한 덩어리 모형) ----------
+  const walkers = [];
+  function folk(r, winter) {
+    const coat = ['#b23a34', '#2f5d8f', '#3f7a5a', '#d9a23a', '#6b4a8f', '#f1ece2', '#333c4a', '#c96a8a'][Math.floor(r() * 8)], skin = ['#f1d2b6', '#e3b98f', '#c98f65'][Math.floor(r() * 3)], hair = ['#2b1d14', '#5a3825', '#d8c08a', '#111'][Math.floor(r() * 4)], hgt = .92 + r() * .12, P = [];
+    const B = (g, c) => P.push([g, c]);
+    for (const sx of [-.09, .09]) B(new THREE.CapsuleGeometry(.07, .62, 3, 6).translate(sx, .42, 0), '#2a2d36');
+    B(new THREE.CylinderGeometry(.17, winter ? .24 : .2, winter ? .78 : .6, 10).translate(0, winter ? 1.05 : 1.12, 0), coat);
+    for (const sx of [-.24, .24]) B(new THREE.CapsuleGeometry(.055, .5, 3, 6).translate(sx, 1.12, 0), coat);
+    B(new THREE.SphereGeometry(.125, 10, 8).translate(0, 1.6, 0), skin);
+    if (winter) { B(new THREE.SphereGeometry(.135, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 1.63, 0), ['#c0392b', '#2e6f9e', '#f4f1ea', '#3e7c5a'][Math.floor(r() * 4)]); B(new THREE.SphereGeometry(.045, 6, 5).translate(0, 1.79, 0), '#ffffff'); B(new THREE.TorusGeometry(.13, .05, 5, 10).rotateX(Math.PI / 2).translate(0, 1.45, 0), ['#f4f1ea', '#c0392b', '#e6b422'][Math.floor(r() * 3)]); }
+    else B(new THREE.SphereGeometry(.132, 10, 6, 0, Math.PI * 2, 0, Math.PI * .55).translate(0, 1.615, -.01), hair);
+    const m = new THREE.Mesh(ISL.merge(P), walkerMat()); m.scale.setScalar(hgt); m.castShadow = true; m.userData.dynamic = true; scene.add(m); return m;
+  }
+  let wm = null; const walkerMat = () => wm || (wm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 }));
+  function addWalker(a, b, lat, r, winter, lift) { const len = Math.hypot(b[0] - a[0], b[1] - a[1]); walkers.push({ m: folk(r, winter), a, b, len, lat, t: r() * len, dir: r() < .5 ? 1 : -1, sp: .9 + r() * .5, ph: r() * 6, lift: lift || .2, x: 0, z: 0 }); }
+  function addStander(x, z, ry, r, winter) { const m = folk(r, winter); m.position.set(x, H(x, z) + .22, z); m.rotation.y = ry; walkers.push({ m, stand: true, ph: r() * 6, ry, x, z }); ISL.colCircle(x, z, .3, H(x, z) - 1, H(x, z) + 2); }
+  function update(dt, player) {
+    const t = performance.now() * .001;
+    for (const w of walkers) {
+      if (w.stand) { if (Math.abs(w.x - player.x) < 60 && Math.abs(w.z - player.z) < 60) w.m.rotation.y = w.ry + Math.sin(t * .7 + w.ph) * .25; continue; }
+      const ux = (w.b[0] - w.a[0]) / w.len, uz = (w.b[1] - w.a[1]) / w.len;
+      let x = w.a[0] + ux * w.t + uz * w.lat, z = w.a[1] + uz * w.t - ux * w.lat;
+      const dp = Math.hypot(x - player.x, z - player.z); if (dp > 150) { w.m.visible = false; w.t += w.dir * w.sp * dt; if (w.t > w.len - 1 || w.t < 1) { w.dir *= -1; w.t = Math.max(1, Math.min(w.len - 1, w.t)); } continue; }
+      w.m.visible = true;
+      if (dp > 1.1) { w.t += w.dir * w.sp * dt; if (w.t > w.len - 1 || w.t < 1) { w.dir *= -1; w.t = Math.max(1, Math.min(w.len - 1, w.t)); } }  // 가까이 가면 멈춰서 길을 내줌
+      x = w.a[0] + ux * w.t + uz * w.lat; z = w.a[1] + uz * w.t - ux * w.lat;
+      w.m.position.set(x, H(x, z) + w.lift + Math.abs(Math.sin(t * 5.5 * w.sp + w.ph)) * .035, z);
+      w.m.rotation.y = dp > 1.1 ? Math.atan2(ux * w.dir, uz * w.dir) : Math.atan2(player.x - x, player.z - z); w.m.rotation.z = Math.sin(t * 5.5 * w.sp + w.ph) * .035;
+      if (dp < .5 && dp > .01 && Math.abs(player.y - w.m.position.y) < 1.5 && !player.fly) { player.x += (player.x - x) / dp * (.5 - dp); player.z += (player.z - z) / dp * (.5 - dp); } // 사람을 뚫고 지나가지 않게
+    }
+  }
+
+  function bench(x, z, ry, snow) { const y = H(x, z) + .2, g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g); for (let k = 0; k < 3; k++) LH.box(g, 1.7, .04, .12, M('#3f6b48'), 0, .43, -.15 + k * .15); for (let k = 0; k < 2; k++) LH.box(g, 1.7, .12, .04, M('#3f6b48'), 0, .62 + k * .18, -.26); for (const sx of [-.75, .75]) { LH.box(g, .06, .45, .45, M('#222'), sx, 0, 0); LH.box(g, .06, .45, .06, M('#222'), sx, .45, -.26); } if (snow) LH.box(g, 1.7, .06, .4, M('#f4f7fa', { roughness: 1 }), 0, .47, 0); ISL.colBox(g, 0, 0, 1.7, .55, 1); }
+  function bin(x, z, style) { const y = H(x, z) + .2, g = new THREE.Group(); g.position.set(x, y, z); scene.add(g);
+    if (style === 'paris') { LH.cyl(g, .03, .03, 1.1, 6, M('#1f3328'), 0, 0, 0); const hoop = new THREE.Mesh(new THREE.TorusGeometry(.2, .02, 6, 14), M('#1f3328')); hoop.rotation.x = Math.PI / 2; hoop.position.set(.22, 1.0, 0); g.add(hoop); LH.cyl(g, .19, .14, .7, 10, new THREE.MeshStandardMaterial({ color: '#7fd08a', transparent: true, opacity: .55, roughness: .3 }), .22, .3, 0); }
+    else { LH.cyl(g, .24, .2, .85, 12, M(style === 'kyoto' ? '#5a6a70' : style === 'lisbon' ? '#3a6a4a' : '#3a3f45'), 0, 0, 0); LH.cyl(g, .26, .26, .06, 12, M('#222'), 0, .85, 0); }
+    ISL.colCircle(x, z, .3, y - 1, y + 1.2); }
 
   function build(sc) {
     scene = sc; LH = ISL.LH;
     let n = 0;
+    const setts = (x, w, h) => { x.fillStyle = '#6f6c68'; x.fillRect(0, 0, w, h); for (let j = 0; j < 8; j++) for (let i = 0; i < 9; i++) { const v = 118 + ((i * 37 + j * 91) % 5) * 9; x.fillStyle = `rgb(${v},${v - 2},${v - 6})`; x.fillRect(i * 16 - (j % 2) * 8 + 1, j * 16 + 1, 14, 14); } };
+    for (const p of plazas) disc(p, p.style === 'paris' ? repTex('setts', 128, 128, setts) : repTex(p.style + 'walk', 64, 128, ROADS[p.style].walk || ROADS[p.style].road), p.style === 'paris' ? 3 : 4, .1);
+    // 광장의 중심 시설을 먼저 세움 (건물이 피해 가도록)
+    for (const p of plazas) {
+      if (p.kind === 'etoile') { let y = -1e9, yl = 1e9; for (let k = 0; k < 16; k++) { const h = H(p.x + Math.cos(k * .3927) * 15.4, p.z + Math.sin(k * .3927) * 15.4); y = Math.max(y, h); yl = Math.min(yl, h); } const g = new THREE.Group(); g.position.set(p.x, y, p.z); scene.add(g); const st = ISL.blockMat('#d9cfb8', .7, .35);
+        const ih = y - yl + 1; const isl = new THREE.Mesh(new THREE.CylinderGeometry(15, 15.4, ih, 40), ISL.blockMat('#bdb7ab', .8, .5)); isl.position.y = .5 - ih / 2; isl.receiveShadow = true; g.add(isl);
+        const lawn = new THREE.Mesh(new THREE.CylinderGeometry(13.5, 13.5, .12, 40), M('#6f9a4a')); lawn.position.y = .56; g.add(lawn);
+        const basin = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.4, .9, 24), st); basin.position.y = .95; g.add(basin);
+        const wat = new THREE.Mesh(new THREE.CircleGeometry(4.8, 24), new THREE.MeshStandardMaterial({ color: '#4f8fa0', roughness: .1, metalness: .2 })); wat.rotation.x = -Math.PI / 2; wat.position.y = 1.32; g.add(wat);
+        LH.cyl(g, 1.2, 1.5, 2.2, 12, st, 0, .5, 0); LH.cyl(g, 2.4, 2.2, .3, 16, st, 0, 2.7, 0); LH.cyl(g, .5, .7, 1.6, 10, st, 0, 3, 0); LH.cyl(g, 1.3, 1.2, .22, 14, st, 0, 4.6, 0); LH.sphere(g, .35, M('#c9a24a', { metalness: .8, roughness: .3 }), 0, 5.2, 0);
+        ISL.colCircle(p.x, p.z, 15.4, yl - 2, y + .45); ISL.colCircle(p.x, p.z, 5.4, y - 1, y + 3);
+        for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2 + .26; if (k % 2) lamp(p.x + Math.cos(a) * 16.6, p.z + Math.sin(a) * 16.6, 'paris'); else bench(p.x + Math.cos(a) * 11, p.z + Math.sin(a) * 11, Math.atan2(Math.cos(a), Math.sin(a))); }
+        ISL.LANDMARKS.push({ id: 'etoile', name: '파리 에투알 광장', region: 'france', x: p.x, z: p.z, r: 46, desc: '오스만 남작이 19세기에 파리를 다시 지으며 만든 방식이에요. 둥근 광장에서 넓은 대로가 별(에투알) 모양으로 뻗어 나가요.', found: false });
+      } else if (p.kind === 'weinmarkt') fountain(p.x, p.z, 'luzern');
+      else if (p.kind === 'xmas') xmasTree(p.x, p.z, 15);
+      else if (p.kind === 'miradouro') { const y = H(p.x, p.z), g = new THREE.Group(); g.position.set(p.x, y + .12, p.z); scene.add(g);
+        for (let k = 0; k < 9; k++) { const a = -Math.PI * .9 + k / 8 * Math.PI * .8; railing(g, 2.6, Math.cos(a) * (p.r - .3), 0, Math.sin(a) * (p.r - .3), -a + Math.PI / 2, 1); }
+        bench(p.x - 2, p.z + 1, .6); bench(p.x + 2.5, p.z + 2, -.5);
+        ISL.LANDMARKS.push({ id: 'miradouro', name: '알파마 전망대', region: 'portugal', x: p.x, z: p.z, r: 12, desc: '리스본에는 언덕마다 "미라도루(전망대)"가 있어요. 계단 골목을 올라오면 붉은 지붕들과 테주 강이 한눈에 보여요.', found: false }); }
+    }
     for (const s of streets) {
-      const R = ISL.mulberry32(hashStr(s.id)), lift = s.walk > 0 ? .18 : .06;
+      const R = ISL.mulberry32(hashStr(s.id)), lift = s.walk > 0 ? .18 : .06, p0 = s.p0 || 0;
+      const rs = Object.assign({}, s, { ax: s.ax + s.ux * p0, az: s.az + s.uz * p0, len: s.len - p0 });
       // 길 표면
       const rd = ROADS[s.style];
-      ribbon(s, -s.road, s.road, .06, repTex(s.style + 'road', 128, 256, rd.road), s.style === 'lisbon' ? 6 : 10);
-      if (s.walk > 0) for (const sd of [-1, 1]) { ribbon(s, sd * s.road, sd * (s.road + s.walk + .5), lift, repTex(s.style + 'walk', 64, 128, rd.walk), 4); curb(s, sd * s.road, lift, rd.curb); }
-      // 건물 줄: 양쪽으로 벽을 맞대고 이어 붙임
+      ribbon(rs, -s.road, s.road, .06 + s.idx * .005, s.stairs ? repTex('stairs', 64, 64, (x, w, h) => { x.fillStyle = '#d9d2c2'; x.fillRect(0, 0, w, h); x.fillStyle = '#8f887a'; x.fillRect(0, 0, w, 7); x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(0, 7, w, 5); }) : repTex(s.style + 'road', 128, 256, rd.road), s.stairs ? .5 : s.style === 'lisbon' ? 6 : 10);
+      if (s.walk > 0) for (const sd of [-1, 1]) { ribbon(rs, sd * s.road, sd * (s.road + s.walk + .5), lift + s.idx * .003, repTex(s.style + 'walk', 64, 128, rd.walk), 4); curb(rs, sd * s.road, lift, rd.curb); }
+      // 건물 줄: 벽을 맞대고 이어 붙임 (교차로·광장·명소 자리는 비움)
       for (const sd of [-1, 1]) {
-        let t = 0;
-        while (true) {
+        let t = s.t0 || 0, guard = 0;
+        while (guard++ < 200) {
           const w = s.widths[Math.floor(R() * s.widths.length)]; if (t + w > s.len) break;
+          const br = (s.breaks || []).find(([b0, b1]) => t < b1 && t + w > b0); if (br) { t = br[1]; continue; }
           const tc = t + w / 2, off = sd * (s.road + s.walk + s.depth / 2 + (s.walk ? .5 : .15));
           const cx = s.ax + s.ux * tc + s.nx * off, cz = s.az + s.uz * tc + s.nz * off;
           const ry = Math.atan2(-s.nx * sd, -s.nz * sd);
+          if (!free(cx, cz, w, s.depth, ry, s.style)) { t += 2; continue; }
           const fx = s.ax + s.ux * tc + s.nx * sd * (s.road + s.walk * .5), fz = s.az + s.uz * tc + s.nz * sd * (s.road + s.walk * .5);
           const dx0 = s.style === 'lisbon' ? -w / 4 : 0, dpx = cx + dx0 * Math.cos(ry) + (s.depth / 2 + .5) * Math.sin(ry), dpz = cz - dx0 * Math.sin(ry) + (s.depth / 2 + .5) * Math.cos(ry);
           const floorY = Math.max(H(fx, fz), H(dpx, dpz)) + lift + .1;
@@ -442,42 +550,61 @@
           for (const q of [-1, 1]) LH.box(dg, .14, 2.35, .16, M(res.trim), q * .64, 0, s.depth / 2 + .04); LH.box(dg, 1.42, .16, .16, M(res.trim), 0, 2.3, s.depth / 2 + .04);
           LH.box(dg, 1.5, .14, .45, ISL.blockMat('#9a948a', .5, .14), 0, -.14, s.depth / 2 + .25);
           ISL.colBox(g, 0, 0, w, s.depth, res.h, { kind: 'street', pass: (lx, lz) => door.open > .55 && Math.abs(lx - dxo) < .7 && lz > -s.depth / 2 + .6, door });
-          t += w;
+          t += w + (s.gap ? s.gap[0] + R() * (s.gap[1] - s.gap[0]) : 0);
         }
       }
+      if (s.props === false) continue;
       // 거리 소품
-      const along = (t, o) => [s.ax + s.ux * t + s.nx * o, s.az + s.uz * t + s.nz * o];
+      const along = (t, o) => [s.ax + s.ux * t + s.nx * o, s.az + s.uz * t + s.nz * o], T0 = Math.max(p0, Math.min(s.t0 || 0, s.len)), ok = (x, z) => !ISL.world.solidAt(x, H(x, z) + 1, z);
+      const walk = (k, winter) => { for (let i = 0; i < k; i++) addWalker(along(T0 + 2, 0), along(s.len - 2, 0), (R() < .5 ? -1 : 1) * (s.walk > 1 ? s.road + s.walk * .5 : s.road * .55), R, winter, lift + .04); };
       if (s.style === 'paris') {
-        for (let t = 8; t < s.len - 4; t += 16) for (const sd of [-1, 1]) { const [x, z] = along(t, sd * (s.road + .7)); lamp(x, z, 'paris'); }
-        const trees = []; for (let t = 4; t < s.len; t += 8) for (const sd of [-1, 1]) { if (s.walk < 3.5) continue; const [x, z] = along(t, sd * (s.road + 1.6)); trees.push({ x, y: H(x, z) + .18, z, s: 1.15 }); }
+        for (let t = T0 + 6; t < s.len - 4; t += 16) for (const sd of [-1, 1]) { const [x, z] = along(t, sd * (s.road + .7)); lamp(x, z, 'paris'); }
+        const trees = []; for (let t = T0 + 2; t < s.len; t += 8) for (const sd of [-1, 1]) { if (s.walk < 3.5) continue; const [x, z] = along(t, sd * (s.road + 1.6)); trees.push({ x, y: H(x, z) + .18, z, s: 1.15 }); }
         ISL.placeInstances(scene, 'plane', trees);
-        for (let t = 10; t < s.len - 6; t += 23) { const sd = R() < .5 ? -1 : 1; for (let k = 0; k < 3; k++) { const [x, z] = along(t + k * 2, sd * (s.road + s.walk - .7)); cafe(x, z, s.ry); } }
-        { const [x, z] = along(s.len * .5, -(s.road + s.walk * .5)); morris(x, z); }
+        for (let t = T0 + 9; t < s.len - 6; t += 27) { const sd = R() < .5 ? -1 : 1; for (let k = 0; k < 3; k++) { const [x, z] = along(t + k * 2, sd * (s.road + s.walk - .7)); if (ok(x, z)) cafe(x, z, s.ry); } }
+        for (let t = T0 + 12; t < s.len - 4; t += 24) { const [x, z] = along(t, (t % 48 < 24 ? 1 : -1) * (s.road + 1)); if (ok(x, z)) bin(x, z, 'paris'); const [bx, bz] = along(t + 6, (t % 48 < 24 ? -1 : 1) * (s.road + 2.6)); if (ok(bx, bz)) bench(bx, bz, s.ry + Math.PI / 2 * (t % 48 < 24 ? -1 : 1)); }
+        if (s.main) { const [x, z] = along(s.len * .5 + T0 * .5, -(s.road + s.walk * .5)); if (ok(x, z)) morris(x, z); }
+        if (T0 < s.len) walk(s.main ? 5 : 3, false);
       } else if (s.style === 'kyoto') {
         utilityPoles(s, 1);
         for (let t = 5; t < s.len; t += 13) { const [x, z] = along(t, -(s.road - .3)); lamp(x, z, 'kyoto'); }
-        { const [x, z] = along(s.len * .62, s.road - .45); vending(x, z, s.ry - Math.PI / 2); }
-        const sak = []; for (const t of [-6, s.len + 6]) for (const sd of [-1, 1]) { const [x, z] = along(t, sd * 4.5); sak.push({ x, y: H(x, z), z, s: 1.4 }); } ISL.placeInstances(scene, 'cherry', sak);
+        { const [x, z] = along(s.len * .62, s.road - .45); vending(x, z, s.ry - Math.PI / 2); const [bx, bz] = along(s.len * .62 + 1.1, s.road - .4); bin(bx, bz, 'kyoto'); }
+        if (s.main) { const sak = []; for (const t of [-6, s.len + 6]) for (const sd of [-1, 1]) { const [x, z] = along(t, sd * 4.5); sak.push({ x, y: H(x, z), z, s: 1.4 }); } ISL.placeInstances(scene, 'cherry', sak); }
+        walk(s.main ? 5 : 2, false);
       } else if (s.style === 'lisbon') {
         for (let t = 7; t < s.len; t += 11) laundry(s, t, H(...along(t, 0)) + 6.2 + R() * 2.5, R);
-        for (const o of [-.55, .55]) { const N = Math.ceil(s.len / 2); const pos = []; for (let i = 0; i <= N; i++) { const [x, z] = along(s.len * i / N, o); pos.push(x, H(x, z) + .1, z); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: '#8a8a8a' }))); }
-        ISL.tramLane = s;
+        if (s.rails) for (const o of [-.55, .55]) { const N = Math.ceil(s.len / 2); const pos = []; for (let i = 0; i <= N; i++) { const [x, z] = along(s.len * i / N, o); pos.push(x, H(x, z) + .12, z); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: '#8a8a8a' }))); }
+        { const [x, z] = along(s.len * .5, s.road + .3); if (ok(x, z)) bin(x, z, 'lisbon'); }
+        walk(2, false);
       } else if (s.style === 'reyk') {
         for (let t = 8; t < s.len; t += 18) for (const sd of [-1, 1]) { const [x, z] = along(t, sd * (s.road + .5)); lamp(x, z, 'reyk'); }
-        // 크리스마스: 거리를 가로지르는 줄 전구, 광장의 큰 트리, 눈사람
         const o = s.road + s.walk + .45;
-        for (let t = 4; t < s.len; t += 6.5) { const a = along(t, -o), b = along(t, o); lightString([a[0], H(a[0], a[1]) + 5.2, a[1]], [b[0], H(b[0], b[1]) + 5.2, b[1]], .8, 16); }
-        { const [x, z] = along(-16, -24); xmasTree(x, z, 14); const sg = ISL.person({ top: '#c81e1e', bottom: '#c81e1e', hat: 'knit', hatColor: '#c81e1e', hair: '#ffffff', scarf: '#ffffff' }); const sx = x + 5, sz = z + 4; sg.g.position.set(sx, H(sx, sz), sz); sg.armR.rotation.x = -2.5; scene.add(sg.g); ISL.colCircle(sx, sz, .35); }
-        // 크리스마스 마켓: 교회 앞 광장 양쪽의 나무 오두막 가게들
-        const goods = ['#c0392b', '#e6b422', '#2e6f9e', '#f4f1ea', '#3e7c5a', '#d9733a'];
-        for (const sd of [-1, 1]) for (let k = 0; k < 4; k++) { const [x, z] = along(-28 + k * 6.2, sd * 12); stall(x, z, s.ry + (sd > 0 ? -Math.PI / 2 : Math.PI / 2), goods, k + (sd > 0 ? 4 : 0)); }
-        for (const [t, o] of [[-34, 7], [-34, -7], [-8, 17], [-21, -18], [3, 15], [3, -15], [30, 12.5], [55, -12.5]]) { const [x, z] = along(t, o); if (!ISL.world.solidAt(x, H(x, z) + 1, z)) lightTree(x, z); }
-        { const [x, z] = along(s.len * .45, -(s.road + 1.1)); snowman(x, z); } { const [x, z] = along(s.len * .8, s.road + 1.2); snowman(x, z); }
+        for (let t = 4; t < s.len; t += s.main ? 6.5 : 11) { const a = along(t, -o), b = along(t, o); lightString([a[0], H(a[0], a[1]) + 5.2, a[1]], [b[0], H(b[0], b[1]) + 5.2, b[1]], .8, 16); }
+        for (let t = 14; t < s.len; t += 26) { const [x, z] = along(t, (t % 52 < 26 ? 1 : -1) * (s.road + 1.2)); if (ok(x, z)) { if (s.main) bench(x, z, s.ry + Math.PI / 2 * (t % 52 < 26 ? 1 : -1), true); else lightTree(x, z); } }
+        if (s.main) { { const [x, z] = along(s.len * .3, -(s.road + 1.1)); snowman(x, z); } { const [x, z] = along(s.len * .8, s.road + 1.2); snowman(x, z); } { const [x, z] = along(s.len * .55, s.road + 1); bin(x, z, 'reyk'); } }
+        walk(s.main ? 9 : 4, true);
       } else if (s.style === 'luzern') {
         for (let t = 9; t < s.len; t += 17) { const [x, z] = along(t, (t % 2 ? 1 : -1) * (s.road + .5)); lamp(x, z, 'luzern'); }
-        const [fx, fz] = along(-5, 0); fountain(fx, fz, 'luzern');
+        { const [x, z] = along(s.len * .4, s.road + .4); bin(x, z, 'luzern'); const [bx, bz] = along(s.len * .7, -(s.road + .5)); bench(bx, bz, s.ry - Math.PI / 2); }
+        walk(5, false);
       }
     }
+    // ---- 크리스마스 광장: 큰 트리를 둘러싼 오두막 가게, 트리 꼭대기에서 뻗는 전구 줄, 모닥불, 사람들 ----
+    { const p = plazas.find(q => q.kind === 'xmas'), R = ISL.mulberry32(2412), goods = ['#c0392b', '#e6b422', '#2e6f9e', '#f4f1ea', '#3e7c5a', '#d9733a'], y0 = H(p.x, p.z);
+      for (let k = 0; k < 8; k++) { const a = (k * 45 + 22.5) * Math.PI / 180, x = p.x + Math.cos(a) * 11.6, z = p.z + Math.sin(a) * 11.6; stall(x, z, Math.atan2(p.x - x, p.z - z), goods, k);
+        for (let q = 0; q < 2; q++) { if (R() < .25) continue; const sx = p.x + Math.cos(a + (q - .5) * .16) * 8.6, sz = p.z + Math.sin(a + (q - .5) * .16) * 8.6; addStander(sx, sz, Math.atan2(x - sx, z - sz), R, true); } }
+      for (let k = 0; k < 8; k++) { const a = k * 45 * Math.PI / 180, x = p.x + Math.cos(a) * 16, z = p.z + Math.sin(a) * 16, y = H(x, z); LH.cyl(scene, .07, .09, 5, 8, M('#2b2b2b'), x, y, z); ISL.colCircle(x, z, .12, y - 1, y + 5); lightString([p.x, y0 + 14.2, p.z], [x, y + 5, z], 1.6, 22); }
+      for (const a of [1.2, 4.3]) { const x = p.x + Math.cos(a) * 5.2, z = p.z + Math.sin(a) * 5.2, y = H(x, z) + .2; LH.cyl(scene, .32, .26, .7, 10, M('#2a2a2a'), x, y, z); const f = new THREE.Mesh(new THREE.ConeGeometry(.24, .6, 7), new THREE.MeshBasicMaterial({ color: '#ffb347' })); f.position.set(x, y + .95, z); f.userData.dynamic = true; scene.add(f); glowPool(x, z, 4.5); ISL.colCircle(x, z, .4, y - 1, y + 1.2);
+        for (let q = 0; q < 3; q++) { const b = a + q * 2.1, sx = x + Math.cos(b) * 1.2, sz = z + Math.sin(b) * 1.2; addStander(sx, sz, Math.atan2(x - sx, z - sz), R, true); } }
+      { const sg = ISL.person({ top: '#c81e1e', bottom: '#c81e1e', hat: 'knit', hatColor: '#c81e1e', hair: '#ffffff', scarf: '#ffffff' }), sx = p.x - 4.6, sz = p.z + 3.4; sg.g.position.set(sx, H(sx, sz) + .2, sz); sg.g.rotation.y = 2.2; sg.armR.rotation.x = -2.5; scene.add(sg.g); ISL.colCircle(sx, sz, .35); }
+      for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283 + .3, x = p.x + Math.cos(a) * 20.5, z = p.z + Math.sin(a) * 20.5; if (!ISL.world.solidAt(x, H(x, z) + 1, z) && !streets.some(s => s.style === 'reyk' && ISL.segDist(x, z, s.ax, s.az, s.b[0], s.b[1]).d < s.road + 1)) lightTree(x, z); }
+      snowman(p.x + 6.5, p.z - 2.5); bench(p.x - 6.5, p.z - 3, 1.1, true); bin(p.x + 3, p.z + 14.2, 'reyk');
+      for (let k = 0; k < 6; k++) { const a0 = R() * 6.283, a1 = a0 + 2 + R() * 2; addWalker([p.x + Math.cos(a0) * 14, p.z + Math.sin(a0) * 14], [p.x + Math.cos(a1) * 14, p.z + Math.sin(a1) * 14], 0, R, true, .22); }
+    }
+    // 28번 트램이 달릴 굽은 선로
+    { const pts = ISL.tramPts, segs = []; let L = 0; for (let k = 0; k < pts.length - 1; k++) { const l = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); segs.push([L, l, pts[k], pts[k + 1]]); L += l; }
+      ISL.tramLane = { len: L, at(t) { t = Math.max(0, Math.min(L - .01, t)); const sg = segs.find(q => t < q[0] + q[1]) || segs[segs.length - 1], f = (t - sg[0]) / sg[1]; return [sg[2][0] + (sg[3][0] - sg[2][0]) * f, sg[2][1] + (sg[3][1] - sg[2][1]) * f, Math.atan2(sg[3][0] - sg[2][0], sg[3][1] - sg[2][1])]; } }; }
+    ISL.walkerCount = walkers.length;
   }
-  ISL.Streets = { plan, build, streets };
+  ISL.Streets = { plan, build, update, streets, plazas };
 })();

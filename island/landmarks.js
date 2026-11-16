@@ -425,8 +425,8 @@
     let ta = 0;
     dyn.push(dt => {
       const L = ISL.tramLane; if (!L) return; ta += dt * 3.2; const per = 2 * (L.len - 10), q = ta % per, s = q < per / 2 ? q : per - q, t = 5 + s;
-      const x = L.ax + L.ux * t, z = L.az + L.uz * t, ahead = H(L.ax + L.ux * Math.min(L.len, t + 3), L.az + L.uz * Math.min(L.len, t + 3)) - H(L.ax + L.ux * Math.max(0, t - 3), L.az + L.uz * Math.max(0, t - 3));
-      tram.position.set(x, H(x, z) + .1, z); tram.rotation.set(0, L.ry + (q < per / 2 ? 0 : Math.PI), 0); tram.rotateX(-Math.atan2(ahead, 6) * (q < per / 2 ? 1 : -1));
+      const [x, z, ry] = L.at(t), pa = L.at(t + 3), pb = L.at(t - 3), ahead = H(pa[0], pa[1]) - H(pb[0], pb[1]);
+      tram.position.set(x, H(x, z) + .1, z); tram.rotation.set(0, ry + (q < per / 2 ? 0 : Math.PI), 0); tram.rotateX(-Math.atan2(ahead, 6) * (q < per / 2 ? 1 : -1));
       if (ISL.debug && ISL.debug.player) { const pl = ISL.debug.player; if (Math.hypot(pl.x - x, pl.z - z) < 4 && Math.abs(pl.y - H(x, z)) < 3 && ISL.Audio && Math.random() < dt * .3) ISL.Audio.chime([12, 12], .04); }
     });
     ISL.tram = tram;

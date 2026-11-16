@@ -604,7 +604,7 @@
     camera.position.set(x, y, z); camera.lookAt(cam.tx, cam.ty, cam.tz);
   }
   function updateWorld(dt) {
-    ISL.Landmarks.update(dt, player);
+    ISL.Landmarks.update(dt, player); ISL.Streets.update(dt, player);
     ISL.Interior.update(dt, camera.position);
     for (const n of npcs) {
       const near = Math.hypot(player.x - n.x, player.z - n.z) < 14;

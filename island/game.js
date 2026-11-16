@@ -416,12 +416,12 @@
   // ---------- 장면 ----------
   let envDirty = true, envT = 0, xmasK = 0;
   function initScene() {
-    renderer = new THREE.WebGLRenderer({ antialias: LQ || MOBILE, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: LQ || MOBILE, powerPreference: 'high-performance' }); ISL.renderer = renderer;
     renderer.setPixelRatio(LQ ? .5 : Math.min(devicePixelRatio || 1, MOBILE ? 1.3 : 1.75)); renderer.setSize(innerWidth, innerHeight);
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .95;
     renderer.shadowMap.enabled = !LQ; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     $('app').appendChild(renderer.domElement);
-    scene = new THREE.Scene(); scene.fog = new THREE.FogExp2('#bcd3e6', .00078);
+    scene = new THREE.Scene(); ISL.scene = scene; scene.fog = new THREE.FogExp2('#bcd3e6', .00078);
     camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .3, 7000); // 깊이 정밀도 → 바닥 깜빡임 방지
     addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); if (post) post.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
     sunLight = new THREE.DirectionalLight('#fff4e0', 2.6); sunLight.castShadow = true;
@@ -746,8 +746,18 @@
   }
 
   let last = performance.now(), titleA = 0, upHeld = false, downHeld = false;
+  // 렉 방지: 실제 프레임 속도를 재서 느리면 해상도 → 그림자 순으로 자동으로 낮추고, 여유가 생기면 다시 올림
+  const gov = { t: performance.now(), n: 0, acc: 0, lvl: 0, good: 0, base: 0 };
+  function govern() {
+    const now = performance.now(), d = now - gov.t; gov.t = now; if (d > 500 || LQ) return; gov.acc += d; gov.n++;
+    if (gov.acc < 2500) return; const fps = gov.n * 1000 / gov.acc; gov.acc = 0; gov.n = 0; if (!gov.base) gov.base = renderer.getPixelRatio();
+    const apply = () => { renderer.setPixelRatio(gov.base * [1, .85, .72, .6, .6, .5][gov.lvl]); renderer.setSize(innerWidth, innerHeight); if (post && post.setSize) post.setSize(innerWidth, innerHeight); sunLight.castShadow = gov.lvl < 4; ISL.gfxLevel = gov.lvl; };
+    if (fps < 38 && gov.lvl < 5) { gov.lvl++; gov.good = 0; apply(); }
+    else if (fps > 57 && gov.lvl > 0 && ++gov.good >= 6) { gov.lvl--; gov.good = 0; apply(); }
+    else if (fps <= 57) gov.good = 0;
+  }
   function loop() {
-    requestAnimationFrame(loop);
+    requestAnimationFrame(loop); govern();
     const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
     updateSky(dt);
     if (state.mode === 'title') { titleA += dt * .04; camera.position.set(Math.sin(titleA) * 520, 260, Math.cos(titleA) * 520); camera.lookAt(0, 20, 0); }

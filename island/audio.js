@@ -171,10 +171,12 @@
     for (const s of d.mel) { if (s === null && notes.length) notes[notes.length - 1][1] += 1 / sub; else notes.push([s, 1 / sub]); }
     return { name, bpm: d.bpm, beats: d.beats, root: d.root / 2, notes, ch: d.ch.map(([r, q]) => [r, q === 1 ? QUAL[''] : q === 0 ? QUAL.m : QUAL[5]]) };
   }
+  // 실제 연주 녹음 (위키미디어 공용, 공유 저작물·CC) — 파일이 없거나 재생이 안 되면 같은 곡을 오르골로 대신 연주
+  const REC = (file, name, alt) => ({ file: 'island/music/' + file + '.mp3', name, alt: alt ? compile(SONGS[alt]) : null });
   const LISTS = {
-    iceland: ['silent', 'jingle', 'tannen', 'deck', 'wish'].map(k => compile(SONGS[k])),
-    kyoto: [compile(SONGS.sakura), compile(SONGS.kojo), legacy('kyoto', '교토의 오후')],
-    france: [compile(SONGS.gymno), legacy('france', '파리의 왈츠')],
+    iceland: [REC('silent', '고요한 밤 거룩한 밤 — 미 공군 군악대 합창단', 'silent'), REC('jingle', '징글벨 — 미 공군 군악대', 'jingle'), REC('tannen', '오 탄넨바움 — 미 공군 군악대 합창단', 'tannen'), REC('deck', '덱 더 홀스 — 미 공군 군악대 합창단', 'deck'), REC('wish', '위 위시 유 어 메리 크리스마스 — 미 공군 군악대', 'wish')],
+    kyoto: [REC('koto', '고토(일본 전통 현악기) 연주 — Torsodog (CC BY 3.0)', 'sakura'), compile(SONGS.sakura), compile(SONGS.kojo)],
+    france: [REC('gymno', '사티: 짐노페디 1번 — 피아노 Robin Alciatore', 'gymno'), REC('waltz', '쇼팽: 왈츠 Op.34-2 — 피아노', null), legacy('france', '파리의 왈츠')],
     portugal: [legacy('portugal', '알파마의 기타')], swiss: [legacy('swiss', '알프스 랜들러')], italy: [legacy('italy', '타란텔라')],
   };
   Object.assign(A, {
@@ -184,15 +186,28 @@
       this.musicId = id; const c = this.ctx;
       if (!this.musicGain) { this.musicGain = c.createGain(); this.musicGain.gain.value = 0; this.musicLP = c.createBiquadFilter(); this.musicLP.type = 'lowpass'; this.musicLP.frequency.value = 6000; this.musicGain.connect(this.musicLP).connect(this.master); setInterval(() => this.musicTick(), 120); }
       const t = c.currentTime; this.musicGain.gain.cancelScheduledValues(t); this.musicGain.gain.setTargetAtTime(0, t, .5);
-      setTimeout(() => { if (this.musicId !== id) return; const L = LISTS[id]; this.music = L ? { list: L, k: Math.floor(Math.random() * L.length), i: 0, beat: 0, next: c.currentTime + .3, bar: -1 } : null; if (this.music) this.announce(); }, 1400);
+      setTimeout(() => { if (this.musicId !== id) return; const L = LISTS[id]; if (this.el) this.el.pause(); this.music = L ? { list: L, k: Math.floor(Math.random() * L.length), i: 0, beat: 0, next: c.currentTime + .3, bar: -1 } : null; if (this.music) this.startEntry(); }, 1400);
     },
-    announce() { this.songName = this.music.list[this.music.k].name; if (ISL.onSong && this.on && this.musicOn) ISL.onSong(this.songName); },
+    // 목록의 현재 곡 시작: 녹음 파일이면 재생기로, 아니면 오르골 합성으로
+    startEntry() {
+      const m = this.music; if (!m) return; let e = m.list[m.k]; m.i = 0; m.beat = 0; m.bar = -1; m.next = this.ctx.currentTime + .4; m.rec = null;
+      if (e.file && !e.bad) {
+        if (!this.el) { this.el = new Audio(); this.el.preload = 'auto'; this.el.addEventListener('ended', () => this.nextEntry()); this.el.addEventListener('error', () => { const mm = this.music; if (mm && mm.rec) { mm.rec.bad = true; if (mm.rec.alt) { mm.cur = mm.rec.alt; mm.rec = null; this.announce(); } else this.nextEntry(); } }); }
+        m.rec = e; m.cur = null; this.el.src = e.file; this.el.volume = 0; const pr = this.el.play(); if (pr && pr.catch) pr.catch(() => { e.bad = true; if (this.music === m) { m.rec = null; m.cur = e.alt; if (!m.cur) this.nextEntry(); } });
+      } else m.cur = e.file ? e.alt : e;
+      if (!m.rec && !m.cur) return this.nextEntry();
+      this.announce();
+    },
+    nextEntry() { const m = this.music; if (!m) return; if (m.list.every(e => e.file && e.bad && !e.alt)) { this.music = null; return; } m.k = (m.k + 1) % m.list.length; this.startEntry(); },
+    announce() { const m = this.music; this.songName = (m.rec || m.cur).name; if (ISL.onSong && this.on && this.musicOn) ISL.onSong(this.songName); },
     musicTick() {
       const m = this.music, c = this.ctx; if (!c) return; if (this.musicGain) this.musicGain.gain.setTargetAtTime(this.on && this.musicOn && m ? (this.inside ? .2 : .36) : 0, c.currentTime, .6);
-      if (!m || !this.on || !this.musicOn || c.state !== 'running') { if (m) m.next = c.currentTime + .1; return; }
+      if (this.el) { const want = m && m.rec && this.on && this.musicOn ? (this.inside ? .3 : .55) : 0; this.el.volume = Math.max(0, Math.min(1, this.el.volume + Math.sign(want - this.el.volume) * Math.min(.04, Math.abs(want - this.el.volume)))); if (m && m.rec && want > 0 && this.el.paused && !m.rec.bad) { const pr = this.el.play(); if (pr && pr.catch) pr.catch(() => {}); } if ((!m || !m.rec || want === 0) && this.el.volume === 0 && !this.el.paused) this.el.pause(); }
+      if (m && m.rec) { m.next = c.currentTime + .1; return; }
+      if (!m || !m.cur || !this.on || !this.musicOn || c.state !== 'running') { if (m) m.next = c.currentTime + .1; return; }
       while (m.next < c.currentTime + .4) {
-        const sg = m.list[m.k], bd = 60 / sg.bpm;
-        if (m.i >= sg.notes.length) { m.k = (m.k + 1) % m.list.length; m.i = 0; m.beat = 0; m.bar = -1; m.next += 3.5; this.announce(); continue; }
+        const sg = m.cur, bd = 60 / sg.bpm;
+        if (m.i >= sg.notes.length) { this.nextEntry(); if (this.music) this.music.next += 3; return; }
         // 반주: 마디마다 화음을 한 음씩 뜯는 오르골 반주 (길게 끄는 저음 없음)
         const [s, d] = sg.notes[m.i], b0 = m.beat, b1 = m.beat + d;
         for (let bar = Math.floor(b0 / sg.beats + 1e-6); bar * sg.beats < b1 - 1e-6; bar++) {

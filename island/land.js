@@ -429,6 +429,7 @@
         const x = u * cs + v * sn, z = -u * sn + v * cs, f = fieldCell(x, z);
         if (f.iu !== c.iu || f.iv !== c.iv) continue;
         const h = H(x, z); if (!farmable(x, z, h, ISL.slopeAt(x, z)) || ISL.world.solidAt(x, h + 1, z) || ISL.world.solidAt(x + 1, h + 1, z) || ISL.world.solidAt(x, h + 1, z + 1)) continue;
+        if (ISL.treeBlocked(x, z)) continue;
         if (kind === 'olive') { extraTrees.push({ type: 'olive', x, z }); continue; }
         if (kind !== 'sunflower') ISL.colCircle(x, z, .45, h - 1, h + 1.3);
         lists[kind].push({ x, y: h - .05, z, s: .9 + rng() * .2, ry: c.ang, color: kind === 'vine' ? tint('#ffffff', .82 + rng() * .18) : kind === 'tea' ? tint('#3f6a2c', .85 + rng() * .3) : null });

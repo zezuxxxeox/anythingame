@@ -530,6 +530,7 @@
   // 교토는 서쪽이 봄(벚꽃), 동쪽이 가을(단풍·은행)
   ISL.kyotoAutumn = (x, z) => x + ISL.noise(z * .01, 3.3) * 14 > 345;
   ISL.noTree = []; ISL.noTreeSeg = [];
+  ISL.treeBlocked = (x, z) => blocked(x, z);
   function blocked(x, z) {
     for (const b of ISL.noTree) if ((x - b.x) ** 2 + (z - b.z) ** 2 < b.r * b.r) return true;
     for (const s of ISL.noTreeSeg) if (ISL.segDist(x, z, s.ax, s.az, s.bx, s.bz).d < s.w) return true;

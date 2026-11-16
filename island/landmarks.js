@@ -856,7 +856,7 @@
   function terraceVines(cx, cz, r, color) {
     const geo = ISL.vineGeo(), list = [];
     for (let x = cx - r; x < cx + r; x += 1.35) for (let z = cz - r; z < cz + r; z += 1.35) {
-      if (Math.hypot(x - cx, z - cz) > r) continue;
+      if (Math.hypot(x - cx, z - cz) > r) continue; if (ISL.treeBlocked(x, z)) continue;
       const h = H(x, z); if (ISL.slopeAt(x, z) > .16 || h < 3 || ISL.world.solidAt(x, h + 1, z)) continue;
       const hx = H(x + 2, z) - H(x - 2, z), hz = H(x, z + 2) - H(x, z - 2);
       if (Math.hypot(hx, hz) < .01 && rng() < .5) continue;

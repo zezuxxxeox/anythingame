@@ -687,12 +687,12 @@
   async function boot() {
     initScene();
     await step('지형을 빚는 중… 🏔️', 5); ISL.init();
-    await step('마을과 길을 그리는 중… 🏘️', 25); ISL.Landmarks.plan(); ISL.Streets.plan(); ISL.Land.plan();
+    await step('마을과 길을 그리는 중… 🏘️', 25); ISL.Landmarks.plan(); ISL.Streets.plan(); ISL.City.plan(); ISL.Land.plan();
     await step('하늘과 땅과 바다를 칠하는 중… 🌊', 35);
     sky = ISL.Nature.makeSky(); scene.add(sky);
     ISL.Nature.makeTerrain(scene); ISL.Nature.makeWater(scene); ISL.Nature.makeClouds(scene); ISL.Nature.makeAurora(scene);
     await step('마을을 짓고 밭을 가꾸는 중… 🌻', 55); ISL.Land.build(scene);
-    await step('에펠탑과 금각사를 세우는 중… 🗼', 68); ISL.Landmarks.build(scene); ISL.Streets.build(scene); ISL.Landmarks.mergeStatic();
+    await step('에펠탑과 금각사를 세우는 중… 🗼', 68); ISL.Landmarks.build(scene); ISL.Streets.build(scene); ISL.City.build(scene); ISL.Landmarks.mergeStatic();
     await step('숲과 풀밭을 키우는 중… 🌿', 80);
     ISL.Nature.makeTrees(scene);
     ISL.Nature.maskGrass();

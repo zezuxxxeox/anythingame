@@ -411,23 +411,11 @@
     const P = ISL.P, hall = P.hallgrim;
     const add = (id, style, a, b, o) => streets.push(Object.assign({ id, style, a, b }, DIM[style], o || {}));
     const plaza = (x, z, r, style, kind) => plazas.push({ x, z, r, style, kind });
-    // 파리 에투알
-    { const C = [-292, 142]; plaza(C[0], C[1], 43, 'paris', 'etoile'); let k = 0;
-      for (const deg of [90, 150, 210, 270, 0]) { const a = deg * Math.PI / 180, L = deg === 0 ? 52 : 114; add(k ? 'paris_' + k : 'paris', 'paris', C, [C[0] + Math.cos(a) * L, C[1] + Math.sin(a) * L], { t0: deg === 0 ? 999 : 47, p0: 40, main: !k }); k++; } }
     add('paris2', 'paris', [-40, 58], [-40, 162], { road: 4.2, walk: 3, depth: 12, main: true });
-    // 교토: 바둑판
-    for (const [k, o] of [[0, 0], [1, -27], [2, 27]]) add(k ? 'kyoto_' + k : 'kyoto', 'kyoto', [222 + o, 513], [222 + o, 600], { main: !k, breaks: [[40.5, 45.5]] });
-    add('kyoto_x', 'kyoto', [222 - 40, 556], [222 + 40, 556], { road: 2.2, t0: 999, props: false });
-    // 리스본 알파마: 굽은 언덕길 + 계단 골목 + 전망대
-    { const pts = [[-374, 432], [-346, 425], [-318, 436], [-288, 428]]; for (let k = 0; k < 3; k++) add(k ? 'lisbon_' + k : 'lisbon', 'lisbon', pts[k], pts[k + 1], { main: !k, t0: k ? 3 : 0, rails: true, joint: k < 2 });
-      add('lisbon_s', 'lisbon', [-346, 421], [-339, 394], { road: 1.6, walk: 0, depth: 9, t0: 6, stairs: true, props: false }); plaza(-338, 386, 8.5, 'lisbon', 'miradouro');
-      ISL.tramPts = pts;
-      const up = [[-330, 388], [-302, 397], [-276, 390]]; for (let k = 0; k < 2; k++) add('lisbon_u' + k, 'lisbon', up[k], up[k + 1], { t0: k ? 3 : 2 }); }
+    // 교토·리스본·파리 서쪽 거리는 실제 지도 그대로 (city.js)
     // 레이캬비크: 크리스마스 광장과 마을
     { const pc = [hall.x, hall.z + 47]; plaza(pc[0], pc[1], 16.5, 'reyk', 'xmas');
-      add('reyk', 'reyk', [hall.x, hall.z + 64], [hall.x, hall.z + 138], { main: true, breaks: [[35, 42]] });
-      for (const [k, o] of [[1, -37], [2, 37]]) add('reyk_' + k, 'reyk', [hall.x + o, hall.z + 50], [hall.x + o, hall.z + 138], { gap: [2, 5], breaks: [[49, 56]], lights: true });
-      add('reyk_x', 'reyk', [hall.x - 54, hall.z + 102.5], [hall.x + 54, hall.z + 102.5], { road: 3, walk: 0, t0: 999, props: false }); }
+      /* 레이캬비크 거리와 집은 실제 지도 그대로 (city.js) */ }
     // 루체른: 분수 광장(바인마르크트)에서 뻗는 골목
     plaza(236, -13, 10.5, 'luzern', 'weinmarkt');
     add('luzern', 'luzern', [226, -10], [150, 11], { main: true });
@@ -611,14 +599,14 @@
       for (const a of [1.2, 4.3]) { const x = p.x + Math.cos(a) * 5.2, z = p.z + Math.sin(a) * 5.2, y = H(x, z) + .2; LH.cyl(scene, .32, .26, .7, 10, M('#2a2a2a'), x, y, z); const f = new THREE.Mesh(new THREE.ConeGeometry(.24, .6, 7), new THREE.MeshBasicMaterial({ color: '#ffb347' })); f.position.set(x, y + .95, z); f.userData.dynamic = true; scene.add(f); glowPool(x, z, 4.5); ISL.colCircle(x, z, .4, y - 1, y + 1.2);
         for (let q = 0; q < 3; q++) { const b = a + q * 2.1, sx = x + Math.cos(b) * 1.2, sz = z + Math.sin(b) * 1.2; addStander(sx, sz, Math.atan2(x - sx, z - sz), R, true); } }
       { const sg = ISL.person({ top: '#c81e1e', bottom: '#c81e1e', hat: 'knit', hatColor: '#c81e1e', hair: '#ffffff', scarf: '#ffffff' }), sx = p.x - 4.6, sz = p.z + 3.4; sg.g.position.set(sx, H(sx, sz) + .2, sz); sg.g.rotation.y = 2.2; sg.armR.rotation.x = -2.5; scene.add(sg.g); ISL.colCircle(sx, sz, .35); }
-      for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283 + .3, x = p.x + Math.cos(a) * 20.5, z = p.z + Math.sin(a) * 20.5; if (!ISL.world.solidAt(x, H(x, z) + 1, z) && !streets.some(s => s.style === 'reyk' && ISL.segDist(x, z, s.ax, s.az, s.b[0], s.b[1]).d < s.road + 1)) lightTree(x, z); }
+      for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283 + .3, x = p.x + Math.cos(a) * 20.5, z = p.z + Math.sin(a) * 20.5; if (!ISL.world.solidAt(x, H(x, z) + 1, z) && !(ISL.City && ISL.City.streetAt(x, z))) lightTree(x, z); }
       snowman(p.x + 6.5, p.z - 2.5); bench(p.x - 6.5, p.z - 3, 1.1, true); bin(p.x + 3, p.z + 14.2, 'reyk');
       for (let k = 0; k < 6; k++) { const a0 = R() * 6.283, a1 = a0 + 2 + R() * 2; addWalker([p.x + Math.cos(a0) * 14, p.z + Math.sin(a0) * 14], [p.x + Math.cos(a1) * 14, p.z + Math.sin(a1) * 14], 0, R, true, .22); }
     }
     // 28번 트램이 달릴 굽은 선로
-    { const pts = ISL.tramPts, segs = []; let L = 0; for (let k = 0; k < pts.length - 1; k++) { const l = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); segs.push([L, l, pts[k], pts[k + 1]]); L += l; }
+    if (ISL.tramPts) { const pts = ISL.tramPts, segs = []; let L = 0; for (let k = 0; k < pts.length - 1; k++) { const l = Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]); segs.push([L, l, pts[k], pts[k + 1]]); L += l; }
       ISL.tramLane = { len: L, at(t) { t = Math.max(0, Math.min(L - .01, t)); const sg = segs.find(q => t < q[0] + q[1]) || segs[segs.length - 1], f = (t - sg[0]) / sg[1]; return [sg[2][0] + (sg[3][0] - sg[2][0]) * f, sg[2][1] + (sg[3][1] - sg[2][1]) * f, Math.atan2(sg[3][0] - sg[2][0], sg[3][1] - sg[2][1])]; } }; }
     ISL.walkerCount = walkers.length;
   }
-  ISL.Streets = { plan, build, update, streets, plazas };
+  ISL.Streets = { plan, build, update, streets, plazas, kit: { facadeMat, repTex, ROADS, lamp, bench, bin, lightString, lightTree, snowman, glowPool, addWalker, addStander, fountain } };
 })();

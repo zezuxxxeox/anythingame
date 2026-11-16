@@ -84,6 +84,7 @@
   // ---------- 마을과 길 ----------
   const villages = [], houses = [], roads = [], extraTrees = [], cells = new Map();
   function landOK(x, z, slopeMax) {
+    for (const b of ISL.cityZones || []) if (x > b[0] - 8 && x < b[2] + 8 && z > b[1] - 8 && z < b[3] + 8) return false; // 실제 도시 구역에는 시골집을 짓지 않음
     const h = H(x, z); if (h < 2.5) return false; if (ISL.slopeAt(x, z) > slopeMax) return false;
     if (ISL.waterAt(x, z).level > h - 1) return false;
     for (const r of ISL.rivers) { const q = ISL.riverNearest(r, x, z); if (q && q.d < q.w + 6) return false; }

@@ -59,7 +59,7 @@
     // 스위스 알프스
     if (W[1] > .01) {
       const rg = ridge(x * .0062 + 3, z * .0062 + 1, 5), pk = Math.max(0, rg - .52);
-      h += W[1] * inland * (rg * 135 - 18 + Math.pow(pk, 1.25) * 330 * (.75 + ridge(x * .021 + 7, z * .021, 3) * .5)); // 봉우리만 더 높고 날카롭게 (골짜기·마을은 그대로)
+      h += W[1] * inland * (rg * 135 - 18 + Math.pow(pk, 1.25) * 300); // 봉우리만 더 높고 날카롭게 (골짜기·마을은 그대로)
       const mx = x - 470, mz = z + 175, ca = Math.cos(.35), sa = Math.sin(.35);
       const u = mx * ca - mz * sa, v = mx * sa + mz * ca;
       const q = Math.max(Math.abs(u), Math.abs(v)) * .8 + (Math.abs(u) + Math.abs(v)) * .2;
@@ -132,6 +132,11 @@
   function applyFeatures(x, z, h) {
     for (let i = 0; i < features.length; i++) {
       const f = features[i];
+      if (f.t === 'city') { // 실제 도시 구역: 잔 굴곡을 없애 완만한 땅으로 (큰 경사는 유지)
+        const dIn = Math.min(x - f.x0, f.x1 - x, z - f.z0, f.z1 - z); if (dIn < -34 || h < 1) continue;
+        let s = 0; for (let j = -2; j <= 2; j++) for (let i2 = -2; i2 <= 2; i2++) s += baseH(x + i2 * 18, z + j * 18);
+        h = mix(h, Math.max(2.2, s / 25), sstep(-34, 6, dIn)); continue;
+      }
       if (f.t === 'flat') {
         const d = Math.hypot(x - f.x, z - f.z); if (d < f.r2) h = mix(h, f.h, sstep(f.r2, f.r, d));
       } else if (f.t === 'lake') {
@@ -259,6 +264,7 @@
 
   // ---------- 초기화 ----------
   function init(progress) {
+    for (const id in ISL.OSM || {}) { const d = ISL.OSM[id]; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const a of d.b.concat(d.r)) for (let i = 4; i < a.length; i += 2) { x0 = Math.min(x0, a[i]); x1 = Math.max(x1, a[i]); z0 = Math.min(z0, a[i + 1]); z1 = Math.max(z1, a[i + 1]); } features.push({ t: 'city', x0, z0, x1, z1 }); }
     // 해안 기준 명소
     P.belemCoast = coastPoint(-470, 575, 0);
     P.msmCoast = coastPoint(-620, -110, 0);

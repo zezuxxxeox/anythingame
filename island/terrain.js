@@ -58,7 +58,8 @@
     let h = 2 + 6 * land + fbm(x * .005, z * .005, 4) * 6 + fbm(x * .02 + 9, z * .02, 3) * 2;
     // 스위스 알프스
     if (W[1] > .01) {
-      h += W[1] * inland * (ridge(x * .0062 + 3, z * .0062 + 1, 5) * 135 - 18);
+      const rg = ridge(x * .0062 + 3, z * .0062 + 1, 5), pk = Math.max(0, rg - .52);
+      h += W[1] * inland * (rg * 135 - 18 + Math.pow(pk, 1.25) * 330 * (.75 + ridge(x * .021 + 7, z * .021, 3) * .5)); // 봉우리만 더 높고 날카롭게 (골짜기·마을은 그대로)
       const mx = x - 470, mz = z + 175, ca = Math.cos(.35), sa = Math.sin(.35);
       const u = mx * ca - mz * sa, v = mx * sa + mz * ca;
       const q = Math.max(Math.abs(u), Math.abs(v)) * .8 + (Math.abs(u) + Math.abs(v)) * .2;

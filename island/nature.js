@@ -267,7 +267,7 @@
       if (ck > .2) tmpC2.lerp(W[2] > W[3] ? PAL.chalk : PAL.gold, ISL.sstep(.2, .6, ck));
       out.lerp(tmpC2, rockK);
     }
-    const snowLine = W[1] * 128 + W[0] * 62 + (W[2] + W[3] + W[4]) * 400 + nz * 12;
+    const snowLine = W[1] * 108 + W[0] * 62 + (W[2] + W[3] + W[4]) * 400 + nz * 12;
     let snowK = ISL.sstep(snowLine, snowLine + 14, h) * (1 - ISL.sstep(.55, .8, slope) * .7);
     if (W[0] > .35) { // 아이슬란드의 겨울: 온 땅에 눈 (바닷가·온천·간헐천 주변은 녹아 있음)
       const P = ISL.P, warm = Math.max(P.lagoon ? 1 - ISL.sstep(30, 48, Math.hypot(x - P.lagoon.x, z - P.lagoon.z)) : 0, P.geysir ? 1 - ISL.sstep(8, 16, Math.hypot(x - P.geysir.x, z - P.geysir.z)) : 0);

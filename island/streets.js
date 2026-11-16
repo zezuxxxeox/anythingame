@@ -73,6 +73,16 @@
     reyk: ['KAFFI', 'BÓKABÚÐ', 'ULL', 'LISTHÚS', 'BAKARÍ', 'TÓNLIST'],
     luzern: ['CONFISERIE', 'UHREN', 'BÄCKEREI', 'KÄSE', 'APOTHEKE', 'WEINSTUBE'],
   };
+  // 건물 옆면·뒷면: 민벽 대신 실제처럼 창과 배수관이 있는 벽
+  function rearMat(key, wM, h, col, bases, o = {}) {
+    return facadeMat('rear|' + key + '|' + wM.toFixed(1) + '|' + h.toFixed(1), wM, h, P => {
+      P.rect(0, 0, wM, h, col); P.noise(o.noise || '#6a5a40', .1, 900); if (o.corr) for (let x = 0; x < wM; x += .076) P.rect(x, 0, .032, h, 'rgba(0,0,0,.09)');
+      if (o.base) P.rect(0, 0, wM, o.baseH || .7, o.base);
+      const bays = Math.max(1, Math.round(wM / (o.bay || 3)));
+      for (const y of bases) for (let b = 0; b < bays; b++) { if (P.r() < .12) continue; P.window({ cx: (b + .5) * wM / bays, y0: y, w: o.ww || .95, h: o.wh || 1.5, frame: o.frame || '#f4f0e8', surround: o.surround, sw: .12, cap: .1, bars: o.bars || [2, 3], shutter: o.shutter, curtain: P.r() < .4 ? 'rgba(245,238,225,.55)' : null }); }
+      P.rect(wM * .08, 0, .09, h, o.pipe || 'rgba(60,60,60,.75)'); if (o.top) P.rect(0, h - .25, wM, .25, o.top);
+    });
+  }
   const STY = {
     // 파리 오스만 양식: 석회암 외벽, 1층 상점, 2·5층 연속 발코니, 아연 망사르드 지붕과 굴뚝
     paris(g, w, d, r, n) {
@@ -100,8 +110,8 @@
         }
         P.rect(0, h - .35, w, .35, '#efe4cc'); P.rect(0, h - .38, w, .05, 'rgba(0,0,0,.3)');
       });
-      const side = ISL.blockMat('#d9ccb0', .9, .5);
-      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [side, side, M('#666'), M('#666'), f, side], 0, h / 2, 0);
+            const pb = Array.from({ length: ups + 1 }, (_, k) => k ? gh + (k - 1) * uh + .3 : 1.2), po = { frame: '#f4efe6', surround: '#efe5cf', wh: 2, bars: [2, 4], noise: '#8a7a5a', top: '#efe4cc', base: '#cfc3a8' }, ps = rearMat('paris' + ups, d, h, '#e0d3b8', pb, po);
+      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [ps, ps, M('#666'), M('#666'), f, rearMat('paris' + ups, w, h, '#e0d3b8', pb, po)], 0, h / 2, 0);
       // 발코니: 2층·꼭대기층은 연속, 나머지는 창마다
       for (let k = 0; k < ups; k++) {
         const y0 = gh + k * uh, top = k === ups - 1;
@@ -137,7 +147,8 @@
         P.window({ cx: w * .73, y0: .8, w: .9, h: 1.2, glass: '#1f1610', glassTop: '#3a2a1e', frame: '#4b3424', bars: [6, 1], shadow: false });
       });
       const side = M('#e3dccb');
-      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [side, side, M('#555'), M('#555'), f, side], 0, h / 2, 0);
+      const ko = { frame: '#3b2a1d', ww: .8, wh: .9, bars: [4, 1], base: '#3b2a1d', baseH: 1.1, pipe: 'rgba(59,42,29,.9)', bay: 3.4 }, ks = rearMat('kyoto', d, h, '#e3dccb', [1.5, gh + .7], ko);
+      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [ks, ks, M('#555'), M('#555'), f, rearMat('kyoto', w, h, '#e3dccb', [1.5, gh + .7], ko)], 0, h / 2, 0);
       const tile = ISL.roofMat('#3f4249', 'tile');
       const eave = new THREE.Mesh(new THREE.BoxGeometry(w + .02, .1, 1.15), tile); eave.position.set(0, gh + .12, d / 2 + .48); eave.rotation.x = .3; eave.castShadow = true; g.add(eave);
       for (let x = -w / 2 + .3; x < w / 2; x += .6) LH.box(g, .07, .07, 1.0, M('#3b2a1d'), x, gh - .08, d / 2 + .45);
@@ -178,7 +189,8 @@
         P.rect(0, h - .25, w, .25, '#f4f0e8');
       });
       const side = M(wall.startsWith('azul') ? '#f2efe6' : wall);
-      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [side, side, M('#555'), M('#555'), f, side], 0, h / 2, 0);
+      const lcol = wall.startsWith('azul') ? '#f2efe6' : wall, lb = Array.from({ length: fl }, (_, k) => k * uh + .8), lo = { frame: '#2f5a3a', surround: '#f4f0e8', base: '#d9d2c3', top: '#f4f0e8', bay: 2.8 }, ls = rearMat('lis' + kind + fl, d, h, lcol, lb, lo);
+      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [ls, ls, M('#555'), M('#555'), f, rearMat('lis' + kind + fl, w, h, lcol, lb, lo)], 0, h / 2, 0);
       for (let k = 1; k < fl; k++) { const cx = w * .25 - w / 2 + w / 2; for (const b of [0, 1]) { const x = (b + .5) * w / 2 - w / 2; LH.box(g, 1.35, .08, .5, M('#e9e4d8'), x, k * uh + .2, d / 2 + .25); railing(g, 1.3, x, k * uh + .28, d / 2 + .48, 0, .85); } }
       LH.mesh(g, LH.hipGeo(w, d, 1.6, .5), ISL.roofMat('#c25a32', 'tile'), 0, h, 0);
       LH.box(g, w + .1, .2, d + .1, M('#f4f0e8'), 0, h - .2, 0);
@@ -202,7 +214,8 @@
         if (shopN) { P.rect(w / 2 - 1.3, 2.55, 2.6, .4, '#f4f1ea'); P.text(shopN, w / 2, 2.75, .26, '#2a2a2a'); }
       });
       const side = M(col);
-      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [side, side, M('#555'), M('#555'), f, side], 0, h / 2, 0);
+      const rb = Array.from({ length: fl }, (_, k) => k * uh + .8), ro = { frame: '#ffffff', corr: 1, base: '#8d8f90', baseH: .5, wh: 1.3, ww: 1.05, bars: [2, 2], bay: 2.8, noise: '#333' }, rs = rearMat('rey' + col + fl, d, h, col, rb, ro);
+      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [rs, rs, M('#555'), M('#555'), f, rearMat('rey' + col + fl, w, h, col, rb, ro)], 0, h / 2, 0);
       const roof = ISL.roofMat(['#b03a2e', '#2b2f36', '#2f5d50'][n % 3], 'metal');
       LH.mesh(g, LH.gableGeo(d, w + .1, 2.6, .45), roof, 0, h, 0, Math.PI / 2);
       LH.mesh(g, LH.gableGeo(d - .5, w + .12, 2.5, .28), M('#f4f7fa', { roughness: 1 }), 0, h + .16, 0, Math.PI / 2); // 지붕에 쌓인 눈
@@ -236,7 +249,8 @@
         }
       });
       const side = M(base);
-      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [side, side, M('#555'), M('#555'), f, side], 0, h / 2, 0);
+      const zb = Array.from({ length: fl }, (_, k) => k * uh + .6), zo = { frame: '#f4f0e8', surround: '#9a958a', shutter: '#2f6b48', base: '#bdb5a5', baseH: .9, wh: 1.55 }, zs = rearMat('luz' + base, d, h, base, zb, zo);
+      LH.mesh(g, new THREE.BoxGeometry(w, h, d), [zs, zs, M('#555'), M('#555'), f, rearMat('luz' + base, w, h, base, zb, zo)], 0, h / 2, 0);
       const roof = ISL.roofMat('#8a4b35', 'tile');
       LH.mesh(g, LH.gableGeo(w, d, 4.6, .55), roof, 0, h, 0);
       const tri = new THREE.Shape(); tri.moveTo(-w / 2, 0); tri.lineTo(w / 2, 0); tri.lineTo(0, 4.5);

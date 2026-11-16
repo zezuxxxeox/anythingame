@@ -525,10 +525,18 @@
     ]);
     const tmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5 });
     const list = [];
-    for (let i = 0; i < path.length - 1; i += 1) {
+    // 실제 후시미 이나리처럼: 입구 쪽은 크고 듬성한 도리이 → 가운데는 촘촘한 센본도리이(작은 터널) → 산길은 중간 크기
+    const NP = path.length - 1;
+    for (let i = 0; i < NP; i += 1) {
+      const f = i / NP, big = f < .16, mid = f > .6, sc = big ? 1.5 : mid ? 1.12 : TS, every = big ? 4 : mid ? 2 : 1; if (i % every) continue;
       const [x, z] = path[i], [x2, z2] = path[i + 1], a = Math.atan2(x2 - x, z2 - z);
-      list.push({ x, y: H(x, z) - .05, z, s: TS, ry: a, tint: .92 + rng() * .12 }); // 실제 센본도리이: 높이 약 2.5m, 폭 약 2m
-      for (const ox of [-HW * TS, HW * TS]) ISL.colCircle(x + Math.cos(a) * ox, z - Math.sin(a) * ox, .12);
+      list.push({ x, y: H(x, z) - .05, z, s: sc, ry: a, tint: .92 + rng() * .12 });
+      for (const ox of [-HW * sc, HW * sc]) ISL.colCircle(x + Math.cos(a) * ox, z - Math.sin(a) * ox, .12 * sc);
+    }
+    { // 참배길 맨 앞의 거대한 첫 도리이 (높이 약 9m)
+      const [x0, z0] = path[0], [x3, z3] = path[3], a = Math.atan2(x3 - x0, z3 - z0), gx = x0 - Math.sin(a) * 24, gz = z0 - Math.cos(a) * 24, GS = 3.1;
+      list.push({ x: gx, y: H(gx, gz) - .1, z: gz, s: GS, ry: a, tint: 1 });
+      for (const ox of [-HW * GS, HW * GS]) ISL.colCircle(gx + Math.cos(a) * ox, gz - Math.sin(a) * ox, .4);
     }
     ISL.placeInstances(scene, torii, list, { material: tmat, collide: 0, tile: 60 });
     // 신사 가는 길의 돌 등롱과 여우상

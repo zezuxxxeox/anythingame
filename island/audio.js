@@ -30,7 +30,7 @@
       for (const [f, d] of [[6.3, .25], [11.7, .18], [17.1, .1]]) { const o = c.createOscillator(); o.frequency.value = f; const og = c.createGain(); og.gain.value = d; o.connect(og).connect(babble.gain); o.start(); }
       this.layers.river = river;
       this.layers.fall = chain(pink, 'lowpass', 1600, .3);
-      this.layers.wind = chain(brown, 'bandpass', 380, .4);
+      this.layers.wind = chain(brown, 'lowpass', 520, .2);
       this.layers.fire = chain(brown, 'lowpass', 900, .5, this.master);
       // 밤 귀뚜라미: 고음 + 빠른 맥동
       const cr = c.createOscillator(); cr.frequency.value = 4600; const crAm = c.createGain(); crAm.gain.value = 0; const lfo = c.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 28; const lg = c.createGain(); lg.gain.value = .5;
@@ -49,7 +49,7 @@
       const sea = env.sea;
       this.set('surf', sea * (.05 + .55 * crash), .15); this.set('wash', sea * (.02 + .22 * ebb), .2);
       this.set('river', env.river * .55); this.set('fall', env.fall * .9);
-      this.set('wind', .05 + env.wind * .25);
+      this.set('wind', env.wind * .1, 1.5);
       this.set('fire', env.fire * (.12 + Math.random() * .1), .05);
       if (this.layers.cricket) this.layers.cricket.am.gain.setTargetAtTime(this.on ? env.night * env.land * .5 : 0, this.ctx.currentTime, .5);
       if (this.layers.cricket) this.layers.cricket.g.gain.setTargetAtTime(this.on ? .012 * (Math.sin(this.t * .7) > -.3 ? 1 : 0) : 0, this.ctx.currentTime, .05);
@@ -129,40 +129,87 @@
       trip: true, mel: [12, 11, 12, 16, 12, 9, 12, 11, 12, 16, 12, 9, 11, 9, 11, 14, 11, 8, 11, 9, 11, 14, 11, 8, 9, 11, 12, 14, 16, 17, 16, 14, 12, 11, 9, 8, 9, N_, 9, 9, N_, N_],
       ch: [[0, 0], [0, 0], [7, 1], [7, 1], [0, 0], [7, 1], [0, 0]] },
   };
+  // ---------- 실제 곡 (모두 저작권이 끝난 옛 노래) : "음이름:박" ----------
+  const SONGS = {
+    silent: { name: '고요한 밤 거룩한 밤 (Stille Nacht)', bpm: 84, beats: 3, bell: 1,
+      n: 'g4:1.5 a4:.5 g4:1 e4:3 g4:1.5 a4:.5 g4:1 e4:3 d5:2 d5:1 b4:3 c5:2 c5:1 g4:3 a4:2 a4:1 c5:1.5 b4:.5 a4:1 g4:1.5 a4:.5 g4:1 e4:3 a4:2 a4:1 c5:1.5 b4:.5 a4:1 g4:1.5 a4:.5 g4:1 e4:3 d5:2 d5:1 f5:1.5 d5:.5 b4:1 c5:3 e5:3 c5:1.5 g4:.5 e4:1 g4:1.5 f4:.5 d4:1 c4:3 r:3',
+      c: 'C C C C G G C C F F C C F F C C G G C C C G C C' },
+    jingle: { name: '징글벨 (Jingle Bells)', bpm: 112, beats: 4, bell: 1,
+      n: 'e5:1 e5:1 e5:2 e5:1 e5:1 e5:2 e5:1 g5:1 c5:1.5 d5:.5 e5:4 f5:1 f5:1 f5:1.5 f5:.5 f5:1 e5:1 e5:1 e5:.5 e5:.5 e5:1 d5:1 d5:1 e5:1 d5:2 g5:2 e5:1 e5:1 e5:2 e5:1 e5:1 e5:2 e5:1 g5:1 c5:1.5 d5:.5 e5:4 f5:1 f5:1 f5:1.5 f5:.5 f5:1 e5:1 e5:1 e5:.5 e5:.5 g5:1 g5:1 f5:1 d5:1 c5:4',
+      c: 'C C C C F C G G C C C C F C G C' },
+    tannen: { name: '오 탄넨바움 (O Tannenbaum)', bpm: 88, beats: 3, bell: 1,
+      n: 'r:2 g4:1 c5:.75 c5:.25 c5:1 d5:1 e5:.75 e5:.25 e5:1.5 e5:.5 d5:.5 e5:.5 f5:1 b4:1 d5:1 c5:1 r:.5 g5:.5 g5:.5 e5:.5 a5:1.5 g5:.5 g5:.5 f5:.5 f5:1.5 f5:.5 f5:.5 d5:.5 g5:1.5 f5:.5 f5:.5 e5:.5 e5:1 g4:1 c5:.75 c5:.25 c5:1 d5:1 e5:.75 e5:.25 e5:1.5 e5:.5 d5:.5 e5:.5 f5:1 b4:1 d5:1 c5:2',
+      c: 'C C C G C C G G C C C G C' },
+    deck: { name: '덱 더 홀스 (Deck the Halls)', bpm: 108, beats: 4, bell: 1,
+      n: 'g5:1.5 f5:.5 e5:1 d5:1 c5:1 d5:1 e5:1 c5:1 d5:.5 e5:.5 f5:.5 d5:.5 e5:1.5 d5:.5 c5:1 b4:1 c5:2 g5:1.5 f5:.5 e5:1 d5:1 c5:1 d5:1 e5:1 c5:1 d5:.5 e5:.5 f5:.5 d5:.5 e5:1.5 d5:.5 c5:1 b4:1 c5:2 d5:1.5 e5:.5 f5:1 d5:1 e5:1.5 f5:.5 g5:1 d5:1 e5:.5 f#5:.5 g5:1 a5:.5 b5:.5 c6:1 b5:1 a5:1 g5:2 g5:1.5 f5:.5 e5:1 d5:1 c5:1 d5:1 e5:1 c5:1 a5:.5 a5:.5 a5:.5 a5:.5 g5:1.5 f5:.5 e5:1 d5:1 c5:2',
+      c: 'C C G C C C G C G C D G C C F C' },
+    wish: { name: '위 위시 유 어 메리 크리스마스', bpm: 116, beats: 3, bell: 1,
+      n: 'r:2 g4:1 c5:1 c5:.5 d5:.5 c5:.5 b4:.5 a4:1 a4:1 a4:1 d5:1 d5:.5 e5:.5 d5:.5 c5:.5 b4:1 g4:1 g4:1 e5:1 e5:.5 f5:.5 e5:.5 d5:.5 c5:1 a4:1 g4:.5 g4:.5 a4:1 d5:1 b4:1 c5:2 g4:1 c5:1 c5:.5 d5:.5 c5:.5 b4:.5 a4:1 a4:1 a4:1 d5:1 d5:.5 e5:.5 d5:.5 c5:.5 b4:1 g4:1 g4:1 e5:1 e5:.5 f5:.5 e5:.5 d5:.5 c5:1 a4:1 g4:.5 g4:.5 a4:1 d5:1 b4:1 c5:3',
+      c: 'C C F Dm G C F G C C F Dm G C F G C' },
+    sakura: { name: '사쿠라 사쿠라 (일본 전래곡)', bpm: 66, beats: 4,
+      n: 'a4:1 a4:1 b4:2 a4:1 a4:1 b4:2 a4:1 b4:1 c5:1 b4:1 a4:1 b4:.5 a4:.5 f4:2 e4:1 c4:1 e4:1 f4:1 e4:1 e4:.5 c4:.5 b3:2 a4:1 b4:1 c5:1 b4:1 a4:1 b4:.5 a4:.5 f4:2 e4:1 c4:1 e4:1 f4:1 e4:1 e4:.5 c4:.5 b3:2 a4:1 a4:1 b4:2 a4:1 a4:1 b4:2 e4:1 f4:1 b4:.5 a4:.5 f4:1 e4:4 r:4',
+      c: 'A5 A5 A5 F A5 E5 A5 F A5 E5 A5 A5 F E5 E5' },
+    kojo: { name: '황성의 달 (荒城の月, 1901)', bpm: 63, beats: 4,
+      n: 'e4:1 e4:1 a4:1 b4:1 c5:1 b4:1 a4:2 f4:1 f4:1 e4:1 d4:1 e4:3 r:1 e4:1 e4:1 a4:1 b4:1 c5:1 b4:1 a4:2 f4:1 d4:1 e4:1.5 e4:.5 a3:3 r:1 c4:1 c4:1 b3:1 a3:1 f4:1 f4:1 e4:2 d4:1 e4:1 f4:1.5 f4:.5 e4:3 r:1 e4:1 e4:1 a4:1 b4:1 c5:1 b4:1 a4:2 f4:1 d4:1 e4:1.5 e4:.5 a3:3 r:5',
+      c: 'Am Am Dm E Am Am Dm Am Am Dm Dm E Am Am Dm Am Am' },
+    gymno: { name: '짐노페디 1번 (에릭 사티, 1888)', bpm: 70, beats: 3,
+      n: 'r:12 r:1 f#5:1 a5:1 g5:1 f#5:1 c#5:1 b4:1 c#5:1 d5:1 a4:3 f#4:6 r:6 r:1 f#5:1 a5:1 g5:1 f#5:1 c#5:1 b4:1 c#5:1 d5:1 a4:3 f#4:6 r:3',
+      c: 'GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7 DM7 GM7' },
+  };
+  const NOTE = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+  const pitch = k => { const m = /^([a-g])(#?)(\d)$/.exec(k); return NOTE[m[1]] + (m[2] ? 1 : 0) + (m[3] - 4) * 12; }; // 가온 다(C4) 기준 반음
+  const QUAL = { '': [0, 4, 7], m: [0, 3, 7], 5: [0, 7, 12], M7: [0, 4, 7, 11] };
+  function compile(sg) {
+    if (sg.notes) return sg;
+    sg.notes = sg.n.split(' ').map(tk => { const [k, d] = tk.split(':'); return [k === 'r' ? null : pitch(k), +d]; });
+    sg.ch = sg.c.split(' ').map(tk => { const m = /^([A-G])(#?)(.*)$/.exec(tk); return [NOTE[m[1].toLowerCase()] + (m[2] ? 1 : 0), QUAL[m[3]]]; });
+    sg.root = 261.63; return sg;
+  }
+  // 예전 방식(반박 단위 배열)으로 적어 둔 지역 곡도 같은 형식으로 변환
+  function legacy(id, name) {
+    const d = TUNES[id], sub = d.trip ? 3 : 2, notes = [];
+    for (const s of d.mel) { if (s === null && notes.length) notes[notes.length - 1][1] += 1 / sub; else notes.push([s, 1 / sub]); }
+    return { name, bpm: d.bpm, beats: d.beats, root: d.root / 2, notes, ch: d.ch.map(([r, q]) => [r, q === 1 ? QUAL[''] : q === 0 ? QUAL.m : QUAL[5]]) };
+  }
+  const LISTS = {
+    iceland: ['silent', 'jingle', 'tannen', 'deck', 'wish'].map(k => compile(SONGS[k])),
+    kyoto: [compile(SONGS.sakura), compile(SONGS.kojo), legacy('kyoto', '교토의 오후')],
+    france: [compile(SONGS.gymno), legacy('france', '파리의 왈츠')],
+    portugal: [legacy('portugal', '알파마의 기타')], swiss: [legacy('swiss', '알프스 랜들러')], italy: [legacy('italy', '타란텔라')],
+  };
   Object.assign(A, {
-    music: null, musicId: null, musicGain: null, musicOn: true,
+    music: null, musicId: null, musicGain: null, musicOn: true, songName: '',
     setMusic(id) {
       if (!this.ctx || id === this.musicId) { this.pendingMusic = id; return; }
       this.musicId = id; const c = this.ctx;
-      if (!this.musicGain) { this.musicGain = c.createGain(); this.musicGain.gain.value = 0; this.musicLP = c.createBiquadFilter(); this.musicLP.type = 'lowpass'; this.musicLP.frequency.value = 5200; this.musicGain.connect(this.musicLP).connect(this.master); setInterval(() => this.musicTick(), 120); }
+      if (!this.musicGain) { this.musicGain = c.createGain(); this.musicGain.gain.value = 0; this.musicLP = c.createBiquadFilter(); this.musicLP.type = 'lowpass'; this.musicLP.frequency.value = 6000; this.musicGain.connect(this.musicLP).connect(this.master); setInterval(() => this.musicTick(), 120); }
       const t = c.currentTime; this.musicGain.gain.cancelScheduledValues(t); this.musicGain.gain.setTargetAtTime(0, t, .5);
-      setTimeout(() => { if (this.musicId !== id) return; this.music = TUNES[id] ? { def: TUNES[id], step: 0, next: c.currentTime + .1 } : null; this.musicGain.gain.setTargetAtTime(this.on && this.musicOn ? .32 : 0, c.currentTime, .8); }, 1400);
+      setTimeout(() => { if (this.musicId !== id) return; const L = LISTS[id]; this.music = L ? { list: L, k: Math.floor(Math.random() * L.length), i: 0, beat: 0, next: c.currentTime + .3, bar: -1 } : null; if (this.music) this.announce(); }, 1400);
     },
+    announce() { this.songName = this.music.list[this.music.k].name; if (ISL.onSong && this.on && this.musicOn) ISL.onSong(this.songName); },
     musicTick() {
-      const m = this.music, c = this.ctx; if (!c) return; if (this.musicGain) this.musicGain.gain.setTargetAtTime(this.on && this.musicOn && m ? (this.inside ? .18 : .32) : 0, c.currentTime, .6);
+      const m = this.music, c = this.ctx; if (!c) return; if (this.musicGain) this.musicGain.gain.setTargetAtTime(this.on && this.musicOn && m ? (this.inside ? .2 : .36) : 0, c.currentTime, .6);
       if (!m || !this.on || !this.musicOn || c.state !== 'running') { if (m) m.next = c.currentTime + .1; return; }
-      const d = m.def, sub = d.trip ? 3 : 2, stepDur = 60 / d.bpm / sub, perBar = d.beats * sub;
-      while (m.next < c.currentTime + .35) {
-        const i = m.step % d.mel.length, bar = Math.floor(m.step / perBar) % d.ch.length, inBar = m.step % perBar, t = m.next, [cr, q] = d.ch[bar];
-        const s = d.mel[i]; if (s !== null) this.voice(d.lead, d.root * Math.pow(2, s / 12), t, stepDur * (d.lead === 'bells' ? 6 : 1.9));
-        const third = q === 1 ? 4 : q === 0 ? 3 : 5, low = d.root / 2;
-        if (inBar === 0) this.voice(d.comp, low * Math.pow(2, cr / 12) / (cr > 6 ? 2 : 1), t, stepDur * sub * 1.6, .9);
-        if (d.comp === 'pad' && inBar === 0) for (const k of [0, third, 7]) this.voice('pad', d.root * Math.pow(2, (cr + k) / 12) / 2, t, stepDur * perBar, .5);
-        m.step++; m.next += stepDur;
+      while (m.next < c.currentTime + .4) {
+        const sg = m.list[m.k], bd = 60 / sg.bpm;
+        if (m.i >= sg.notes.length) { m.k = (m.k + 1) % m.list.length; m.i = 0; m.beat = 0; m.bar = -1; m.next += 3.5; this.announce(); continue; }
+        // 반주: 마디마다 화음을 한 음씩 뜯는 오르골 반주 (길게 끄는 저음 없음)
+        const [s, d] = sg.notes[m.i], b0 = m.beat, b1 = m.beat + d;
+        for (let bar = Math.floor(b0 / sg.beats + 1e-6); bar * sg.beats < b1 - 1e-6; bar++) {
+          if (bar <= m.bar) continue; m.bar = bar; const [cr, q] = sg.ch[bar % sg.ch.length], tb = m.next + (bar * sg.beats - b0) * bd;
+          for (let k = 0; k < sg.beats; k++) { const semi = k === 0 ? cr - 12 : cr + q[1 + (k - 1) % (q.length - 1)]; this.voice('comp', sg.root * Math.pow(2, (semi > 7 ? semi - 12 : semi) / 12), tb + k * bd, bd * 1.5, k === 0 ? .55 : .36); }
+        }
+        if (s !== null) this.voice(sg.bell ? 'bell' : 'box', sg.root * Math.pow(2, s / 12), m.next, Math.min(d * bd, 2.2));
+        m.i++; m.beat = b1; m.next += d * bd;
       }
     },
-    // 모든 악기를 부드러운 음색으로: 톱니파(기계음) 없이 사인·삼각파만, 느린 어택과 긴 여운
+    // 오르골·피아노 같은 맑은 소리만 사용: 톡 치고 자연스럽게 사라짐 (윙 하고 끄는 소리 없음)
     voice(kind, f, t, dur, vol = 1) {
-      const c = this.ctx, g = c.createGain(), lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800; lp.connect(g); g.connect(this.musicGain);
-      const o = (type, fr, gain, det) => { const x = c.createOscillator(), xg = c.createGain(); x.type = type; x.frequency.value = fr; if (det) x.detune.value = det; xg.gain.value = gain; x.connect(xg).connect(lp); x.start(t); x.stop(t + dur + 2.6); };
-      const comp = kind === 'pad' || /Low$/.test(kind) || kind === 'accordion';
-      if (comp) { // 반주: 아주 여린 패드
-        o('sine', f, 1); o('sine', f * 2, .25, 4);
-        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.028 * vol, t + .35); g.gain.linearRampToValueAtTime(0.0001, t + dur + 1.2);
-      } else { // 선율: 오르골·칼림바 같은 맑은 소리
-        o('sine', f, 1); o('triangle', f, .22); o('sine', f * 3, .06); o('sine', f * 2, .18, 3);
-        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(.075 * vol, t + .012); g.gain.exponentialRampToValueAtTime(.02 * vol, t + .35); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(dur, .5) + 1.6);
-      }
+      const c = this.ctx, g = c.createGain(); g.connect(this.musicGain); const tail = Math.min(2.4, Math.max(.9, dur + .9));
+      const o = (fr, gain, dec) => { const x = c.createOscillator(), xg = c.createGain(); x.type = 'sine'; x.frequency.value = fr; xg.gain.setValueAtTime(gain, t); xg.gain.exponentialRampToValueAtTime(gain * .001, t + tail * dec); x.connect(xg).connect(g); x.start(t); x.stop(t + tail + .05); };
+      o(f, 1, 1); o(f * 2, .32, .55); o(f * 3, .1, .3); if (kind === 'bell') { o(f * 4, .09, .22); o(f * 5.4, .035, .12); }
+      const pk = (kind === 'comp' ? .05 : .085) * vol;
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(pk, t + .006); g.gain.exponentialRampToValueAtTime(pk * .35, t + .28); g.gain.exponentialRampToValueAtTime(0.0001, t + tail);
     },
   });
   ISL.Audio = A;

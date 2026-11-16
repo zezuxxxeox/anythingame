@@ -165,6 +165,7 @@
 
   // ---------- UI ----------
   const state = { mode: 'loading', dlg: null, region: null, nearest: null, modal: null, inside: null, wheel: false, fading: false };
+  ISL.onSong = name => toast('♪ ' + name, 4200);
   function toast(html, ms = 3200) {
     const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = html; $('toasts').appendChild(d);
     setTimeout(() => d.classList.add('out'), ms); setTimeout(() => d.remove(), ms + 600);

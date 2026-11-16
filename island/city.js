@@ -81,7 +81,7 @@
     const mk = (geo, tex, off) => { const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: .92, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off })); m.receiveShadow = true; m.userData.dynamic = true; scene.add(m); };
     const walkTex = K.repTex(st.road + 'walk', 64, 128, rd.walk || rd.road), roadTex = K.repTex(st.road + 'road', 128, 256, rd.road);
     if (cars.length) { mk(ribbonGeo(cars.map(r => ({ p: r.p, hw: r.w / 2 + 1.9 })), .1, 4), walkTex, -2); const hero = st.winter ? cars.filter(r => /Skólavörðustígur/.test(r.name || '')) : cars, plain = cars.filter(r => !hero.includes(r)); if (hero.length) mk(ribbonGeo(hero.map(r => ({ p: r.p, hw: r.w / 2 })), .14, 10), roadTex, -4); if (plain.length) mk(ribbonGeo(plain.map(r => ({ p: r.p, hw: r.w / 2 })), .14, 8), K.repTex('snowroad', 64, 64, (x, w, h) => { x.fillStyle = '#c9d0d6'; x.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { x.fillStyle = i % 3 ? 'rgba(255,255,255,.5)' : 'rgba(110,120,130,.35)'; x.fillRect((i * 37) % w, (i * 53) % h, 3 + i % 4, 2); } x.fillStyle = 'rgba(90,96,104,.35)'; x.fillRect(w * .28, 0, 5, h); x.fillRect(w * .68, 0, 5, h); }), -4); }
-    if (peds.length) mk(ribbonGeo(peds.map(r => ({ p: r.p, hw: r.w / 2 })), .12, 4), walkTex, -3);
+    if (peds.length) mk(ribbonGeo(peds.map(r => ({ p: r.p, hw: r.w / 2 })), .12, st.winter ? 3 : 4), st.winter ? K.repTex('snowpath', 64, 64, (x, w, h) => { x.fillStyle = '#aeb6be'; x.fillRect(0, 0, w, h); for (let i = 0; i < 120; i++) { x.fillStyle = i % 2 ? 'rgba(235,240,245,.55)' : 'rgba(90,98,108,.3)'; x.fillRect((i * 29) % w, (i * 47) % h, 2 + i % 5, 2 + i % 3); } x.fillStyle = 'rgba(240,244,248,.9)'; x.fillRect(0, 0, 4, h); x.fillRect(w - 4, 0, 4, h); }) : walkTex, -3);
     if (steps.length) mk(ribbonGeo(steps.map(r => ({ p: r.p, hw: r.w / 2 })), .16, .5), K.repTex('stairs', 64, 64, (x, w, h) => { x.fillStyle = '#d9d2c2'; x.fillRect(0, 0, w, h); x.fillStyle = '#8f887a'; x.fillRect(0, 0, w, 7); }), -5);
 
     // ---- 건물: 실제 윤곽 그대로 벽을 세우고 지붕을 얹음 ----
@@ -93,6 +93,9 @@
       let area = 0; for (let i = 0; i < n; i++) area += p[i][0] * p[(i + 1) % n][1] - p[(i + 1) % n][0] * p[i][1];
       if (area < 0) p = p.slice().reverse(); // 한 방향으로 통일
       let lo = 1e9, hi = -1e9, bad = false;
+      // 바닥 높이: 꼭짓점뿐 아니라 벽을 따라 2m마다, 그리고 가운데도 재서 집이 땅에 반쯤 묻히지 않게
+      for (let i = 0; i < n; i++) { const a = p[i], c2 = p[(i + 1) % n], L = Math.hypot(c2[0] - a[0], c2[1] - a[1]), m = Math.max(1, Math.ceil(L / 2)); for (let k = 1; k < m; k++) { const h = H(a[0] + (c2[0] - a[0]) * k / m, a[1] + (c2[1] - a[1]) * k / m); lo = Math.min(lo, h); hi = Math.max(hi, h); } }
+      hi = Math.max(hi, H(b.cx, b.cz));
       for (const [x, z] of p) { const h = H(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h); if (ISL.waterAt(x, z).level > h - .3 || h < 1.5) bad = true; }
       if (b.solid) bad = true;
       for (const q of (ISL.Landmarks.planData.inari || [])) if (Math.hypot(q[0] - b.cx, q[1] - b.cz) < b.rad + 3) { bad = true; break; }
@@ -141,7 +144,7 @@
     const trees = []; let lamps = 0;
     for (const [k, x, z] of D.props) {
       if (!free(x, z)) continue;
-      if (k === 'lamp') { if (lamps++ % 2 === 0) K.lamp(x, z, st.road); }
+      if (k === 'lamp') { let near = false; for (let j = -1; j <= 1 && !near; j++) for (let i = -1; i <= 1; i++) if (D.cells.has((Math.round(x / 2) + i) * 100003 + Math.round(z / 2) + j)) { near = true; break; } if (near && lamps++ % 2 === 0) K.lamp(x, z, st.road); } // 길가에 있는 가로등만
       else if (k === 'tree') { if (st.winter) K.lightTree(x, z); else trees.push({ x, y: H(x, z), z, s: 1 + R() * .3 }); }
       else if (k === 'bench') K.bench(x, z, R() * 6.28, st.winter);
       else if (k === 'waste_basket') K.bin(x, z, st.road);

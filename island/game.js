@@ -165,7 +165,7 @@
 
   // ---------- UI ----------
   const state = { mode: 'loading', dlg: null, region: null, nearest: null, modal: null, inside: null, wheel: false, fading: false };
-  ISL.onSong = name => toast('♪ ' + name, 4200);
+  ISL.onSong = name => { const b = document.getElementById('musBtn'); if (b) b.title = '♪ ' + name; ISL.songLog = (ISL.songLog || []).concat(name).slice(-20); const el = document.getElementById('nowPlaying'); if (el) el.textContent = '♪ ' + name; }; // 화면에 띄우지 않고 ⋯ 메뉴에만 기록
   function toast(html, ms = 3200) {
     const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = html; $('toasts').appendChild(d);
     setTimeout(() => d.classList.add('out'), ms); setTimeout(() => d.remove(), ms + 600);
@@ -173,7 +173,7 @@
   ISL.toast = toast;
   function banner(r) {
     const b = $('banner'); b.innerHTML = `<div class="flag">${r.flag}</div><div><b>${r.name}</b><span>${r.hello}</span></div>`;
-    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); $('where').textContent = `${r.flag} ${r.name}`;
+    $('where').textContent = `${r.flag} ${r.name}`; // 큰 안내 배너는 몰입을 깨서 띄우지 않음 (왼쪽 위 작은 표시만 갱신)
   }
   function closeModals() { $('map').classList.remove('open'); $('passport').classList.remove('open'); state.modal = null; toggleWheel(false); }
   function toggleUI() { uiHidden = !uiHidden; document.body.classList.toggle('photo', uiHidden); if (uiHidden) toast('📷 사진 모드 — H 키나 화면 아래 버튼으로 돌아와요', 2500); }
@@ -463,7 +463,7 @@
       gu.uSkyC.value.copy(hemi.color).multiplyScalar(hemi.intensity * 1.9); gu.uGndC.value.copy(hemi.groundColor).multiplyScalar(hemi.intensity * 1.6);
     }
     camera.getWorldDirection(tmpV); tmpV.y = .02; tmpV.normalize();
-    ISL.skyColJS(tmpV, sun, fogC); scene.fog.color.copy(fogC);
+    ISL.skyColJS(tmpV, sun, fogC); scene.fog.color.copy(fogC); scene.fog.density = .00078 + xmasK * .0021; // 눈 내리는 마을에서는 먼 다른 나라가 눈안개에 가려짐
     for (const m of ISL.waterMats) { m.uniforms.uSunCol.value.copy(lightC).multiplyScalar(isSun ? 1 : .4); m.uniforms.uCam.value.copy(camera.position); }
     if (ISL.sea && !state.inside) { const st = ISL.sea.step; ISL.sea.sea.position.set(Math.round(camera.position.x / st) * st, 0, Math.round(camera.position.z / st) * st); ISL.sea.far.position.set(ISL.sea.sea.position.x, -.02, ISL.sea.sea.position.z); }
     if (ISL.clouds) { const cc = new THREE.Color().setRGB(.05 + .95 * day + low * .25, .06 + .9 * day + low * .02, .1 + .85 * day - low * .15); for (const m of ISL.clouds.mats) m.color.copy(cc); ISL.clouds.group.position.x = (performance.now() * .002) % 400; }

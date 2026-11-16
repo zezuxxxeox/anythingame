@@ -176,10 +176,16 @@
           foam += smoothstep(0.32,0.6,vW.y)*smoothstep(0.55,0.9,sin(vW.x*0.7+vW.z*0.5+uTime)*0.5+0.5)*0.3*(1.0-uRiver)*uWave;
           float fall=smoothstep(0.2,0.6,steep);
           foam+=fall*(0.75+0.25*sin(vUv.y*3.0+uTime*14.0+vUv.x*20.0));
-          if(uRiver>0.5) foam+=(0.08+smoothstep(1.6,3.2,vSp)*0.5)*smoothstep(0.55,1.0,sin(p.x*3.0+p.y*2.0)*0.5+sin(p2.x*2.0-p2.y*3.0)*0.5);
+          if(uRiver>0.5){ // 물살: 동그란 얼룩 대신 흐름 방향으로 길게 늘어진 가는 물결선
+            float s1=pow(max(sin(p.x*7.0+sin(p.y*0.55)*1.8+sin(p.y*0.21+p.x)*0.9),0.0),10.0)*(0.5+0.5*sin(p.y*0.9+p.x*2.0));
+            float s2=pow(max(sin(p2.x*9.0+sin(p2.y*0.6)*1.5),0.0),10.0)*(0.5+0.5*sin(p2.y*1.1-p2.x*3.0));
+            foam+=(0.05+smoothstep(1.6,3.2,vSp)*0.45)*mix(s1,s2,bw)*0.8;
+            foam+=smoothstep(0.82,1.0,abs(vUv.x*2.0-1.0))*0.18*(0.6+0.4*sin(vUv.y*5.0-uTime*1.5)); // 물가의 잔거품
+          }
           col=mix(col, vec3(0.92,0.96,1.0)*lit, clamp(foam,0.0,1.0)*0.85);
           float a = uRiver>0.5 ? mix(0.72,0.95,dk) : mix(0.35,0.97,smoothstep(0.0,3.5,depth));
-          a=max(a,fall); if(uMilky>0.5) a=max(a,0.9);
+          if(uRiver>0.5) a*=smoothstep(1.0,0.86,abs(vUv.x*2.0-1.0))*max(smoothstep(0.0,0.22,depth),fall); // 강가를 딱 끊지 않고 땅으로 스며들게
+          a=max(a,fall*step(uRiver,0.5)); if(uMilky>0.5) a=max(a,0.9);
           gl_FragColor=vec4(col,a);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>

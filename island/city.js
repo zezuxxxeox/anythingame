@@ -5,10 +5,10 @@
   let scene, K;
   // 나라별 건축 양식: 칸 너비(bay)·층높이·기본 층수·벽 색·지붕
   const STYLE = {
-    reyk: { bay: 2.8, gh: 2.9, uh: 2.8, lv: [2, 2, 2, 3], pal: ['#c0392b', '#2e6f9e', '#e6b422', '#f4f1ea', '#3e7c5a', '#8e5aa8', '#d9733a', '#e9e2d0', '#6f8fa8', '#b8c4b0'], roof: ['#f2f5f8', '#eef2f6', '#f6f8fa'], rh: 2.6, gable: 1, road: 'reyk', winter: 1, tint: '#dfe6ec', skip: /Hallgrímskirkja/ },
-    kyoto: { bay: 1.9, gh: 2.9, uh: 2.2, lv: [2, 2, 2, 1], pal: ['#efe8d8', '#e6dcc6', '#d9cdb4', '#f2ecdf'], roof: ['#3f4249', '#45484f', '#383b42'], rh: 1.5, gable: 1, road: 'kyoto', tint: '#6f6c66', skip: /法観寺|八坂の塔/ },
-    lisbon: { bay: 2.6, gh: 3.2, uh: 2.9, lv: [3, 4, 4, 5, 3], pal: ['#f2ead8', '#e5b04a', '#e9a6a1', '#f6f3ec', '#cfe0ea', '#f0d9a8', '#e8c9b0'], roof: ['#c25a32', '#b8532d', '#cc6a3c'], rh: 1.7, road: 'lisbon', tint: '#e2dccc' },
-    paris: { bay: 3, gh: 4.3, uh: 3.05, lv: [5, 6, 6, 6], pal: ['#e6d9bf', '#e2d4b8', '#eadfc8'], roof: ['#6e7b86', '#66737e'], rh: 1.1, mans: [1.5, 3.3], road: 'paris', tint: '#8f8a80' },
+    reyk: { bay: 2.8, gh: 2.9, uh: 2.8, lv: [2, 2, 2, 3], pal: ['#c0392b', '#2e6f9e', '#e6b422', '#f4f1ea', '#3e7c5a', '#8e5aa8', '#d9733a', '#e9e2d0', '#6f8fa8', '#b8c4b0'], roof: ['#f2f5f8', '#eef2f6', '#f6f8fa'], rh: 2.6, gable: 1, road: 'reyk', winter: 1, tint: '#dfe6ec', yard: '#eef2f6', door: 'is', skip: /Hallgrímskirkja/ },
+    kyoto: { bay: 1.9, gh: 2.9, uh: 2.2, lv: [2, 2, 2, 1], pal: ['#efe8d8', '#e6dcc6', '#d9cdb4', '#f2ecdf'], roof: ['#3f4249', '#45484f', '#383b42'], rh: 1.5, gable: 1, road: 'kyoto', tint: '#6f6c66', yard: '#b3ab98', door: 'machiya', skip: /法観寺|八坂の塔/ },
+    lisbon: { bay: 2.6, gh: 3.2, uh: 2.9, lv: [3, 4, 4, 5, 3], pal: ['#f2ead8', '#e5b04a', '#e9a6a1', '#f6f3ec', '#cfe0ea', '#f0d9a8', '#e8c9b0'], roof: ['#c25a32', '#b8532d', '#cc6a3c'], rh: 1.7, road: 'lisbon', tint: '#e2dccc', yard: '#d6cdb8', door: 'pt' },
+    paris: { bay: 3, gh: 4.3, uh: 3.05, lv: [5, 6, 6, 6], pal: ['#e6d9bf', '#e2d4b8', '#eadfc8'], roof: ['#6e7b86', '#66737e'], rh: 1.1, mans: [1.5, 3.3], road: 'paris', tint: '#8f8a80', yard: '#a8a397', door: 'prov' },
   };
   const districts = [];
   const hash = (a, b) => { let h = (a * 73856093) ^ (b * 19349663); h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
@@ -17,11 +17,11 @@
     ISL.cityZones = ISL.cityZones || [];
     for (const id in ISL.OSM || {}) {
       const src = ISL.OSM[id], st = STYLE[id]; if (!st) continue;
-      const D = { id, st, b: [], r: [], props: src.t, areas: src.g, walls: src.n, cells: new Map() };
+      const D = { id, st, b: [], r: [], props: src.t, areas: src.g, walls: src.n, cells: new Map(), yard: new Map() };
       for (const a of src.b) { const p = []; for (let i = 4; i < a.length; i += 2) p.push([a[i], a[i + 1]]); if (st.skip && a[2] && st.skip.test(a[2])) continue; D.b.push({ lv: a[0], ht: a[1], name: a[2], kind: a[3], p }); }
       for (const a of src.r) { const p = []; for (let i = 4; i < a.length; i += 2) p.push([a[i], a[i + 1]]); D.r.push({ kind: a[0], w: a[1], name: a[2], surf: a[3], p, car: /primary|secondary|tertiary|residential|unclassified|living/.test(a[0]) }); }
       let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
-      for (const b of D.b) { let cx = 0, cz = 0, rr = 0; for (const [x, z] of b.p) { cx += x; cz += z; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } b.cx = cx / b.p.length; b.cz = cz / b.p.length; for (const [x, z] of b.p) rr = Math.max(rr, Math.hypot(x - b.cx, z - b.cz)); b.rad = rr; ISL.noTree.push({ x: b.cx, z: b.cz, r: rr + 1.5 }); }
+      for (const b of D.b) { let cx = 0, cz = 0, rr = 0; for (const [x, z] of b.p) { cx += x; cz += z; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } b.cx = cx / b.p.length; b.cz = cz / b.p.length; for (const [x, z] of b.p) rr = Math.max(rr, Math.hypot(x - b.cx, z - b.cz)); b.rad = rr; ISL.noTree.push({ x: b.cx, z: b.cz, r: rr + 1.5 }); ISL.paved.push({ ax: b.cx - .1, az: b.cz, bx: b.cx + .1, bz: b.cz, hw: rr + 2.5 }); for (const [vx, vz] of b.p.concat([[b.cx, b.cz]])) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (i * i + j * j <= 5) D.yard.set((Math.round(vx / 2) + i) * 100003 + Math.round(vz / 2) + j, 1); } // 건물 둘레 4m만 마당
       D.box = [x0 - 6, z0 - 6, x1 + 6, z1 + 6]; ISL.cityZones.push(D.box);
       // 도로가 지나는 칸(2m)을 기록 → 땅 색, 풀 없애기
       const mark = (x, z, w) => { const r = Math.ceil(w / 2); for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (i * i + j * j <= r * r + 1) D.cells.set((Math.round(x / 2) + i) * 100003 + Math.round(z / 2) + j, 1); };
@@ -29,8 +29,8 @@
         const hw = r.w / 2 + (r.car ? 2 : .3);
         for (let i = 0; i < r.p.length - 1; i++) { const [ax, az] = r.p[i], [bx, bz] = r.p[i + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 2)); for (let k = 0; k <= n; k++) mark(ax + (bx - ax) * k / n, az + (bz - az) * k / n, hw); ISL.noTreeSeg.push({ ax, az, bx, bz, w: hw + 1 }); ISL.paved.push({ ax, az, bx, bz, hw: hw + .2 }); }
       }
-      const pc = new THREE.Color(st.tint);
-      ISL.groundTints.push((x, z) => (x > D.box[0] && x < D.box[2] && z > D.box[1] && z < D.box[3] && D.cells.has(Math.round(x / 2) * 100003 + Math.round(z / 2))) ? [pc, .95, 0] : null);
+      const pc = new THREE.Color(st.tint), yc = new THREE.Color(st.yard);
+      ISL.groundTints.push((x, z) => { if (!(x > D.box[0] && x < D.box[2] && z > D.box[1] && z < D.box[3])) return null; const k = Math.round(x / 2) * 100003 + Math.round(z / 2); return D.cells.has(k) ? [pc, .95, 0] : D.yard.has(k) ? [yc, .8, 0] : null; });
       if (id === 'lisbon') { const car = D.r.filter(r => r.car).sort((a, b) => b.p.length - a.p.length)[0]; if (car) ISL.tramPts = car.p; } // 트램은 실제 찻길을 따라
       districts.push(D);
     }
@@ -93,9 +93,10 @@
       let area = 0; for (let i = 0; i < n; i++) area += p[i][0] * p[(i + 1) % n][1] - p[(i + 1) % n][0] * p[i][1];
       if (area < 0) p = p.slice().reverse(); // 한 방향으로 통일
       let lo = 1e9, hi = -1e9, bad = false;
-      for (const [x, z] of p) { const h = H(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h); if (ISL.waterAt(x, z).level > h - .3 || h < 1.5) bad = true; if (ISL.world.solidAt(x, h + 1.5, z)) bad = true; }
+      for (const [x, z] of p) { const h = H(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h); if (ISL.waterAt(x, z).level > h - .3 || h < 1.5) bad = true; }
+      if (b.solid) bad = true;
       for (const q of (ISL.Landmarks.planData.inari || [])) if (Math.hypot(q[0] - b.cx, q[1] - b.cz) < b.rad + 3) { bad = true; break; }
-      if (bad || hi - lo > 9 || ISL.world.solidAt(b.cx, H(b.cx, b.cz) + 1.5, b.cz)) continue;
+      D.skip = D.skip || {}; const why = b.solid ? 'landmark' : bad ? 'water' : hi - lo > 9 ? 'slope' : null; if (why) { D.skip[why] = (D.skip[why] || 0) + 1; continue; }
       for (const pz of (ISL.Streets.plazas || [])) if (Math.hypot(b.cx - pz.x, b.cz - pz.z) < pz.r + b.rad) bad = true;
       if (bad) continue;
       const hsh = hash(Math.round(b.cx * 10), Math.round(b.cz * 10)), small = Math.abs(area) / 2 < 45;
@@ -103,6 +104,8 @@
       const y0 = hi + .12, yG = y0 + (lv > 1 || !small ? st.gh : 2.5), yT = yG + (lv - 1) * st.uh;
       col.set(st.pal[Math.floor(hash(Math.round(b.cz * 7), Math.round(b.cx * 3)) * st.pal.length)]); const fc = col.clone(), dark = col.clone().multiplyScalar(.62);
       const gc = T.grPlain ? new THREE.Color('#ffffff') : fc;
+      let de = -1, dbest = 1e9, dpt = null;
+      for (let i = 0; i < n; i++) { const a = p[i], c = p[(i + 1) % n], L = Math.hypot(c[0] - a[0], c[1] - a[1]), nb = Math.round(L / st.bay); if (nb < 3) continue; const ux = (c[0] - a[0]) / L, uz = (c[1] - a[1]) / L, s = L / (2 * nb), px = a[0] + ux * s, pz = a[1] + uz * s, ox = px + uz * 1.2, oz = pz - ux * 1.2; const fx = px + uz * .8, fz = pz - ux * .8; if (Math.abs(y0 - H(ox, oz)) > .7 || y0 - H(fx, fz) < -.3 || y0 - H(px, pz) < -.3 || ISL.world.solidAt(ox, y0 + 1, oz)) continue; let rdist = 60; for (const r of D.r) for (let k = 0; k < r.p.length - 1; k++) { if (Math.abs(r.p[k][0] - px) > 60 || Math.abs(r.p[k][1] - pz) > 60) continue; rdist = Math.min(rdist, ISL.segDist(ox, oz, r.p[k][0], r.p[k][1], r.p[k + 1][0], r.p[k + 1][1]).d); } if (rdist < dbest) { dbest = rdist; de = i; dpt = [px, pz, ux, uz, s, L]; } }
       for (let i = 0; i < n; i++) {
         const a = p[i], c = p[(i + 1) % n], dx = c[0] - a[0], dz = c[1] - a[1], L = Math.hypot(dx, dz); if (L < .05) continue;
         const nb = Math.max(1, Math.round(L / st.bay)), blank = L < st.bay * .7;
@@ -110,7 +113,12 @@
         if (blank) { quad(gr, a, c, y0, yG, .002, .02, .3, .32, gc); if (lv > 1) quad(up, a, c, yG, yT, .005, .03, .02, .04, fc); }
         else { const off = nb >= 3 ? .5 : 0; quad(gr, a, c, y0, yG, off, off + nb / 4, 0, 1, gc); if (lv > 1) quad(up, a, c, yG, yT, 0, nb, 0, lv - 1, fc); }
         // 충돌: 벽마다 얇은 상자 (안쪽으로 0.35m)
-        if (L > .4) { const ux = dx / L, uz = dz / L, mx = (a[0] + c[0]) / 2 - uz * .3, mz = (a[1] + c[1]) / 2 + ux * .3; ISL.world.add({ t: 'b', x: mx, z: mz, hw: L / 2, hd: .35, a: Math.atan2(-uz, ux), y0: lo - 2, y1: yT + 2, city: 1 }); }
+        if (L > .4) { const ux = dx / L, uz = dz / L, mx = (a[0] + c[0]) / 2 - uz * .3, mz = (a[1] + c[1]) / 2 + ux * .3; let extra = null;
+          if (i === de && dbest < 40) { const [px, pz, , , s] = dpt, g = new THREE.Group(); g.position.set(px - uz * .1, y0, pz + ux * .1); g.rotation.y = Math.atan2(uz, -ux); scene.add(g);
+            const door = ISL.Interior.addDoor({ x: b.cx, z: b.cz, ry: g.rotation.y, dims: { w: 6, d: 5 }, floorY: y0, street: 'city:' + D.id }, g, 6, .2, st.door, R);
+            for (const q of [-1, 1]) ISL.LH.box(g, .14, 2.35, .18, st.door === 'machiya' ? '#2a1c12' : '#f1ece2', q * (door.sliding ? .82 : .64), 0, .14); ISL.LH.box(g, door.sliding ? 1.8 : 1.42, .16, .18, st.door === 'machiya' ? '#2a1c12' : '#f1ece2', 0, 2.3, .14); ISL.LH.box(g, 1.7, .14, .6, '#9a948a', 0, -.14, .4);
+            const off = s - L / 2; extra = { door, pass: lx => door.open > .55 && Math.abs(lx - off) < .7 }; D.doors = (D.doors || 0) + 1; }
+          ISL.world.add(Object.assign({ t: 'b', x: mx, z: mz, hw: L / 2, hd: .35, a: Math.atan2(-uz, ux), y0: lo - 2, y1: yT + 2, city: 1 }, extra || {})); }
       }
       // 지붕: 가장 긴 변 방향의 용마루로 모아 올림 (맞배/우진각/망사르드)
       let bi = 0, bl = 0; for (let i = 0; i < n; i++) { const L = Math.hypot(p[(i + 1) % n][0] - p[i][0], p[(i + 1) % n][1] - p[i][1]); if (L > bl) { bl = L; bi = i; } }
@@ -150,7 +158,10 @@
   }
 
   function build(sc) {
-    scene = sc; K = ISL.Streets.kit; for (const D of districts) buildDistrict(D);
+    scene = sc; K = ISL.Streets.kit;
+    // 이웃한 집끼리는 벽을 맞대므로, 다른 것(명소·기존 건물)과 겹치는지는 도시 벽을 세우기 전에 미리 판정
+    for (const D of districts) for (const b of D.b) { b.solid = ISL.world.solidAt(b.cx, H(b.cx, b.cz) + 1.5, b.cz); for (const [x, z] of b.p) if (ISL.world.solidAt(x, H(x, z) + 1.5, z)) b.solid = true; }
+    for (const D of districts) buildDistrict(D);
     const t = document.getElementById('title'); if (t && !document.getElementById('osmCredit')) { const d = document.createElement('div'); d.id = 'osmCredit'; d.textContent = '도시 지도 © OpenStreetMap contributors'; d.style.cssText = 'position:absolute;left:10px;bottom:8px;font-size:11px;opacity:.7;color:#fff'; t.appendChild(d); }
   }
   // 지금 서 있는 실제 길 이름

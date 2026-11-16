@@ -6,7 +6,7 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', 'island', 'osm')
 # anchor: 실제 좌표 ↔ 게임 좌표, toward: 이 실제 지점 방향이 게임의 dir 방향이 되도록 회전, clip: 게임 좌표 사각형
 CFG = {
   'reyk':   dict(anchor=(64.14170, -21.92655), game=(40, -395), toward=(64.14564, -21.93202), dir=(0, 1), clip=(-95, -432, 175, -150), levels=2),
-  'kyoto':  dict(anchor=(34.99852, 135.77917), game=(222, 498), toward=(34.99852, 135.77700), dir=(0, 1), clip=(110, 440, 330, 640), levels=2, avoid=[(352, 528, 48), (280, 392, 52)]),
+  'kyoto':  dict(anchor=(34.99852, 135.77917), game=(222, 498), toward=(34.99852, 135.77700), dir=(-1, 0), clip=(40, 420, 335, 610), levels=2, avoid=[(352, 528, 48), (280, 392, 68)]),
   'lisbon': dict(anchor=(38.71200, -9.13000), game=(-330, 412), toward=None, dir=(0, 1), clip=(-440, 340, -240, 480), levels=4, avoid=[(-255, 335, 64)]),
   'paris':  dict(anchor=(48.85837, 2.29448), game=(-150, 150), toward=(48.86050, 2.29900), dir=(-1, 0), clip=(-500, -40, -236, 330), levels=6),
   'firenze':dict(anchor=(43.77310, 11.25600), game=(0, 0), toward=None, dir=(0, 1), clip=(-400, -400, 400, 400), levels=4),

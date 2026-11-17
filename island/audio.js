@@ -171,7 +171,10 @@
   // 실제 연주 녹음 (위키미디어 공용, 공유 저작물·CC) — 파일이 없거나 재생이 안 되면 같은 곡을 오르골로 대신 연주
   const REC = (file, name, alt) => ({ file: 'island/music/' + file + '.mp3', name, alt: alt ? compile(SONGS[alt]) : null });
   const LISTS = {
-    iceland: [REC('silent', '고요한 밤 거룩한 밤 — 미 공군 군악대 합창단', 'silent'), REC('jingle', '징글벨 — 미 공군 군악대', 'jingle'), REC('tannen', '오 탄넨바움 — 미 공군 군악대 합창단', 'tannen'), REC('deck', '덱 더 홀스 — 미 공군 군악대 합창단', 'deck'), REC('wish', '위 위시 유 어 메리 크리스마스 — 미 공군 군악대', 'wish')],
+    iceland: [REC('silent', '고요한 밤 거룩한 밤 — 미 공군 군악대 합창단', 'silent'), REC('jingle', '징글벨 — 미 공군 군악대', 'jingle'), REC('tannen', '오 탄넨바움 — 미 공군 군악대 합창단', 'tannen'), REC('deck', '덱 더 홀스 — 미 공군 군악대 합창단', 'deck'), REC('wish', '위 위시 유 어 메리 크리스마스 — 미 공군 군악대', 'wish'),
+      // 아래 곡들은 녹음 파일이 들어오는 대로 자동으로 재생됨 (파일이 없으면 건너뜀)
+      REC('joy', '기쁘다 구주 오셨네', null), REC('carols', '캐럴 메들리', null), REC('midnight', '그 맑고 환한 밤중에 / 덱 더 홀스', null), REC('holy', '오 거룩한 밤', null), REC('hark', '천사 찬송하기를', null), REC('faithful', '참 반가운 성도여', null),
+      REC('godrest', '갓 레스트 예 메리 젠틀맨', null), REC('bells', '캐럴 오브 더 벨', null), REC('noel', '저 들 밖에 한밤중에', null), REC('angels', '천사들의 노래가', null), REC('sleigh', '썰매 타기', null), REC('nutcracker', '호두까기 인형 — 사탕 요정의 춤', null)],
     kyoto: [REC('koto', '고토(일본 전통 현악기) 연주 — Torsodog (CC BY 3.0)', 'sakura'), compile(SONGS.sakura), compile(SONGS.kojo)],
     france: [REC('gymno', '사티: 짐노페디 1번 — 피아노 Robin Alciatore', 'gymno'), REC('waltz', '쇼팽: 왈츠 Op.34-2 — 피아노', null), legacy('france', '파리의 왈츠')],
     portugal: [legacy('portugal', '알파마의 기타')], swiss: [legacy('swiss', '알프스 랜들러')], italy: [legacy('italy', '타란텔라')],
@@ -189,8 +192,8 @@
     startEntry() {
       const m = this.music; if (!m) return; let e = m.list[m.k]; m.i = 0; m.beat = 0; m.bar = -1; m.next = this.ctx.currentTime + .4; m.rec = null;
       if (e.file && !e.bad) {
-        if (!this.el) { this.el = new Audio(); this.el.preload = 'auto'; this.el.addEventListener('ended', () => this.nextEntry()); this.el.addEventListener('error', () => { const mm = this.music; if (mm && mm.rec) { mm.rec.bad = true; if (mm.rec.alt) { mm.cur = mm.rec.alt; mm.rec = null; this.announce(); } else this.nextEntry(); } }); }
-        m.rec = e; m.cur = null; this.el.src = e.file; this.el.volume = 0; const pr = this.el.play(); if (pr && pr.catch) pr.catch(() => { e.bad = true; if (this.music === m) { m.rec = null; m.cur = e.alt; if (!m.cur) this.nextEntry(); } });
+        if (!this.el) { this.el = new Audio(); this.el.preload = 'auto'; this.el.addEventListener('ended', () => this.nextEntry()); this.el.addEventListener('error', () => { const mm = this.music; if (mm && mm.rec && this.el.src && decodeURI(this.el.src).endsWith(mm.rec.file)) { mm.rec.bad = true; if (mm.rec.alt) { mm.cur = mm.rec.alt; mm.rec = null; this.announce(); } else this.nextEntry(); } }); }
+        m.rec = e; m.cur = null; this.el.src = e.file; this.el.volume = 0; const pr = this.el.play(); if (pr && pr.catch) pr.catch(err => { if (!err || err.name === 'AbortError' || m.rec !== e) return; e.bad = true; if (this.music === m) { m.rec = null; m.cur = e.alt; if (!m.cur) this.nextEntry(); } });
       } else m.cur = e.file ? e.alt : e;
       if (!m.rec && !m.cur) return this.nextEntry();
       this.announce();

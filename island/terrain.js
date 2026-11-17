@@ -58,8 +58,7 @@
     let h = 2 + 6 * land + fbm(x * .005, z * .005, 4) * 6 + fbm(x * .02 + 9, z * .02, 3) * 2;
     // 스위스 알프스
     if (W[1] > .01) {
-      const rg = ridge(x * .0062 + 3, z * .0062 + 1, 5), pk = Math.max(0, rg - .52);
-      h += W[1] * inland * (rg * 135 - 18 + Math.pow(pk, 1.25) * 300); // 봉우리만 더 높고 날카롭게 (골짜기·마을은 그대로)
+      h += W[1] * inland * (ridge(x * .0048 + 3, z * .0048 + 1, 3) * 150 - 20 + fbm(x * .028, z * .028, 3) * 7); // 굵직한 산줄기 + 잔 바위결 (바늘 같은 봉우리 없이)
       const mx = x - 470, mz = z + 175, ca = Math.cos(.35), sa = Math.sin(.35);
       const u = mx * ca - mz * sa, v = mx * sa + mz * ca;
       const q = Math.max(Math.abs(u), Math.abs(v)) * .8 + (Math.abs(u) + Math.abs(v)) * .2;
@@ -135,7 +134,11 @@
       if (f.t === 'city') { // 실제 도시 구역: 잔 굴곡을 없애 완만한 땅으로 (큰 경사는 유지)
         const dIn = Math.min(x - f.x0, f.x1 - x, z - f.z0, f.z1 - z); if (dIn < -34 || h < 1) continue;
         let s = 0; for (let j = -2; j <= 2; j++) for (let i2 = -2; i2 <= 2; i2++) s += baseH(x + i2 * 18, z + j * 18);
-        h = mix(h, Math.max(2.2, s / 25), sstep(-34, 6, dIn)); continue;
+        h = mix(h, Math.max(2.2, s / 25), sstep(-34, 6, dIn));
+        // 집터 고르기: 건물 자리는 평평하게 다지고 둘레 4m에 걸쳐 원래 땅과 잇는다 (집이 비탈에 떠 있거나 묻히지 않게)
+        const lots = f.grid.get(Math.floor(x / 24) * 100003 + Math.floor(z / 24));
+        if (lots) { let bd = 1e9, bh = 0; for (const L of lots) { if (Math.abs(x - L.cx) > L.rad + 5 || Math.abs(z - L.cz) > L.rad + 5) continue; const d = polyDist(L.p, x, z); if (d < bd) { bd = d; bh = L.h; } } if (bd < 4.5) h = mix(h, bh, 1 - sstep(.8, 4.5, bd)); }
+        continue;
       }
       if (f.t === 'flat') {
         const d = Math.hypot(x - f.x, z - f.z); if (d < f.r2) h = mix(h, f.h, sstep(f.r2, f.r, d));
@@ -164,6 +167,12 @@
     return h;
   }
 
+  // 점에서 다각형까지의 거리 (안쪽이면 0)
+  function polyDist(p, x, z) {
+    let ins = false, best = 1e9;
+    for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const a = p[i], b = p[j]; if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) ins = !ins; const d = segDist(x, z, a[0], a[1], b[0], b[1]).d; if (d < best) best = d; }
+    return ins ? 0 : best;
+  }
   function segDist(px, pz, ax, az, bx, bz) {
     const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz;
     const t = clamp(((px - ax) * dx + (pz - az) * dz) / l2, 0, 1);
@@ -264,7 +273,10 @@
 
   // ---------- 초기화 ----------
   function init(progress) {
-    for (const id in ISL.OSM || {}) { const d = ISL.OSM[id]; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const a of d.b.concat(d.r)) for (let i = 4; i < a.length; i += 2) { x0 = Math.min(x0, a[i]); x1 = Math.max(x1, a[i]); z0 = Math.min(z0, a[i + 1]); z1 = Math.max(z1, a[i + 1]); } features.push({ t: 'city', x0, z0, x1, z1 }); }
+    for (const id in ISL.OSM || {}) { const d = ISL.OSM[id]; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const a of d.b.concat(d.r)) for (let i = 4; i < a.length; i += 2) { x0 = Math.min(x0, a[i]); x1 = Math.max(x1, a[i]); z0 = Math.min(z0, a[i + 1]); z1 = Math.max(z1, a[i + 1]); } const grid = new Map(), smooth = (x, z) => { let s = 0; for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) s += baseH(x + i * 18, z + j * 18); return Math.max(2.2, s / 25); };
+      for (const a of d.b) { const p = []; let cx = 0, cz = 0, rad = 0; for (let i = 4; i < a.length; i += 2) { p.push([a[i], a[i + 1]]); cx += a[i]; cz += a[i + 1]; } cx /= p.length; cz /= p.length; for (const q of p) rad = Math.max(rad, Math.hypot(q[0] - cx, q[1] - cz)); const L = { p, cx, cz, rad, h: smooth(cx, cz) };
+        for (let gx = Math.floor((cx - rad - 5) / 24); gx <= Math.floor((cx + rad + 5) / 24); gx++) for (let gz = Math.floor((cz - rad - 5) / 24); gz <= Math.floor((cz + rad + 5) / 24); gz++) { const k = gx * 100003 + gz; if (!grid.has(k)) grid.set(k, []); grid.get(k).push(L); } }
+      features.push({ t: 'city', x0, z0, x1, z1, grid }); }
     // 해안 기준 명소
     P.belemCoast = coastPoint(-470, 575, 0);
     P.msmCoast = coastPoint(-620, -110, 0);

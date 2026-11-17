@@ -32,6 +32,7 @@
       const pc = new THREE.Color(st.tint), yc = new THREE.Color(st.yard);
       ISL.groundTints.push((x, z) => { if (!(x > D.box[0] && x < D.box[2] && z > D.box[1] && z < D.box[3])) return null; const k = Math.round(x / 2) * 100003 + Math.round(z / 2); return D.cells.has(k) ? [pc, .95, 0] : D.yard.has(k) ? [yc, .8, 0] : null; });
       if (id === 'lisbon') { const car = D.r.filter(r => r.car).sort((a, b) => b.p.length - a.p.length)[0]; if (car) ISL.tramPts = car.p; } // 트램은 실제 찻길을 따라
+      if (st.winter) { const B = D.box, prev = ISL.snowZone; ISL.snowZone = (x, z) => Math.max(prev ? prev(x, z) : 0, ISL.sstep(-26, 4, Math.min(x - B[0], B[2] - x, z - B[1], B[3] - z))); }
       districts.push(D);
     }
   }
@@ -80,7 +81,7 @@
     const rd = K.ROADS[st.road], cars = D.r.filter(r => r.car), peds = D.r.filter(r => !r.car && r.kind !== 'steps'), steps = D.r.filter(r => r.kind === 'steps');
     const mk = (geo, tex, off) => { const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: .92, polygonOffset: true, polygonOffsetFactor: off, polygonOffsetUnits: off })); m.receiveShadow = true; m.userData.dynamic = true; scene.add(m); };
     const walkTex = K.repTex(st.road + 'walk', 64, 128, rd.walk || rd.road), roadTex = K.repTex(st.road + 'road', 128, 256, rd.road);
-    if (cars.length) { mk(ribbonGeo(cars.map(r => ({ p: r.p, hw: r.w / 2 + 1.9 })), .1, 4), walkTex, -2); const hero = st.winter ? cars.filter(r => /Skólavörðustígur/.test(r.name || '')) : cars, plain = cars.filter(r => !hero.includes(r)); if (hero.length) mk(ribbonGeo(hero.map(r => ({ p: r.p, hw: r.w / 2 })), .14, 10), roadTex, -4); if (plain.length) mk(ribbonGeo(plain.map(r => ({ p: r.p, hw: r.w / 2 })), .14, 8), K.repTex('snowroad', 64, 64, (x, w, h) => { x.fillStyle = '#c9d0d6'; x.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { x.fillStyle = i % 3 ? 'rgba(255,255,255,.5)' : 'rgba(110,120,130,.35)'; x.fillRect((i * 37) % w, (i * 53) % h, 3 + i % 4, 2); } x.fillStyle = 'rgba(90,96,104,.35)'; x.fillRect(w * .28, 0, 5, h); x.fillRect(w * .68, 0, 5, h); }), -4); }
+    if (cars.length) { mk(ribbonGeo(cars.map(r => ({ p: r.p, hw: r.w / 2 + 1.9 })), .1, 4), walkTex, -2); const hero = st.winter ? cars.filter(r => /Skólavörðustígur/.test(r.name || '')) : cars, plain = cars.filter(r => !hero.includes(r)); if (hero.length) mk(ribbonGeo(hero.map(r => ({ p: r.p, hw: r.w / 2 })), .14, D.id === 'lisbon' ? 3 : D.id === 'kyoto' ? 4 : 10), roadTex, -4); if (plain.length) mk(ribbonGeo(plain.map(r => ({ p: r.p, hw: r.w / 2 })), .14, 8), K.repTex('snowroad', 64, 64, (x, w, h) => { x.fillStyle = '#c9d0d6'; x.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { x.fillStyle = i % 3 ? 'rgba(255,255,255,.5)' : 'rgba(110,120,130,.35)'; x.fillRect((i * 37) % w, (i * 53) % h, 3 + i % 4, 2); } x.fillStyle = 'rgba(90,96,104,.35)'; x.fillRect(w * .28, 0, 5, h); x.fillRect(w * .68, 0, 5, h); }), -4); }
     if (peds.length) mk(ribbonGeo(peds.map(r => ({ p: r.p, hw: r.w / 2 })), .12, st.winter ? 3 : 4), st.winter ? K.repTex('snowpath', 64, 64, (x, w, h) => { x.fillStyle = '#aeb6be'; x.fillRect(0, 0, w, h); for (let i = 0; i < 120; i++) { x.fillStyle = i % 2 ? 'rgba(235,240,245,.55)' : 'rgba(90,98,108,.3)'; x.fillRect((i * 29) % w, (i * 47) % h, 2 + i % 5, 2 + i % 3); } x.fillStyle = 'rgba(240,244,248,.9)'; x.fillRect(0, 0, 4, h); x.fillRect(w - 4, 0, 4, h); }) : walkTex, -3);
     if (steps.length) mk(ribbonGeo(steps.map(r => ({ p: r.p, hw: r.w / 2 })), .16, .5), K.repTex('stairs', 64, 64, (x, w, h) => { x.fillStyle = '#d9d2c2'; x.fillRect(0, 0, w, h); x.fillStyle = '#8f887a'; x.fillRect(0, 0, w, 7); }), -5);
 
@@ -130,9 +131,16 @@
       const tc = (t0 + t1) / 2, wd = (t1 - t0) / 2, ln = (s1 - s0) / 2, sc = (s0 + s1) / 2, rl = st.gable ? ln : Math.max(0, ln - wd);
       const proj = ([x, z]) => { const s = Math.max(sc - rl, Math.min(sc + rl, x * ax + z * az)); return [s * ax - tc * az, s * az + tc * ax]; };
       const rc = new THREE.Color(st.roof[Math.floor(hsh * 97) % st.roof.length]), rh = Math.min(st.rh * 1.6, Math.max(st.rh * .5, wd * (st.rh / 4)));
-      let ring = p.map(q => [q[0], yT, q[1]]);
-      const stage = (f, dy) => { const nr = ring.map((q, i) => { const r = proj(p[i]); return [q[0] + (r[0] - q[0]) * f, q[1] + dy, q[2] + (r[1] - q[2]) * f]; }); for (let i = 0; i < n; i++) { const a = ring[i], c = ring[(i + 1) % n], c2 = nr[(i + 1) % n], a2 = nr[i], k = rf.pos.length / 3; rf.pos.push(...a, ...c, ...c2, ...a2); for (let q = 0; q < 4; q++) rf.col.push(rc.r, rc.g, rc.b); rf.idx.push(k, k + 1, k + 2, k, k + 2, k + 3); } ring = nr; };
+      const ev = st.mans ? .25 : .5; // 처마: 벽보다 바깥으로 내밀고 살짝 아래로
+      let ring = p.map(q => { const r = proj(q), dx = q[0] - r[0], dz = q[1] - r[1], l = Math.hypot(dx, dz) || 1; return [q[0] + dx / l * ev, yT - .12, q[1] + dz / l * ev]; });
+      { const k0 = rf.pos.length / 3; for (const q of ring) { rf.pos.push(q[0], q[1], q[2]); rf.col.push(rc.r * .8, rc.g * .8, rc.b * .8); } for (let i = 0; i < n; i++) { rf.pos.push(p[i][0], yT - .12, p[i][1]); rf.col.push(rc.r * .7, rc.g * .7, rc.b * .7); } for (let i = 0; i < n; i++) { const j = (i + 1) % n; rf.idx.push(k0 + i, k0 + j, k0 + n + j, k0 + i, k0 + n + j, k0 + n + i); } } // 처마 밑면
+      const stage = (f, dy) => { const nr = ring.map((q, i) => { const r = proj(p[i]); return [q[0] + (r[0] - q[0]) * f, q[1] + dy, q[2] + (r[1] - q[2]) * f]; }); for (let i = 0; i < n; i++) { const a = ring[i], c = ring[(i + 1) % n], c2 = nr[(i + 1) % n], a2 = nr[i], k = rf.pos.length / 3; rf.pos.push(...a, ...c, ...c2, ...a2); const gab = Math.hypot(a2[0] - c2[0], a2[2] - c2[2]) < .05 && st.gable, cc = gab ? fc : rc; for (let q = 0; q < 4; q++) rf.col.push(cc.r, cc.g, cc.b); rf.idx.push(k, k + 1, k + 2, k, k + 2, k + 3); } ring = nr; };
       if (st.mans) { stage(Math.min(.5, st.mans[0] / Math.max(wd, 2)), st.mans[1]); stage(1, st.rh); } else stage(1, rh);
+      if (Math.abs(area) / 2 > 40 && hsh > .25) { // 굴뚝
+        const s = sc + (hsh - .5) * rl, cxx = s * ax - tc * az, czz = s * az + tc * ax, w2 = .32, yb = yT + (st.mans ? st.mans[1] : rh * .5), yt = yT + (st.mans ? st.mans[1] + st.rh : rh) + .9, cc = new THREE.Color(st.winter ? '#b9b4ac' : D.id === 'kyoto' ? '#4a4a4e' : '#a8674c');
+        const k = rf.pos.length / 3; for (const y of [yb, yt]) for (const [ox, oz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { rf.pos.push(cxx + ox * w2, y, czz + oz * w2); rf.col.push(cc.r, cc.g, cc.b); }
+        for (let i = 0; i < 4; i++) { const j = (i + 1) % 4; rf.idx.push(k + i, k + j, k + 4 + j, k + i, k + 4 + j, k + 4 + i); } rf.idx.push(k + 4, k + 5, k + 6, k + 4, k + 6, k + 7);
+      }
       built++;
     }
     const mesh = (B, mat) => { if (!B.pos.length) return; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(B.pos, 3)); if (B.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(B.uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(B.col, 3)); g.setIndex(B.idx); g.computeVertexNormals(); const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; m.userData.dynamic = true; scene.add(m); };

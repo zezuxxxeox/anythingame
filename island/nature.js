@@ -275,9 +275,10 @@
     }
     const snowLine = W[1] * 108 + W[0] * 62 + (W[2] + W[3] + W[4]) * 400 + nz * 12;
     let snowK = ISL.sstep(snowLine, snowLine + 14, h) * (1 - ISL.sstep(.55, .8, slope) * .7);
-    if (W[0] > .35) { // 아이슬란드의 겨울: 온 땅에 눈 (바닷가·온천·간헐천 주변은 녹아 있음)
+    const snowZ = ISL.snowZone ? ISL.snowZone(x, z) : 0; // 눈 마을 구역은 나라 경계와 상관없이 끝까지 눈
+    if (W[0] > .35 || snowZ > 0) { // 아이슬란드의 겨울: 온 땅에 눈 (바닷가·온천·간헐천 주변은 녹아 있음)
       const P = ISL.P, warm = Math.max(P.lagoon ? 1 - ISL.sstep(30, 48, Math.hypot(x - P.lagoon.x, z - P.lagoon.z)) : 0, P.geysir ? 1 - ISL.sstep(8, 16, Math.hypot(x - P.geysir.x, z - P.geysir.z)) : 0);
-      const cover = ISL.sstep(.35, .7, W[0]) * ISL.sstep(1.2, 3.2, h) * (1 - ISL.sstep(.5, .8, slope) * .6) * (1 - warm) * (.82 + .18 * ISL.sstep(-.4, .3, nz));
+      const cover = Math.max(ISL.sstep(.35, .7, W[0]), snowZ) * ISL.sstep(1.2, 3.2, h) * (1 - ISL.sstep(.5, .8, slope) * .6) * (1 - warm) * (.82 + .18 * ISL.sstep(-.4, .3, nz));
       snowK = Math.max(snowK, cover);
     }
     SURF.snow = snowK;

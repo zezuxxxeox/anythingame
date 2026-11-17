@@ -32,10 +32,7 @@
       this.layers.fall = chain(pink, 'lowpass', 1600, .3);
       this.layers.wind = chain(brown, 'lowpass', 520, .2);
       this.layers.fire = chain(brown, 'lowpass', 900, .5, this.master);
-      // 밤 귀뚜라미: 고음 + 빠른 맥동
-      const cr = c.createOscillator(); cr.frequency.value = 4600; const crAm = c.createGain(); crAm.gain.value = 0; const lfo = c.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 28; const lg = c.createGain(); lg.gain.value = .5;
-      lfo.connect(lg).connect(crAm.gain); const crG = c.createGain(); crG.gain.value = 0; cr.connect(crAm).connect(crG).connect(this.outdoor); cr.start(); lfo.start();
-      this.layers.cricket = { g: crG, am: crAm };
+      // (밤 벌레 소리는 '지이잉' 하는 기계음처럼 들려서 없앰)
       this.t = 0; this.surfPhase = 0;
     },
     set(name, v, tc = .4) { const L = this.layers[name]; if (L) L.g.gain.setTargetAtTime(this.on ? v : 0, this.ctx.currentTime, tc); },
@@ -80,7 +77,7 @@
       steps.forEach((st, k) => setTimeout(() => { const f = 523.25 * Math.pow(2, st / 12); this.tone(f, 'sine', 1.5, vol, this.master); this.tone(f * 2.01, 'sine', 1, vol / 2, this.master); }, k * 120));
     },
     bird() { const f = 2200 + Math.random() * 1600; this.tone(f, 'sine', .18, .02, this.outdoor, f * (1.2 + Math.random() * .5)); },
-    gull() { const c = this.ctx; for (let k = 0; k < 3; k++) setTimeout(() => { this.tone(1500 - k * 60, 'sawtooth', .35, .008, this.outdoor, 850); this.tone(1520 - k * 60, 'triangle', .35, .012, this.outdoor, 900); }, k * 260); },
+    gull() { const c = this.ctx; for (let k = 0; k < 3; k++) setTimeout(() => { this.tone(1520 - k * 60, 'triangle', .35, .012, this.outdoor, 900); }, k * 260); },
     cowbell(v) { const f = 540 + Math.random() * 80; [1, 1.48, 2.37, 3.1].forEach((m, i) => this.tone(f * m, 'triangle', .6 - i * .1, .02 * v / (i + 1))); },
     crackle() { this.noise(.03 + Math.random() * .04, 'highpass', 2500, .5, .05 + Math.random() * .05, this.master); },
     tick() { this.noise(.02, 'bandpass', 3800, 4, .05, this.master); },
@@ -97,7 +94,7 @@
     door(open, sliding) {
       if (!this.ctx || !this.on) return; const d = this.master;
       if (sliding) { this.noise(.45, 'bandpass', 1500, .6, .06, d); return; }
-      if (open) { this.tone(420, 'sawtooth', .5, .012, d, 310); this.noise(.1, 'bandpass', 600, 1, .06, d, this.buf.brown); }
+      if (open) { this.noise(.1, 'bandpass', 600, 1, .06, d, this.buf.brown); }
       else { this.noise(.18, 'lowpass', 400, .7, .5, d, this.buf.brown); this.noise(.05, 'bandpass', 2400, 2, .05, d); }
     },
     melody(region) { // 오르골

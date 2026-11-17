@@ -1,0 +1,389 @@
+<title>눈의 마을 설계도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 한 장의 밤 지도를 맨 위에 펼치고, 아래로 동네별 설계 카드와 자정 장면을 시간순으로 읽게 한다. 늘 밤인 마을이라 화면도 밤 하나로 고정. */
+:root {
+  --night: #0d1729;   /* 바탕: 깊은 겨울밤 */
+  --dusk: #15233d;    /* 패널: 푸른 저녁 */
+  --snow: #eaf0f7;    /* 본문: 눈빛 */
+  --frost: #9fb2c9;   /* 보조 글자 */
+  --lamp: #ffbf6b;    /* 강조: 창불·등불 */
+  --aurora: #7fe6bf;  /* 오로라 */
+  --berry: #e0645c;   /* 산타·장터 빨강 */
+  --line: rgba(159,178,201,.22);
+  --display: "Gowun Batang", "Nanum Myeongjo", "AppleMyungjo", serif;
+  --body: "Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--night); color: var(--snow); font-family: var(--body); font-size: 16px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 48px 72px; display: flex; flex-direction: column; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(40px, 8vw, 72px); letter-spacing: .08em; line-height: 1.15; }
+h2 { font-size: clamp(24px, 4vw, 32px); letter-spacing: .03em; }
+h3 { font-size: 21px; }
+p { margin: 0; max-width: 66ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .28em; color: var(--frost); text-transform: uppercase; }
+.lede { font-size: 18px; color: var(--snow); opacity: .92; }
+.muted { color: var(--frost); }
+.num { font-family: var(--mono); font-size: 13px; color: var(--lamp); font-variant-numeric: tabular-nums; }
+header { display: flex; flex-direction: column; gap: 14px; }
+section { display: flex; flex-direction: column; gap: 20px; }
+
+.map { position: relative; border-radius: 18px; overflow: hidden; background: var(--dusk); border: 1px solid var(--line); }
+.mapScroll { overflow-x: auto; }
+.map svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.map svg text { font-family: var(--body); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--frost); padding: 14px 18px; border-top: 1px solid var(--line); }
+.legend span::before { content: ""; display: inline-block; width: 18px; height: 0; border-top: 2px solid currentColor; vertical-align: middle; margin-right: 6px; }
+.legend .walk { color: var(--snow); } .legend .sled { color: var(--lamp); } .legend .sled::before { border-top-style: dashed; }
+.legend .fly { color: var(--aurora); } .legend .fly::before { border-top-style: dotted; }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 28px; padding: 0; margin: 0; list-style: none; }
+.rules li { padding-top: 12px; border-top: 1px solid var(--line); }
+.rules b { display: block; font-family: var(--display); font-size: 18px; color: var(--lamp); font-weight: 700; }
+
+.must { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.must div { background: var(--dusk); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.must b { display: block; font-size: 15px; }
+.must small { color: var(--frost); font-size: 13.5px; line-height: 1.6; display: block; margin-top: 4px; }
+
+.zones { display: flex; flex-direction: column; gap: 0; }
+.zone { display: grid; grid-template-columns: 220px 1fr; gap: 8px 32px; padding: 26px 0; border-top: 1px solid var(--line); }
+.zone:last-child { border-bottom: 1px solid var(--line); }
+.zone .side { display: flex; flex-direction: column; gap: 6px; }
+.zone .tag { font-size: 13.5px; color: var(--frost); }
+.zone .body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.zone ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+.zone li::marker { color: var(--lamp); }
+.dims { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.feel { font-family: var(--display); font-size: 17px; color: var(--aurora); }
+
+.timeline { display: grid; grid-template-columns: 96px 1fr; gap: 0 22px; }
+.timeline .t { font-family: var(--mono); color: var(--lamp); font-size: 14px; padding-top: 14px; font-variant-numeric: tabular-nums; }
+.timeline .d { padding: 12px 0 18px; border-left: 1px solid var(--line); padding-left: 22px; position: relative; min-width: 0; }
+.timeline .d::before { content: ""; position: absolute; left: -5px; top: 21px; width: 9px; height: 9px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 12px var(--lamp); }
+.timeline .d b { display: block; font-family: var(--display); font-size: 18px; margin-bottom: 2px; }
+
+.sky { display: grid; grid-template-columns: repeat(4, 1fr); border-radius: 14px; overflow: hidden; }
+.sky div { padding: 18px 16px 16px; min-height: 150px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sky b { font-family: var(--display); font-size: 18px; }
+.sky small { font-size: 13.5px; line-height: 1.6; opacity: .9; }
+.s1 { background: linear-gradient(180deg, #2a4a78, #1a2d50); }
+.s2 { background: linear-gradient(180deg, #0b1630, #13294a); }
+.s3 { background: linear-gradient(180deg, #091024, #1d2a4a); }
+.s4 { background: linear-gradient(180deg, #2b3a58, #3a4866); }
+
+.people { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0 28px; }
+.people div { padding: 12px 0; border-top: 1px solid var(--line); min-width: 0; }
+.people b { font-family: var(--display); font-size: 17px; }
+
+.steps { counter-reset: s; display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: baseline; }
+.steps li::before { content: counter(s); font-family: var(--mono); color: var(--night); background: var(--lamp); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 500; }
+
+@media (max-width: 680px) {
+  .zone { grid-template-columns: 1fr; }
+  .sky { grid-template-columns: 1fr 1fr; }
+  .timeline { grid-template-columns: 70px 1fr; gap: 0 14px; }
+  .timeline .d { padding-left: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .aur { animation: sway 9s ease-in-out infinite alternate; transform-origin: 50% 0; }
+  @keyframes sway { from { transform: translateX(-12px) skewX(-3deg); opacity: .75; } to { transform: translateX(12px) skewX(3deg); opacity: 1; } }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">위아더월드 · 새 맵 설계도</div>
+  <h1>눈의 마을</h1>
+  <p class="lede">해가 뜨지 않는 크리스마스 마을. 추운 숲길을 걷다가 수백 개의 불빛을 만나고, 반겨 주는 사람들 사이에서 "여기 내 자리가 있다"고 느끼게 하는 것이 이 마을의 목적입니다.</p>
+  <p class="muted">걸어서 끝에서 끝까지 약 25분 · 가로 2.4km × 세로 1.6km · 산이 뒤를 감싸고 앞은 얼음 바다로 열린 분지</p>
+</header>
+
+<section>
+  <h2>마을 지도</h2>
+  <div class="map">
+    <div class="mapScroll">
+    <svg viewBox="0 0 1000 640" role="img" aria-label="눈의 마을 전체 지도">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1226"/><stop offset="1" stop-color="#16284a"/></linearGradient>
+        <linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fe6bf" stop-opacity="0"/><stop offset=".55" stop-color="#7fe6bf" stop-opacity=".45"/><stop offset="1" stop-color="#b48cff" stop-opacity="0"/></linearGradient>
+        <radialGradient id="glow"><stop offset="0" stop-color="#ffbf6b" stop-opacity=".55"/><stop offset="1" stop-color="#ffbf6b" stop-opacity="0"/></radialGradient>
+        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c3a5c"/><stop offset="1" stop-color="#0e2238"/></linearGradient>
+      </defs>
+      <rect width="1000" height="640" fill="url(#sky)"/>
+      <path class="aur" d="M40 20 C220 80 380 0 560 60 S860 30 980 70 L980 150 C820 100 640 150 480 110 S180 140 40 90Z" fill="url(#au)"/>
+      <!-- 뒷산 -->
+      <path d="M0 230 L90 150 L170 205 L260 120 L350 190 L430 140 L520 200 L600 150 L700 110 L780 60 L860 120 L940 90 L1000 140 L1000 300 L0 300Z" fill="#22385c"/>
+      <path d="M700 110 L780 60 L860 120 L800 108 L760 130Z M240 135 L260 120 L285 145 L262 140Z" fill="#dfe8f3" opacity=".85"/>
+      <!-- 눈 덮인 땅 -->
+      <path d="M0 270 C200 250 380 290 560 270 S860 260 1000 280 L1000 640 L0 640Z" fill="#c9d6e6"/>
+      <path d="M0 330 C220 310 420 350 640 320 S900 330 1000 320 L1000 640 L0 640Z" fill="#dce5f0"/>
+      <!-- 얼음 바다와 북극곰 해안 -->
+      <path d="M560 640 C600 590 690 560 780 560 S930 540 1000 520 L1000 640Z" fill="url(#sea)"/>
+      <g fill="#eef4fa" opacity=".9"><path d="M720 600 l26 -6 l14 10 l-30 6Z"/><path d="M800 585 l34 -4 l10 12 l-38 4Z"/><path d="M880 600 l22 -8 l20 8 l-30 8Z"/><path d="M940 560 l28 -2 l6 12 l-30 2Z"/></g>
+      <!-- 얼음 호수 -->
+      <ellipse cx="470" cy="500" rx="78" ry="34" fill="#a9c4de"/><ellipse cx="470" cy="500" rx="70" ry="28" fill="none" stroke="#ffbf6b" stroke-dasharray="2 5" stroke-width="2"/>
+      <!-- 운하 -->
+      <path d="M640 640 C650 560 610 500 650 440 S700 360 690 320" fill="none" stroke="#5f86b0" stroke-width="9" stroke-linecap="round"/>
+      <!-- 스키 산 -->
+      <path d="M820 300 L900 150 L990 300Z" fill="#e9f0f8"/><path d="M900 150 L880 300 M900 150 L930 300 M900 150 L960 300" stroke="#9fb2c9" stroke-width="2" fill="none"/>
+      <path d="M850 300 L905 165" stroke="#ffbf6b" stroke-width="1.5" stroke-dasharray="1 4"/>
+      <!-- 자작나무 숲 -->
+      <g fill="#2f4a3e">
+        <path d="M30 360 l10 -26 l10 26Z"/><path d="M60 380 l12 -30 l12 30Z"/><path d="M95 350 l10 -24 l10 24Z"/><path d="M40 420 l12 -30 l12 30Z"/><path d="M80 440 l10 -26 l10 26Z"/><path d="M120 400 l12 -30 l12 30Z"/><path d="M150 450 l10 -24 l10 24Z"/><path d="M20 480 l12 -30 l12 30Z"/><path d="M60 510 l10 -24 l10 24Z"/><path d="M110 500 l12 -30 l12 30Z"/><path d="M160 520 l10 -26 l10 26Z"/><path d="M200 470 l12 -30 l12 30Z"/>
+        <path d="M330 230 l9 -22 l9 22Z"/><path d="M355 245 l10 -26 l10 26Z"/><path d="M380 228 l9 -22 l9 22Z"/><path d="M405 250 l10 -26 l10 26Z"/>
+      </g>
+      <!-- 걷는 길 -->
+      <g fill="none" stroke="#eaf0f7" stroke-width="2.4" stroke-linecap="round" opacity=".8">
+        <path d="M40 600 C100 560 140 520 190 470"/><path d="M190 470 C250 450 300 420 330 400 L470 395"/>
+        <path d="M470 395 L470 460"/><path d="M470 395 C540 390 600 380 650 380 L800 420"/><path d="M800 420 C840 470 860 520 860 555"/>
+        <path d="M330 400 C300 360 260 330 230 320"/><path d="M470 395 C440 330 410 280 390 225"/><path d="M540 520 C570 470 590 450 620 420"/>
+        <path d="M800 420 L850 300"/>
+      </g>
+      <!-- 썰매 길 -->
+      <path d="M230 320 C170 300 120 330 90 400 C70 460 110 520 170 540 C260 570 360 560 400 520" fill="none" stroke="#ffbf6b" stroke-width="2.2" stroke-dasharray="7 6"/>
+      <!-- 자정 썰매 비행 -->
+      <g fill="none" stroke="#7fe6bf" stroke-width="1.8" stroke-dasharray="1.5 6" stroke-linecap="round">
+        <path d="M260 300 C320 200 420 150 600 70"/><path d="M260 300 C230 200 180 130 60 60"/><path d="M260 300 C420 230 650 200 960 120"/><path d="M260 300 C380 260 520 250 700 30"/>
+      </g>
+      <!-- 불빛 -->
+      <g><circle cx="470" cy="395" r="70" fill="url(#glow)"/><circle cx="330" cy="400" r="46" fill="url(#glow)"/><circle cx="650" cy="400" r="50" fill="url(#glow)"/><circle cx="800" cy="440" r="44" fill="url(#glow)"/><circle cx="230" cy="320" r="44" fill="url(#glow)"/><circle cx="390" cy="220" r="30" fill="url(#glow)"/><circle cx="560" cy="300" r="22" fill="url(#glow)"/></g>
+      <!-- 트리 -->
+      <path d="M470 352 l14 34 l-28 0Z M470 340 l10 22 l-20 0Z" fill="#2f5a46"/><circle cx="470" cy="337" r="3.5" fill="#ffd66b"/>
+      <!-- 지점과 이름 -->
+      <g font-size="15" fill="#eaf0f7" font-weight="700">
+        <circle cx="470" cy="395" r="6" fill="#ffbf6b"/><text x="486" y="414">종탑 광장 · 큰 마켓</text>
+        <circle cx="330" cy="400" r="5" fill="#ffbf6b"/><text x="252" y="432">등불 골목</text>
+        <circle cx="650" cy="392" r="5" fill="#ffbf6b"/><text x="664" y="372">운하 동네</text>
+        <circle cx="800" cy="425" r="5" fill="#ffbf6b"/><text x="812" y="452">등대 항구</text>
+        <circle cx="230" cy="320" r="6" fill="#e0645c"/><text x="150" y="300">산타 마을</text>
+        <circle cx="390" cy="220" r="5" fill="#7fe6bf"/><text x="404" y="214">별빛 언덕</text>
+        <circle cx="900" cy="150" r="5" fill="#ffbf6b"/><text x="830" y="140">스키 산</text>
+        <circle cx="470" cy="500" r="5" fill="#ffbf6b"/><text x="420" y="552">얼음 호수</text>
+        <circle cx="560" cy="300" r="5" fill="#ffbf6b"/><text x="574" y="296">언덕 위 예배당</text>
+        <circle cx="860" cy="560" r="5" fill="#eaf0f7"/><text x="770" y="620">북극곰 얼음 해안</text>
+        <circle cx="40" cy="600" r="6" fill="#eaf0f7"/><text x="54" y="625">시작: 숲속 등불길</text>
+        <circle cx="270" cy="372" r="5" fill="#ffd66b"/><text x="160" y="380" font-size="13" fill="#ffd66b">내 오두막</text>
+        <circle cx="120" cy="560" r="4" fill="#ffbf6b"/><text x="80" y="590" font-size="13" fill="#9fb2c9">순록 썰매 길</text>
+      </g>
+      <text x="610" y="96" font-size="13" fill="#7fe6bf">자정: 산타들의 썰매 비행</text>
+    </svg>
+    </div>
+    <div class="legend"><span class="walk">걷는 길</span><span class="sled">순록 썰매 길</span><span class="fly">자정 썰매 비행</span><span style="color:var(--lamp)">● 불빛이 모인 곳</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>이 마을의 약속</h2>
+  <ul class="rules">
+    <li><b>서두를 일이 없다</b>시간 제한도, 실패도, 점수도 없어요. 멈춰 서 있는 것도 놀이예요.</li>
+    <li><b>어디서나 앉을 수 있다</b>벤치, 창가 자리, 모닥불 곁, 부두 끝, 리프트 의자. 쉬는 자리가 30걸음마다 하나.</li>
+    <li><b>혼자여도 외롭지 않다</b>늘 누군가의 목소리, 불 켜진 창, 지나가는 사람과 동물이 있어요.</li>
+    <li><b>나를 기억한다</b>두 번째 만나면 이름을 부르고, 내가 준 선물 이야기를 해요.</li>
+    <li><b>내가 줄 수 있다</b>받기만 하지 않아요. 장터에서 산 것으로 누군가를 기쁘게 할 수 있어요.</li>
+    <li><b>불은 꺼지지 않는다</b>가로등, 창불, 전구, 트리. 이 마을의 조명은 언제나 켜져 있어요.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>꼭 들어가는 것</h2>
+  <div class="must">
+    <div><b>오로라</b><small>하늘 어디서나 보이고 깊은 밤에 가장 강해요. 초록에서 분홍, 보라로 번져요.</small></div>
+    <div><b>북극곰</b><small>얼음 해안 놀이터에 살아요. 미끄럼틀을 타고, 새끼들은 눈싸움. 생선을 주면 따라와요.</small></div>
+    <div><b>크리스마스 마켓</b><small>광장의 큰 장터 12채와 골목·운하·항구의 작은 장터들.</small></div>
+    <div><b>늘 켜진 조명</b><small>낮이 없는 마을. 하늘은 푸른 저녁과 깊은 밤 사이만 오가요.</small></div>
+    <div><b>산타들</b><small>여러 산타가 함께 사는 산타 마을. 저마다 맡은 일과 성격이 달라요.</small></div>
+    <div><b>순록</b><small>이름 있는 순록 여섯 마리. 먹이 주기, 쓰다듬기, 썰매 끌기.</small></div>
+    <div><b>썰매</b><small>순록 썰매(숲길 일주), 하늘 썰매(밤 비행), 아이들 눈썰매 언덕.</small></div>
+    <div><b>스키</b><small>야간 조명 슬로프 세 개와 리프트. 오로라를 보며 마을 불빛으로 내려와요.</small></div>
+  </div>
+</section>
+
+<section>
+  <h2>동네별 설계</h2>
+  <div class="zones">
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">시작</div><h3>숲속 등불길</h3><div class="tag">어둡고 조용한 자작나무 숲</div></div>
+      <div class="body">
+        <p>내 발자국 소리와 눈 내리는 소리만 들리는 숲길로 시작해요. 나무에 걸린 작은 등불이 10m마다 길을 알려 주고, 하늘에는 오로라가 희미하게 흘러요.</p>
+        <ul><li>모퉁이를 돌면 숲이 열리고 언덕 아래로 마을 전체 불빛이 한꺼번에 보여요.</li><li>그 순간 순록 썰매 한 대가 방울 소리를 내며 마을 위를 가로질러 날아가요.</li><li>입구 다리에서 등불 할머니가 핫초코와 내 오두막 열쇠를 건네요.</li></ul>
+        <div class="dims"><span class="num">숲길 약 400m</span><span class="num">등불 간격 10m</span></div>
+        <p class="feel">추웠다가, 따뜻해지는 첫 5분.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">마을의 심장</div><h3>종탑 광장 · 큰 마켓</h3><div class="tag">모든 길이 모이는 둥근 광장</div></div>
+      <div class="body">
+        <p>가운데 20m 전나무 트리. 장식은 금색과 빨간색만 써서 촌스럽지 않게 해요. 둘레에 빨간 지붕 장터 오두막 12채와 천천히 도는 회전목마, 4층 높이 종탑이 있어요.</p>
+        <ul><li>장터: 구운 아몬드, 생강빵, 털장갑, 나무 장난감, 촛불, 유리 장식, 따뜻한 음료, 선물 포장.</li><li>트리 아래 모닥불 두 곳과 둘러앉는 통나무 의자.</li><li>장난감처럼 밝은 동화 색감: 빨강·흰 줄무늬 차양, 사탕 지팡이 가로등, 선물상자 모양 가판대.</li></ul>
+        <div class="dims"><span class="num">광장 지름 60m</span><span class="num">트리 20m</span><span class="num">종탑 4층</span><span class="num">장터 12채</span></div>
+        <p class="feel">사람들 웃음소리 속에 서 있는 것만으로 좋은 곳.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">오래된 이야기책</div><h3>등불 골목</h3><div class="tag">굽은 돌길과 튀어나온 위층</div></div>
+      <div class="body">
+        <p>위층이 앞으로 튀어나와 맞은편 집과 거의 닿을 듯한 좁은 목조 골목이에요. 가스등이 주황빛으로 비추고, 창틀마다 눈과 성에, 촛대가 놓여 있어요.</p>
+        <ul><li>서점(문 열면 종이 딸랑), 찻집(김 서린 창 너머 웃음소리), 오르골 가게, 빵집.</li><li>골목 끝 작은 광장에서 캐럴 합창단이 노래해요.</li><li>소리가 벽에 울려서 더 가깝고 포근하게 들려요.</li></ul>
+        <div class="dims"><span class="num">골목 폭 3~4m</span><span class="num">집 3~4층</span><span class="num">가스등 간격 12m</span></div>
+        <p class="feel">어깨를 움츠리고 걷다가 찻집 문을 열고 싶어지는 길.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">물 위의 불빛</div><h3>운하 동네</h3><div class="tag">색색의 반목조 집과 돌다리</div></div>
+      <div class="body">
+        <p>얼지 않은 좁은 운하 양쪽에 분홍·노랑·하늘색 반목조 집이 늘어서 있어요. 물에 창불이 흔들리며 비치고, 다섯 개의 돌다리 난간마다 리스와 리본이 걸려 있어요.</p>
+        <ul><li>노 젓는 작은 배를 타고 집들 사이를 지나요. 다리 밑을 지날 때 위에서 사람들이 손을 흔들어요.</li><li>창가에 놓인 인형, 문 위의 겨울 꽃장식, 물가 계단에 앉은 연인들.</li></ul>
+        <div class="dims"><span class="num">운하 폭 6m</span><span class="num">다리 5개</span><span class="num">뱃길 약 350m</span></div>
+        <p class="feel">천천히 흘러가며 남의 창을 구경하는 즐거움.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">바다와 책</div><h3>등대 항구</h3><div class="tag">함석집, 부두, 노천 온천</div></div>
+      <div class="body">
+        <p>부두를 따라 색색의 함석집, 눈 덮인 고깃배, 깜빡이는 등대가 있어요. 부두 끝 노천 온천에 들어가면 눈송이가 김 속으로 녹아 사라져요.</p>
+        <ul><li>크리스마스이브에 책을 선물하는 풍습을 가진 책방. 한 권 골라 내 오두막 책장에 꽂아요.</li><li>생선 가게에서 산 생선은 북극곰 친구에게 줄 수 있어요.</li></ul>
+        <div class="dims"><span class="num">부두 길이 180m</span><span class="num">등대 높이 22m</span></div>
+        <p class="feel">따뜻한 물속에서 오로라를 올려다보는 밤.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">동심</div><h3>산타 마을</h3><div class="tag">여러 산타가 함께 사는 곳</div></div>
+      <div class="body">
+        <p>자작나무 숲 가장자리의 통나무 마을이에요. 선물 공장, 산타 우체국, 순록 마구간, 그리고 자정에 썰매들이 날아오르는 220m 활주로가 있어요.</p>
+        <ul><li>편지를 써서 우체통에 넣으면 며칠 뒤 내 오두막 우편함에 답장이 와요.</li><li>공장 창 너머로 장난감 만드는 모습이 보여요.</li><li>순록 먹이 주기, 순록 썰매로 숲길 일주(약 1.2km).</li></ul>
+        <div class="dims"><span class="num">활주로 220m</span><span class="num">순록 6마리</span><span class="num">산타 5명</span></div>
+        <p class="feel">어릴 때 믿었던 이야기가 정말로 있는 곳.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">하얀 놀이터</div><h3>북극곰 얼음 해안</h3><div class="tag">유빙과 이글루, 얼음 미끄럼틀</div></div>
+      <div class="body">
+        <p>마을 바깥 얼음 바닷가에 북극곰 가족이 살아요. 얼음 언덕으로 만든 미끄럼틀을 타고, 새끼 곰들은 눈을 굴리며 놀고, 엄마 곰은 유빙 위에서 바다를 바라봐요.</p>
+        <ul><li>가까이 가면 다가와서 머리를 부비고, 생선을 주면 졸졸 따라와요.</li><li>함께 미끄럼틀을 탈 수 있고, 이글루 안에는 작은 모닥불과 쉼터가 있어요.</li></ul>
+        <div class="dims"><span class="num">해안 약 300m</span><span class="num">북극곰 4마리</span><span class="num">유빙 수십 개</span></div>
+        <p class="feel">크고 하얗고 폭신한 친구들.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">야간 슬로프</div><h3>스키 산</h3><div class="tag">조명 켜진 슬로프와 리프트</div></div>
+      <div class="body">
+        <p>마을 뒤 산에 조명이 켜진 슬로프 세 개(완만·보통·숲길)와 리프트가 있어요. 정상에서는 오로라가 머리 위로 지나가고, 내려올 때는 마을 불빛을 향해 미끄러져요.</p>
+        <ul><li>정상의 작은 산장에서 쉬어 갈 수 있어요.</li><li>슬로프 아래 아이들 눈썰매 언덕.</li></ul>
+        <div class="dims"><span class="num">높이 차 180m</span><span class="num">슬로프 3개</span><span class="num">리프트 1개</span></div>
+        <p class="feel">차가운 바람을 가르고 불빛 속으로 들어가는 기분.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">가장 높은 곳</div><h3>별빛 언덕</h3><div class="tag">오로라 전망대</div></div>
+      <div class="body">
+        <p>지그재그 숲길 끝에 유리 지붕 오두막 몇 채와 큰 모닥불이 있어요. 마을 전체 불빛이 발아래 펼쳐지고, 자정에는 산타들이 날아가는 모습이 가장 잘 보여요.</p>
+        <ul><li>소원 등불에 소원을 적어 띄우면 다른 등불들 사이로 천천히 올라가요.</li><li>유리 오두막 침대에 누워 오로라를 볼 수 있어요.</li></ul>
+        <div class="dims"><span class="num">광장보다 90m 높음</span><span class="num">숲길 약 600m</span></div>
+        <p class="feel">아무 말 없이 오래 머물게 되는 곳.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">가장 조용한 곳</div><h3>얼음 호수와 예배당</h3><div class="tag">스케이트장과 촛불 예배당</div></div>
+      <div class="body">
+        <p>가장자리에 전구가 둘린 얼음 호수에서 사람들이 손잡고 천천히 스케이트를 타요. 호숫가 언덕 위 작은 예배당은 촛불만 켜져 있고, 들어가면 바깥 소리가 사라지고 '고요한 밤'만 들려요.</p>
+        <div class="dims"><span class="num">호수 150m × 70m</span><span class="num">예배당 의자 열두 줄</span></div>
+        <p class="feel">아무것도 하지 않아도 괜찮다고 말해 주는 곳.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">돌아갈 곳</div><h3>내 오두막</h3><div class="tag">등불 골목 끝 언덕의 통나무집</div></div>
+      <div class="body">
+        <p>벽난로, 흔들의자, 창가 자리, 그리고 고양이 한 마리가 있어요. 어디서 놀다 와도 문을 열면 벽난로가 타고 있어요.</p>
+        <ul><li>장터에서 산 장식으로 내 트리를 꾸며요.</li><li>책방에서 고른 책, 산타의 답장, 주민들의 선물이 하나씩 쌓여요.</li><li>자정 비행이 끝난 다음 날, 트리 밑에 작은 선물이 놓여 있어요.</li></ul>
+        <p class="feel">이 마을에 내 자리가 있다는 증거.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>하늘의 흐름</h2>
+  <p class="muted">해가 뜨지 않아요. 실제 약 20분에 한 바퀴씩 하늘이 천천히 바뀌고, 조명은 언제나 켜져 있어요.</p>
+  <div class="sky">
+    <div class="s1"><b>푸른 저녁</b><small>짙은 파란 하늘. 창불과 전구가 가장 예뻐 보이고 장터가 가장 붐벼요.</small></div>
+    <div class="s2"><b>깊은 밤</b><small>별이 가득하고 오로라가 가장 강해요. 하늘 썰매를 타는 시간.</small></div>
+    <div class="s3"><b>자정</b><small>종이 열두 번 울리고 산타들이 썰매를 타고 날아올라요.</small></div>
+    <div class="s4"><b>눈 내리는 밤</b><small>함박눈. 거리가 조용해지고 썰매들이 하나둘 돌아와요.</small></div>
+  </div>
+</section>
+
+<section>
+  <h2>자정 — 산타들의 출발</h2>
+  <div class="timeline">
+    <div class="t">23:50</div><div class="d"><b>준비</b>활주로 양옆 등불이 하나씩 켜지고 마구간 문이 열려요. 선물 자루를 가득 실은 썰매들이 줄지어 나오고, 맨 앞 순록의 빨간 코에 불이 들어와요. 주민과 아이들이 활주로로 모여들어요.</div>
+    <div class="t">00:00</div><div class="d"><b>출발</b>종탑이 열두 번 울리고, 마지막 종소리와 함께 첫 썰매가 활주로를 달려 하늘로 떠올라요. 이어서 여러 대가 몇 초 간격으로 날아올라요.</div>
+    <div class="t">00:02</div><div class="d"><b>인사</b>썰매들이 마을 위를 한 바퀴 크게 돌며 손을 흔들고, 오로라를 가로질러 저마다 다른 방향의 지평선으로 흩어져요. 지나간 자리에 금빛 가루가 잠깐 남았다 사라지고, 방울 소리가 점점 멀어져요.</div>
+    <div class="t">00:05</div><div class="d"><b>여운</b>마지막 썰매가 별 사이로 사라지면 함박눈이 쏟아져요. 아이들이 "잘 다녀오세요!" 하고 외쳐요.</div>
+    <div class="t">새벽녘</div><div class="d"><b>귀환</b>빈 자루를 실은 썰매들이 조용히 돌아와 마구간에 내려앉아요. 다음 날 내 오두막 트리 밑에 선물이 놓여 있어요.</div>
+  </div>
+  <p class="muted">꼬마 산타와 충분히 친해지면, 어느 자정에 "오늘은 같이 가자"며 썰매 한 자리를 내줘요. 산타들과 나란히 마을 위를 날아오르게 돼요.</p>
+</section>
+
+<section>
+  <h2>주민들</h2>
+  <div class="people">
+    <div><b>등불 할머니</b><p class="muted">입구 다리에서 매일 등불을 켜요. 처음 온 나에게 핫초코와 열쇠를 줘요.</p></div>
+    <div><b>꼬마 산타</b><p class="muted">아직 견습생. 마을 안내를 맡았고, 언젠가 나를 썰매에 태워 주고 싶어 해요.</p></div>
+    <div><b>졸린 할아버지 산타</b><p class="muted">우체국 난로 옆에서 늘 꾸벅꾸벅. 편지 답장은 꼭 직접 써요.</p></div>
+    <div><b>순록지기 산타</b><p class="muted">순록 여섯 마리의 이름과 성격을 다 알아요. 먹이 주는 법을 알려 줘요.</p></div>
+    <div><b>털실 가게 주인</b><p class="muted">혼자 장갑을 떠요. 실을 사다 주면 내 장갑을 떠 줘요.</p></div>
+    <div><b>벤치의 노신사</b><p class="muted">매일 같은 벤치에서 누군가를 기다려요. 이야기를 들어 주면 조금씩 사연을 털어놔요.</p></div>
+    <div><b>등대지기</b><p class="muted">북극곰 가족의 오랜 친구. 생선을 나눠 주고 곰들 이름을 알려 줘요.</p></div>
+    <div><b>합창단 지휘자</b><p class="muted">골목 캐럴을 이끌어요. 함께 서면 나도 한 소절 부를 수 있어요.</p></div>
+    <div><b>책방 주인</b><p class="muted">내게 어울리는 책을 골라 줘요. 다음에 오면 그 책 어땠냐고 물어봐요.</p></div>
+  </div>
+  <p class="muted">거리에는 장 보는 가족, 팔짱 낀 연인, 눈싸움하는 아이들, 개 산책하는 사람들이 늘 오가요. 주민들은 시간에 따라 장터, 창가, 활주로로 자리를 옮겨요.</p>
+</section>
+
+<section>
+  <h2>디테일 원칙</h2>
+  <ul class="rules">
+    <li><b>실제 크기</b>문 높이 2m, 층 높이 2.8~3m, 골목 폭 3~5m, 사람 키 174cm 기준.</li>
+    <li><b>눈이 있어야 할 곳에 다</b>지붕, 창틀, 가로등 위, 벤치, 울타리 기둥 위. 처마에는 고드름. 다닌 길은 눈이 다져져 돌바닥이 비쳐요.</li>
+    <li><b>빛은 두 가지 색</b>푸른 눈빛과 주황빛 창불. 형광색 전구는 쓰지 않아요.</li>
+    <li><b>추운 공기가 보이게</b>사람과 순록의 입김, 굴뚝 연기, 온천과 찻집 김.</li>
+    <li><b>소리는 장소마다</b>골목은 울리고, 호수는 넓고, 예배당은 고요해요. 실제 녹음과 자연스러운 소리만 써요.</li>
+    <li><b>모든 문은 열린다</b>들어가면 그 집에 맞는 실내가 있어요.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>만드는 순서</h2>
+  <ol class="steps">
+    <li><div><b>첫 장면과 마을의 심장.</b> 숲속 등불길 → 언덕 위에서 마을 불빛이 펼쳐지는 순간 → 입구 다리 → 종탑 광장과 큰 마켓. 처음 10분이 마음을 움직이는지부터 맞춰요.</div></li>
+    <li><div><b>산타 마을과 순록.</b> 산타들, 마구간, 우체국, 순록 썰매 숲길.</div></li>
+    <li><div><b>북극곰 얼음 해안.</b> 곰 가족, 미끄럼틀, 이글루, 유빙.</div></li>
+    <li><div><b>하늘.</b> 스키 산, 하늘 썰매, 별빛 언덕의 오로라, 자정 산타 출발.</div></li>
+    <li><div><b>나머지 동네.</b> 등불 골목, 운하 동네, 등대 항구, 얼음 호수와 예배당, 내 오두막.</div></li>
+    <li><div><b>살아 있는 마을.</b> 주민들의 사연과 하루 일과, 거리의 사람들, 장소별 소리와 음악.</div></li>
+  </ol>
+  <p class="muted">단계마다 보여드리고, 마음에 안 드는 부분은 그 자리에서 고친 뒤 다음으로 넘어가요.</p>
+</section>
+
+</div>

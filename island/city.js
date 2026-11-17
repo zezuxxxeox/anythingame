@@ -87,7 +87,7 @@
 
     // ---- 건물: 실제 윤곽 그대로 벽을 세우고 지붕을 얹음 ----
     const up = { pos: [], uv: [], col: [], idx: [] }, gr = { pos: [], uv: [], col: [], idx: [] }, rf = { pos: [], col: [], idx: [] };
-    const quad = (B, a, b, y0, y1, u0, u1, v0, v1, c) => { const k = B.pos.length / 3; B.pos.push(a[0], y0, a[1], b[0], y0, b[1], b[0], y1, b[1], a[0], y1, a[1]); B.uv.push(u0, v0, u1, v0, u1, v1, u0, v1); for (let i = 0; i < 4; i++) B.col.push(c.r, c.g, c.b); B.idx.push(k, k + 1, k + 2, k, k + 2, k + 3); };
+    const quad = (B, a, b, y0, y1, u0, u1, v0, v1, c) => { const k = B.pos.length / 3; B.pos.push(a[0], y0, a[1], b[0], y0, b[1], b[0], y1, b[1], a[0], y1, a[1]); B.uv.push(u0, v0, u1, v0, u1, v1, u0, v1); for (let i = 0; i < 4; i++) B.col.push(c.r, c.g, c.b); B.idx.push(k, k + 2, k + 1, k, k + 3, k + 2); };
     let built = 0;
     for (const b of D.b) {
       let p = b.p; const n = p.length;

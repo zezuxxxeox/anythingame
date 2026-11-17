@@ -86,6 +86,42 @@ section { display: flex; flex-direction: column; gap: 20px; }
 .steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: baseline; }
 .steps li::before { content: counter(s); font-family: var(--mono); color: var(--night); background: var(--lamp); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 500; }
 
+
+.plan { border-radius:18px; overflow:hidden; background:var(--dusk); border:1px solid var(--line); }
+.planTools { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line); }
+.chips { display:flex; flex-wrap:wrap; gap:6px; min-width:0; }
+.chips button, .zbtn button { font:inherit; font-size:13px; color:var(--snow); background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:99px; padding:5px 11px; cursor:pointer; }
+.chips button:hover, .zbtn button:hover, .chips button:focus-visible, .zbtn button:focus-visible { background:rgba(255,191,107,.18); border-color:var(--lamp); outline:none; }
+.zbtn { display:flex; gap:6px; }
+.zbtn button { min-width:36px; }
+.planView { position:relative; height:min(78vh, 760px); background:#dfe7f1; touch-action:none; cursor:grab; overflow:hidden; }
+.planView:active { cursor:grabbing; }
+#plan { width:100%; height:100%; display:block; user-select:none; -webkit-user-select:none; }
+#plan text { font-family:var(--body); pointer-events:none; }
+#plan .zl { font-family:var(--display); font-weight:700; fill:#1d2c45; paint-order:stroke; stroke:#eef3f8; stroke-width:5; stroke-linejoin:round; }
+#plan .bl, #plan .sl, #plan .dl { display:none; fill:#22324b; paint-order:stroke; stroke:#f4f7fb; stroke-linejoin:round; }
+#plan.z2 .bl { display:block; } #plan.z2 .zl { opacity:.35; }
+#plan.z3 .sl, #plan.z3 .dl { display:block; }
+#plan.far .mk { display:none; }
+#plan .det { display:none; } #plan.z2 .det { display:inline; }
+.north { position:absolute; right:14px; top:12px; width:38px; height:46px; border-radius:10px; background:rgba(13,23,41,.78); color:var(--snow); display:grid; place-items:center; font-family:var(--mono); font-size:12px; line-height:1; padding-top:4px; }
+.north span { font-weight:500; }
+.scale { position:absolute; left:14px; bottom:12px; display:flex; align-items:center; gap:8px; background:rgba(13,23,41,.78); color:var(--snow); border-radius:8px; padding:6px 10px; font-family:var(--mono); font-size:12px; }
+.scale i { display:block; height:6px; border:1.5px solid var(--snow); border-top:0; width:80px; }
+.legend2 { display:flex; flex-wrap:wrap; gap:8px 18px; padding:12px 16px; font-size:13px; color:var(--frost); border-top:1px solid var(--line); }
+.legend2 span { display:inline-flex; align-items:center; gap:7px; }
+.sw { display:inline-block; width:22px; height:10px; border-radius:2px; }
+.sw.dash { background:transparent; border-top:2px dashed; height:0; }
+.sw.dot { background:transparent; border-top:2.5px dotted; height:0; }
+.sw.round { width:10px; border-radius:50%; }
+.keyGrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr)); gap:0 26px; }
+.keyGroup { padding:12px 0; border-top:1px solid var(--line); min-width:0; }
+.keyGroup h4 { margin:0 0 6px; font-family:var(--display); font-size:17px; color:var(--lamp); }
+.keyGroup ol { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:3px; font-size:14px; }
+.keyGroup li { display:grid; grid-template-columns:28px 1fr; gap:6px; align-items:baseline; cursor:pointer; }
+.keyGroup li:hover { color:var(--lamp); }
+.keyGroup li b { font-family:var(--mono); font-size:12px; color:var(--night); background:var(--snow); border-radius:99px; text-align:center; padding:1px 0; }
+.keyGroup li small { color:var(--frost); }
 @media (max-width: 680px) {
   .zone { grid-template-columns: 1fr; }
   .sky { grid-template-columns: 1fr 1fr; }
@@ -108,77 +144,32 @@ section { display: flex; flex-direction: column; gap: 20px; }
 </header>
 
 <section>
-  <h2>마을 지도</h2>
-  <div class="map">
-    <div class="mapScroll">
-    <svg viewBox="0 0 1000 640" role="img" aria-label="눈의 마을 전체 지도">
-      <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1226"/><stop offset="1" stop-color="#16284a"/></linearGradient>
-        <linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fe6bf" stop-opacity="0"/><stop offset=".55" stop-color="#7fe6bf" stop-opacity=".45"/><stop offset="1" stop-color="#b48cff" stop-opacity="0"/></linearGradient>
-        <radialGradient id="glow"><stop offset="0" stop-color="#ffbf6b" stop-opacity=".55"/><stop offset="1" stop-color="#ffbf6b" stop-opacity="0"/></radialGradient>
-        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c3a5c"/><stop offset="1" stop-color="#0e2238"/></linearGradient>
-      </defs>
-      <rect width="1000" height="640" fill="url(#sky)"/>
-      <path class="aur" d="M40 20 C220 80 380 0 560 60 S860 30 980 70 L980 150 C820 100 640 150 480 110 S180 140 40 90Z" fill="url(#au)"/>
-      <!-- 뒷산 -->
-      <path d="M0 230 L90 150 L170 205 L260 120 L350 190 L430 140 L520 200 L600 150 L700 110 L780 60 L860 120 L940 90 L1000 140 L1000 300 L0 300Z" fill="#22385c"/>
-      <path d="M700 110 L780 60 L860 120 L800 108 L760 130Z M240 135 L260 120 L285 145 L262 140Z" fill="#dfe8f3" opacity=".85"/>
-      <!-- 눈 덮인 땅 -->
-      <path d="M0 270 C200 250 380 290 560 270 S860 260 1000 280 L1000 640 L0 640Z" fill="#c9d6e6"/>
-      <path d="M0 330 C220 310 420 350 640 320 S900 330 1000 320 L1000 640 L0 640Z" fill="#dce5f0"/>
-      <!-- 얼음 바다와 북극곰 해안 -->
-      <path d="M560 640 C600 590 690 560 780 560 S930 540 1000 520 L1000 640Z" fill="url(#sea)"/>
-      <g fill="#eef4fa" opacity=".9"><path d="M720 600 l26 -6 l14 10 l-30 6Z"/><path d="M800 585 l34 -4 l10 12 l-38 4Z"/><path d="M880 600 l22 -8 l20 8 l-30 8Z"/><path d="M940 560 l28 -2 l6 12 l-30 2Z"/></g>
-      <!-- 얼음 호수 -->
-      <ellipse cx="470" cy="500" rx="78" ry="34" fill="#a9c4de"/><ellipse cx="470" cy="500" rx="70" ry="28" fill="none" stroke="#ffbf6b" stroke-dasharray="2 5" stroke-width="2"/>
-      <!-- 운하 -->
-      <path d="M640 640 C650 560 610 500 650 440 S700 360 690 320" fill="none" stroke="#5f86b0" stroke-width="9" stroke-linecap="round"/>
-      <!-- 스키 산 -->
-      <path d="M820 300 L900 150 L990 300Z" fill="#e9f0f8"/><path d="M900 150 L880 300 M900 150 L930 300 M900 150 L960 300" stroke="#9fb2c9" stroke-width="2" fill="none"/>
-      <path d="M850 300 L905 165" stroke="#ffbf6b" stroke-width="1.5" stroke-dasharray="1 4"/>
-      <!-- 자작나무 숲 -->
-      <g fill="#2f4a3e">
-        <path d="M30 360 l10 -26 l10 26Z"/><path d="M60 380 l12 -30 l12 30Z"/><path d="M95 350 l10 -24 l10 24Z"/><path d="M40 420 l12 -30 l12 30Z"/><path d="M80 440 l10 -26 l10 26Z"/><path d="M120 400 l12 -30 l12 30Z"/><path d="M150 450 l10 -24 l10 24Z"/><path d="M20 480 l12 -30 l12 30Z"/><path d="M60 510 l10 -24 l10 24Z"/><path d="M110 500 l12 -30 l12 30Z"/><path d="M160 520 l10 -26 l10 26Z"/><path d="M200 470 l12 -30 l12 30Z"/>
-        <path d="M330 230 l9 -22 l9 22Z"/><path d="M355 245 l10 -26 l10 26Z"/><path d="M380 228 l9 -22 l9 22Z"/><path d="M405 250 l10 -26 l10 26Z"/>
-      </g>
-      <!-- 걷는 길 -->
-      <g fill="none" stroke="#eaf0f7" stroke-width="2.4" stroke-linecap="round" opacity=".8">
-        <path d="M40 600 C100 560 140 520 190 470"/><path d="M190 470 C250 450 300 420 330 400 L470 395"/>
-        <path d="M470 395 L470 460"/><path d="M470 395 C540 390 600 380 650 380 L800 420"/><path d="M800 420 C840 470 860 520 860 555"/>
-        <path d="M330 400 C300 360 260 330 230 320"/><path d="M470 395 C440 330 410 280 390 225"/><path d="M540 520 C570 470 590 450 620 420"/>
-        <path d="M800 420 L850 300"/>
-      </g>
-      <!-- 썰매 길 -->
-      <path d="M230 320 C170 300 120 330 90 400 C70 460 110 520 170 540 C260 570 360 560 400 520" fill="none" stroke="#ffbf6b" stroke-width="2.2" stroke-dasharray="7 6"/>
-      <!-- 자정 썰매 비행 -->
-      <g fill="none" stroke="#7fe6bf" stroke-width="1.8" stroke-dasharray="1.5 6" stroke-linecap="round">
-        <path d="M260 300 C320 200 420 150 600 70"/><path d="M260 300 C230 200 180 130 60 60"/><path d="M260 300 C420 230 650 200 960 120"/><path d="M260 300 C380 260 520 250 700 30"/>
-      </g>
-      <!-- 불빛 -->
-      <g><circle cx="470" cy="395" r="70" fill="url(#glow)"/><circle cx="330" cy="400" r="46" fill="url(#glow)"/><circle cx="650" cy="400" r="50" fill="url(#glow)"/><circle cx="800" cy="440" r="44" fill="url(#glow)"/><circle cx="230" cy="320" r="44" fill="url(#glow)"/><circle cx="390" cy="220" r="30" fill="url(#glow)"/><circle cx="560" cy="300" r="22" fill="url(#glow)"/></g>
-      <!-- 트리 -->
-      <path d="M470 352 l14 34 l-28 0Z M470 340 l10 22 l-20 0Z" fill="#2f5a46"/><circle cx="470" cy="337" r="3.5" fill="#ffd66b"/>
-      <!-- 지점과 이름 -->
-      <g font-size="15" fill="#eaf0f7" font-weight="700">
-        <circle cx="470" cy="395" r="6" fill="#ffbf6b"/><text x="486" y="414">종탑 광장 · 큰 마켓</text>
-        <circle cx="330" cy="400" r="5" fill="#ffbf6b"/><text x="252" y="432">등불 골목</text>
-        <circle cx="650" cy="392" r="5" fill="#ffbf6b"/><text x="664" y="372">운하 동네</text>
-        <circle cx="800" cy="425" r="5" fill="#ffbf6b"/><text x="812" y="452">등대 항구</text>
-        <circle cx="230" cy="320" r="6" fill="#e0645c"/><text x="150" y="300">산타 마을</text>
-        <circle cx="390" cy="220" r="5" fill="#7fe6bf"/><text x="404" y="214">별빛 언덕</text>
-        <circle cx="900" cy="150" r="5" fill="#ffbf6b"/><text x="830" y="140">스키 산</text>
-        <circle cx="470" cy="500" r="5" fill="#ffbf6b"/><text x="420" y="552">얼음 호수</text>
-        <circle cx="560" cy="300" r="5" fill="#ffbf6b"/><text x="574" y="296">언덕 위 예배당</text>
-        <circle cx="860" cy="560" r="5" fill="#eaf0f7"/><text x="770" y="620">북극곰 얼음 해안</text>
-        <circle cx="40" cy="600" r="6" fill="#eaf0f7"/><text x="54" y="625">시작: 숲속 등불길</text>
-        <circle cx="270" cy="372" r="5" fill="#ffd66b"/><text x="160" y="380" font-size="13" fill="#ffd66b">내 오두막</text>
-        <circle cx="120" cy="560" r="4" fill="#ffbf6b"/><text x="80" y="590" font-size="13" fill="#9fb2c9">순록 썰매 길</text>
-      </g>
-      <text x="610" y="96" font-size="13" fill="#7fe6bf">자정: 산타들의 썰매 비행</text>
-    </svg>
+  <h2>배치 평면도</h2>
+  <p class="muted">위가 북쪽, 1칸 = 100m인 실제 축척 평면도예요. 손가락으로 벌리거나 휠을 굴려 확대하면 건물 하나하나와 이름, 가로등, 벤치, 나무까지 보여요. 아래 동네 버튼을 누르면 그곳으로 바로 이동해요.</p>
+  <div class="plan">
+    <div class="planTools">
+      <div class="chips" id="zoneChips"></div>
+      <div class="zbtn"><button id="zIn" aria-label="확대">＋</button><button id="zOut" aria-label="축소">－</button><button id="zAll">전체</button></div>
     </div>
-    <div class="legend"><span class="walk">걷는 길</span><span class="sled">순록 썰매 길</span><span class="fly">자정 썰매 비행</span><span style="color:var(--lamp)">● 불빛이 모인 곳</span></div>
+    <div class="planView" id="planView">
+      <svg id="plan" viewBox="0 0 2400 1600" role="img" aria-label="눈의 마을 배치 평면도"></svg>
+      <div class="north" aria-hidden="true"><span>N</span>▲</div>
+      <div class="scale" aria-hidden="true"><i id="scaleBar"></i><span id="scaleTxt">100 m</span></div>
+    </div>
+    <div class="legend2">
+      <span><i class="sw" style="background:#f6f8fb;border:1.5px solid #9eacbf"></i>찻길·골목 (실제 폭)</span>
+      <span><i class="sw" style="background:#f1e3c2"></i>숲길·산책로</span>
+      <span><i class="sw dash" style="border-color:#d9822b"></i>순록 썰매 길</span>
+      <span><i class="sw dot" style="border-color:#2fa37a"></i>자정 썰매 비행</span>
+      <span><i class="sw" style="background:#9cc0e0"></i>물 (바다·운하·호수·개울)</span>
+      <span><i class="sw" style="background:#fff;border:1.5px solid #c5d3e3"></i>스키 슬로프</span>
+      <span><i class="sw round" style="background:#ffb347"></i>가로등</span>
+      <span><i class="sw" style="background:transparent;border-top:1.5px solid #8da3bd;height:0;margin-top:6px"></i>등고선 (광장 기준 높이)</span>
+    </div>
   </div>
+  <div class="keyGrid" id="keyList"></div>
+  <h3 style="margin-top:12px">단면도 A–A′ (북 → 남)</h3>
+  <div class="mapScroll"><svg id="section" viewBox="0 0 1000 230" style="width:100%;min-width:620px;display:block;background:var(--dusk);border-radius:14px"></svg></div>
 </section>
 
 <section>
@@ -387,3 +378,306 @@ section { display: flex; flex-direction: column; gap: 20px; }
 </section>
 
 </div>
+<script>
+(function () {
+  const NS = 'http://www.w3.org/2000/svg', svg = document.getElementById('plan');
+  const el = (t, a, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; };
+  const g = (cls) => el('g', cls ? { class: cls } : {});
+  const path = pts => 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('L');
+  let seed = 20241224; const R = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const rr = (a, b) => a + R() * (b - a);
+  const segD = (x, y, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy, t = l ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / l)) : 0; return Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t); };
+  const lineD = (x, y, pts) => { let m = 1e9; for (let i = 0; i < pts.length - 1; i++) m = Math.min(m, segD(x, y, pts[i], pts[i + 1])); return m; };
+  const offset = (pts, d) => pts.map((p, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; return [p[0] - dy / l * d, p[1] + dx / l * d]; });
+  const along = (pts, step, fn) => { let carry = 0; for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L; for (let s = carry; s < L; s += step) fn(a[0] + ux * s, a[1] + uy * s, ux, uy); carry = (carry - L) % step; if (carry < 0) carry += step; } };
+  const pointAt = (pts, f) => { let tot = 0; const ls = []; for (let i = 0; i < pts.length - 1; i++) { const l = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); ls.push(l); tot += l; } let t = f * tot; for (let i = 0; i < ls.length; i++) { if (t <= ls[i]) { const a = pts[i], b = pts[i + 1], u = t / ls[i]; return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, Math.atan2(b[1] - a[1], b[0] - a[0])]; } t -= ls[i]; } const a = pts[pts.length - 2], b = pts[pts.length - 1]; return [b[0], b[1], Math.atan2(b[1] - a[1], b[0] - a[0])]; };
+
+  // ---------- 지형 데이터 (단위: m, 위가 북쪽) ----------
+  const PLAZA = [1180, 820];
+  const SEA = [[1180, 1600], [1330, 1530], [1520, 1450], [1700, 1380], [1860, 1345], [2000, 1320], [2150, 1300], [2290, 1265], [2400, 1240], [2400, 1600]];
+  const LAKE = { x: 1180, y: 1065, rx: 75, ry: 35 };
+  const CANAL = [[1520, 470], [1508, 590], [1494, 700], [1494, 790], [1515, 900], [1555, 1000], [1606, 1095], [1660, 1185], [1700, 1290], [1730, 1420]];
+  const STREAM = [[610, 520], [640, 660], [672, 800], [696, 930], [712, 1012], [770, 1078], [900, 1104], [1050, 1088], [1106, 1070]];
+  const ST = {
+    alley: { name: '등불 골목', w: 4, pts: [[1150, 826], [1100, 846], [1040, 853], [985, 872], [925, 874], [865, 862], [812, 842], [782, 806]] },
+    market: { name: '마켓 거리', w: 8, pts: [[1210, 816], [1290, 799], [1380, 789], [1470, 781], [1560, 772], [1650, 763], [1760, 760], [1880, 768], [1950, 772]] },
+    entry: { name: '다리 길', w: 6, pts: [[712, 1012], [800, 974], [900, 935], [1000, 902], [1085, 864], [1150, 834]] },
+    lake: { name: '호숫길', w: 6, pts: [[1180, 851], [1180, 935], [1180, 1022]] },
+    santa: { name: '산타 마을 길', w: 5, pts: [[782, 806], [720, 770], [650, 718], [590, 672]] },
+    harbor: { name: '부둣길', w: 7, pts: [[1610, 1112], [1690, 1180], [1780, 1232], [1870, 1262]] },
+    bear: { name: '얼음 해안길', w: 3.5, pts: [[1870, 1262], [1960, 1278], [2050, 1268], [2140, 1250]] },
+    lane1: { name: '윗골목', w: 3.5, pts: [[1128, 806], [1066, 796], [1004, 806], [944, 824], [884, 826], [838, 818]] },
+    lane2: { name: '빵집 골목', w: 3.5, pts: [[1100, 846], [1080, 890], [1046, 926], [998, 948], [950, 958]] },
+    lane3: { name: '계단 골목', w: 3, pts: [[1040, 853], [1036, 826], [1028, 800], [1012, 768], [990, 744]] },
+    lane4: { name: '우물 골목', w: 3, pts: [[925, 874], [930, 912], [950, 956]] },
+    lane5: { name: '언덕 골목', w: 3, pts: [[865, 862], [870, 826], [884, 826]] },
+    cE1: { name: '운하 동쪽 골목', w: 3.5, pts: [[1508, 650], [1570, 640], [1640, 652]] },
+    cE2: { name: '꽃창문 골목', w: 3.5, pts: [[1528, 930], [1590, 916], [1660, 930]] },
+    cW1: { name: '운하 서쪽 골목', w: 3.5, pts: [[1488, 650], [1430, 666], [1380, 700]] },
+    cW2: { name: '물레방아 골목', w: 3.5, pts: [[1500, 870], [1440, 880], [1380, 900]] },
+    hb2: { name: '항구 뒷골목', w: 3.5, pts: [[1650, 1150], [1730, 1146], [1810, 1170], [1860, 1200]] },
+    canalE: { name: '운하 동쪽 둑길', w: 3, pts: offset(CANAL.slice(0, 7), 6.5) },
+    canalW: { name: '운하 서쪽 둑길', w: 3, pts: offset(CANAL.slice(0, 7), -6.5) },
+  };
+  const PATHS = {
+    forest: { name: '숲속 등불길', w: 2.6, pts: [[90, 1530], [170, 1470], [250, 1420], [330, 1370], [420, 1310], [500, 1240], [570, 1170], [630, 1100], [690, 1040], [712, 1012]] },
+    star: { name: '별빛 언덕 숲길', w: 2.6, pts: [[1180, 790], [1150, 730], [1196, 676], [1124, 622], [1162, 566], [1086, 520], [1104, 468], [1052, 436]] },
+    lakering: { name: '호수 산책로', w: 2.4, pts: Array.from({ length: 49 }, (_, i) => [LAKE.x + Math.cos(i / 48 * 6.283) * (LAKE.rx + 9), LAKE.y + Math.sin(i / 48 * 6.283) * (LAKE.ry + 9)]) },
+    chapel: { name: '예배당 오르막', w: 2.4, pts: [[1262, 1050], [1300, 1028], [1330, 1006]] },
+    cabin: { name: '오두막 오솔길', w: 2, pts: [[782, 806], [770, 790], [758, 776]] },
+  };
+  const SLED = [[590, 672], [500, 730], [400, 810], [310, 930], [262, 1060], [300, 1170], [410, 1215], [520, 1150], [600, 1030], [656, 900], [640, 780], [590, 672]];
+  const RUNWAY = { a: [478, 560], b: [624, 396], w: 14 };
+  const PEAK = [2062, 318], BASE = [1960, 752];
+  const RUNS = [
+    { name: '완만한 슬로프', w: 30, pts: [[2062, 330], [2000, 420], [1940, 520], [1900, 620], [1930, 700], [1955, 742]] },
+    { name: '보통 슬로프', w: 24, pts: [[2066, 330], [2080, 440], [2050, 560], [2010, 660], [1970, 740]] },
+    { name: '숲길 슬로프', w: 16, pts: [[2072, 334], [2150, 430], [2170, 540], [2120, 640], [2050, 710], [1985, 748]] },
+  ];
+
+  // ---------- 바탕 ----------
+  el('rect', { x: -200, y: -200, width: 2800, height: 2000, fill: '#dfe7f1' });
+  const gGrid = g();
+  for (let x = 0; x <= 2400; x += 100) el('line', { x1: x, y1: 0, x2: x, y2: 1600, stroke: '#c7d3e1', 'stroke-width': x % 500 ? .6 : 1.2 }, gGrid);
+  for (let y = 0; y <= 1600; y += 100) el('line', { x1: 0, y1: y, x2: 2400, y2: y, stroke: '#c7d3e1', 'stroke-width': y % 500 ? .6 : 1.2 }, gGrid);
+  for (let x = 0; x <= 2400; x += 500) el('text', { x: x + 6, y: 18, 'font-size': 13, fill: '#8a9ab0' }, gGrid).textContent = x + 'm';
+  for (let y = 500; y <= 1500; y += 500) el('text', { x: 6, y: y - 6, 'font-size': 13, fill: '#8a9ab0' }, gGrid).textContent = y + 'm';
+
+  // 등고선 (광장 = 0m)
+  const gC = g();
+  const contour = (cx, cy, rx, ry, h, rot, lx) => { const pts = []; for (let i = 0; i <= 64; i++) { const a = i / 64 * 6.283, w = 1 + .07 * Math.sin(a * 3 + cx) + .05 * Math.sin(a * 5 + cy); pts.push([cx + Math.cos(a) * rx * w, cy + Math.sin(a) * ry * w]); } el('path', { d: path(pts) + 'Z', fill: 'none', stroke: '#8da3bd', 'stroke-width': h % 30 ? .6 : 1.1, opacity: .75, transform: `rotate(${rot || 0} ${cx} ${cy})` }, gC); if (lx !== false) el('text', { x: cx + rx * .72, y: cy - ry * .72, 'font-size': 10, fill: '#7186a1', class: 'det' }, gC).textContent = '+' + h; };
+  [[60, 300, 210], [30, 200, 140], [60, 130, 95], [90, 70, 50]].forEach(([h, rx, ry], i) => contour(1060, 440, rx * .9, ry * .8, [20, 40, 60, 90][i], -12));
+  [[40, 420, 520], [80, 320, 420], [120, 230, 320], [160, 140, 210], [180, 70, 100]].forEach(([h, rx, ry]) => contour(2075, 290, rx, ry, h, 18));
+  [[10, 70, 50], [20, 40, 30]].forEach(([h, rx, ry]) => contour(1330, 1000, rx, ry, h, 0));
+  [[10, 180, 140], [20, 120, 90], [30, 60, 45]].forEach(([h, rx, ry]) => contour(520, 560, rx, ry, h, 25));
+  for (let k = 0; k < 6; k++) { const y0 = 260 - k * 42, pts = []; for (let x = -10; x <= 1720; x += 40) pts.push([x, y0 + Math.sin(x * .006 + k) * 22 + Math.sin(x * .017) * 9]); el('path', { d: path(pts), fill: 'none', stroke: '#8da3bd', 'stroke-width': k % 3 === 2 ? 1.1 : .6, opacity: .7 }, gC); el('text', { x: 300 + k * 160, y: y0 - 4, 'font-size': 10, fill: '#7186a1', class: 'det' }, gC).textContent = '+' + (40 + k * 30); }
+
+  // 물
+  const gW = g();
+  el('path', { d: path(SEA) + 'Z', fill: '#9cc0e0' }, gW);
+  el('path', { d: path(SEA.slice(0, 9)), fill: 'none', stroke: '#eef5fb', 'stroke-width': 5, opacity: .9 }, gW);
+  for (let i = 0; i < 70; i++) { const x = rr(1900, 2380), y = rr(1300, 1590); if (y < 1240 + (2400 - x) * .25 + 70) continue; const s = rr(4, 16), pts = []; for (let k = 0; k < 6; k++) { const a = k / 6 * 6.283 + rr(-.3, .3); pts.push([x + Math.cos(a) * s * rr(.6, 1.1), y + Math.sin(a) * s * rr(.5, .9)]); } el('path', { d: path(pts) + 'Z', fill: '#f4f8fc', stroke: '#c3d6ea', 'stroke-width': .6 }, gW); }
+  el('path', { d: path(STREAM), fill: 'none', stroke: '#9cc0e0', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gW);
+  el('path', { d: path(CANAL), fill: 'none', stroke: '#8c96a3', 'stroke-width': 8.5, 'stroke-linejoin': 'round' }, gW);
+  el('path', { d: path(CANAL), fill: 'none', stroke: '#9cc0e0', 'stroke-width': 6, 'stroke-linejoin': 'round' }, gW);
+  el('ellipse', { cx: LAKE.x, cy: LAKE.y, rx: LAKE.rx + 2, ry: LAKE.ry + 2, fill: '#8c96a3' }, gW);
+  el('ellipse', { cx: LAKE.x, cy: LAKE.y, rx: LAKE.rx, ry: LAKE.ry, fill: '#cfe2f2' }, gW);
+  el('ellipse', { cx: LAKE.x, cy: LAKE.y, rx: LAKE.rx - 8, ry: LAKE.ry - 6, fill: 'none', stroke: '#ffb347', 'stroke-width': 1.2, 'stroke-dasharray': '1.5 3' }, gW);
+  el('ellipse', { cx: LAKE.x, cy: LAKE.y, rx: LAKE.rx - 22, ry: LAKE.ry - 14, fill: 'none', stroke: '#b5cbe0', 'stroke-width': .8 }, gW);
+
+  // 스키장
+  const gS = g();
+  RUNS.forEach(r => { el('path', { d: path(r.pts), fill: 'none', stroke: '#c5d3e3', 'stroke-width': r.w + 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gS); el('path', { d: path(r.pts), fill: 'none', stroke: '#ffffff', 'stroke-width': r.w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gS); along(r.pts, 24, (x, y, ux, uy) => { for (const s of [-1, 1]) el('circle', { cx: x - uy * s * (r.w / 2 + 2), cy: y + ux * s * (r.w / 2 + 2), r: 1, fill: '#ffb347' }, gS); }); });
+
+  // 숲 (나무 한 그루 = 점 하나, 실제 수관 지름 4~7m)
+  const gT = g(), avoidLines = [PATHS.forest.pts, SLED, STREAM, ST.santa.pts, ST.entry.pts, PATHS.star.pts, CANAL, ...RUNS.map(r => r.pts)];
+  const nearLine = (x, y, d) => avoidLines.some(L => lineD(x, y, L) < d);
+  const treeAt = (x, y, s, snowy) => { el('circle', { cx: x, cy: y, r: s, fill: snowy ? '#6f8c7d' : '#5d7a6b' }, gT); el('circle', { cx: x - s * .3, cy: y - s * .3, r: s * .45, fill: '#eef3f6', opacity: .8 }, gT); };
+  for (let i = 0; i < 2600; i++) { const x = rr(0, 760), y = rr(380, 1600); if (y > 1540 && x < 140) continue; if (x > 420 && x < 660 && y > 380 && y < 720) continue; if (Math.hypot(x - 760, y - 790) < 50) continue; if (nearLine(x, y, 7)) continue; if (x > 600 && y < 600) continue; treeAt(x, y, rr(2, 3.5), 1); }
+  for (let i = 0; i < 900; i++) { const x = rr(0, 1780), y = rr(0, 330); if (Math.hypot(x - 1060, y - 440) < 80) continue; if (nearLine(x, y, 6)) continue; if (R() < .45) continue; treeAt(x, y, rr(2, 3.2), 1); }
+  for (let i = 0; i < 520; i++) { const a = R() * 6.283, d = rr(70, 260), x = 1060 + Math.cos(a) * d * 1.15, y = 440 + Math.sin(a) * d * .7; if (y > 700 || nearLine(x, y, 6) || Math.hypot(x - PLAZA[0], y - PLAZA[1]) < 120) continue; treeAt(x, y, rr(2, 3.2), 1); }
+  for (let i = 0; i < 700; i++) { const x = rr(1820, 2400), y = rr(120, 760); if (Math.hypot(x - PEAK[0], y - PEAK[1]) < 60) continue; if (nearLine(x, y, 4)) continue; if (lineD(x, y, [PEAK, BASE]) < 8) continue; treeAt(x, y, rr(2, 3), 1); }
+
+  // 길
+  const gR = g();
+  const road = (s, casing, fill) => { el('path', { d: path(s.pts), fill: 'none', stroke: casing, 'stroke-width': s.w + 1.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gR); el('path', { d: path(s.pts), fill: 'none', stroke: fill, 'stroke-width': s.w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gR); };
+  el('path', { d: path(SLED) + 'Z', fill: 'none', stroke: '#d9822b', 'stroke-width': 2.2, 'stroke-dasharray': '7 5' }, gR);
+  Object.values(PATHS).forEach(s => road(s, '#d8c8a4', '#f1e3c2'));
+  Object.values(ST).forEach(s => road(s, '#9eacbf', '#f6f8fb'));
+  // 중앙선이 있는 큰길: 마켓 거리
+  el('path', { d: path(ST.market.pts), fill: 'none', stroke: '#c9d3df', 'stroke-width': .5, 'stroke-dasharray': '3 3' }, gR);
+
+  // 활주로
+  const gRw = g(); { const { a, b, w } = RUNWAY, ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI, L = Math.hypot(b[0] - a[0], b[1] - a[1]); el('rect', { x: a[0], y: a[1] - w / 2, width: L, height: w, fill: '#f6f8fb', stroke: '#9eacbf', 'stroke-width': .8, transform: `rotate(${ang} ${a[0]} ${a[1]})` }, gRw); el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: '#d6dde6', 'stroke-width': .6, 'stroke-dasharray': '6 4' }, gRw); along([a, b], 12, (x, y, ux, uy) => { for (const s of [-1, 1]) el('circle', { cx: x - uy * s * (w / 2 + 1.5), cy: y + ux * s * (w / 2 + 1.5), r: 1.1, fill: '#ffb347' }, gRw); }); }
+
+  // ---------- 건물 ----------
+  const placed = [], gB = g(), gL = g();
+  const blocked = (x, y, r) => { if (Math.hypot(x - PLAZA[0], y - PLAZA[1]) < 31 + r) return true; for (const p of placed) if (Math.hypot(x - p.x, y - p.y) < (p.r + r) * .82) return true; if (lineD(x, y, CANAL) < 3 + r * .7) return true; if (lineD(x, y, STREAM) < 2 + r * .7) return true; if (((x - LAKE.x) / (LAKE.rx + 14)) ** 2 + ((y - LAKE.y) / (LAKE.ry + 14)) ** 2 < 1) return true; for (const s of [...Object.values(ST), ...Object.values(PATHS)]) if (lineD(x, y, s.pts) < s.w / 2 + r * .62) return true; return false; };
+  const building = (x, y, w, d, ang, fill, opt = {}) => {
+    const r = Math.hypot(w, d) / 2; if (!opt.force && blocked(x, y, r)) return null; placed.push({ x, y, r });
+    const tr = `rotate(${ang * 180 / Math.PI} ${x} ${y})`;
+    el('rect', { x: x - w / 2, y: y - d / 2, width: w, height: d, fill, stroke: '#33435a', 'stroke-width': .45, transform: tr }, gB);
+    if (opt.ridge !== false) { const long = w >= d; el('line', long ? { x1: x - w / 2 + Math.min(w, d) * .5, y1: y, x2: x + w / 2 - Math.min(w, d) * .5, y2: y } : { x1: x, y1: y - d / 2 + w * .5, x2: x, y2: y + d / 2 - w * .5 }, gB).setAttribute('stroke', 'rgba(30,40,58,.45)'), gB.lastChild.setAttribute('stroke-width', '.4'), gB.lastChild.setAttribute('transform', tr); }
+    if (opt.chimney) el('rect', { x: x + w * .22 - .5, y: y - d * .18 - .5, width: 1, height: 1, fill: '#7b5b4a', transform: tr }, gB);
+    return { x, y };
+  };
+  const ROOF = { alley: ['#7a4b3a', '#8a5a44', '#6e4637', '#93624a'], market: ['#b23a2e', '#c4473a', '#9e3328'], canal: ['#e6a49a', '#efd38a', '#a9cbe6', '#f0b98c', '#c9e0b8'], harbor: ['#c0392b', '#2e6f9e', '#e6b422', '#3e7c5a', '#8e5aa8', '#d9733a'], entry: ['#7a4b3a', '#6e4637'], lake: ['#8a5a44', '#7a4b3a'] };
+  const pick = a => a[Math.floor(R() * a.length)];
+  const rowsAlong = (pts, o) => {
+    const out = [];
+    for (const side of o.sides || [-1, 1]) {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L, nx = -uy * side, ny = ux * side, ang = Math.atan2(uy, ux);
+        let s = o.start || 1.5;
+        while (s < L - 2) { const w = rr(o.minW, o.maxW); if (s + w > L) break; const c = s + w / 2, off = o.half + o.set + o.depth / 2, x = a[0] + ux * c + nx * off, y = a[1] + uy * c + ny * off; const b2 = building(x, y, w, o.depth, ang, pick(o.roof), { chimney: R() < .5 }); if (b2) out.push({ x, y, side, nx, ny, w }); s += w + (o.gap || .25); }
+      }
+    }
+    return out;
+  };
+  // 번호와 이름은 확대해도 화면에서 같은 크기로 보이게 (apply()에서 배율을 맞춤)
+  const PINS = [];
+  const pin = (x, y, cls) => { const p = el('g', { class: cls || '' }, gL); PINS.push({ p, x, y }); return p; };
+  const marker = (n, x, y) => { const p = pin(x, y, 'mk'); el('circle', { r: 9, fill: '#1d2c45', stroke: '#fff', 'stroke-width': 1.6 }, p); el('text', { y: 4, 'font-size': 11, 'text-anchor': 'middle', fill: '#fff', 'font-weight': 700 }, p).textContent = n; return p; };
+  const label = (t, x, y, cls, size, anchor) => { const p = pin(x, y, cls === 'zl' ? 'zg' : ''); const e = el('text', { class: cls, 'font-size': cls === 'zl' ? Math.min(19, size * .8) : 12, 'stroke-width': cls === 'zl' ? 4.5 : 3.2, 'text-anchor': anchor || 'middle' }, p); e.textContent = t; return e; };
+  const KEY = []; let num = 0;
+  const key = (group, name, note, x, y, z) => { num++; KEY.push({ n: num, group, name, note, x, y, z: z || 1.2 }); const m = marker(num, x, y); const t = el('text', { x: 13, y: 4, class: 'bl', 'font-size': 12, 'stroke-width': 3.2 }, m); t.textContent = name; return num; };
+
+  // 종탑 광장
+  { const [cx, cy] = PLAZA, gp = gB;
+    el('circle', { cx, cy, r: 31, fill: '#d6dde6', stroke: '#9eacbf', 'stroke-width': 1 }, gp);
+    for (const r of [26, 20, 14]) el('circle', { cx, cy, r, fill: 'none', stroke: '#c3ccd8', 'stroke-width': .5 }, gp);
+    el('circle', { cx, cy, r: 6, fill: '#3f6b50', stroke: '#2a4a37', 'stroke-width': .6 }, gp); el('path', { d: `M${cx} ${cy - 3.5}l1 2.4 2.5.2-1.9 1.6.6 2.4-2.2-1.3-2.2 1.3.6-2.4-1.9-1.6 2.5-.2z`, fill: '#ffd66b' }, gp);
+    el('rect', { x: cx - 5, y: cy - 43, width: 10, height: 10, fill: '#9a8f86', stroke: '#33435a', 'stroke-width': .5 }, gp); el('path', { d: `M${cx - 5} ${cy - 43}L${cx + 5} ${cy - 33}M${cx + 5} ${cy - 43}L${cx - 5} ${cy - 33}`, stroke: '#5d5550', 'stroke-width': .4 }, gp); placed.push({ x: cx, y: cy - 38, r: 7 });
+    el('circle', { cx: cx + 16, cy: cy + 14, r: 5.5, fill: '#f2d6e0', stroke: '#b05d7d', 'stroke-width': .6 }, gp);
+    for (let k = 0; k < 12; k++) { const a = k / 12 * 6.283 + .26, x = cx + Math.cos(a) * 23.5, y = cy + Math.sin(a) * 23.5; if (Math.hypot(x - cx - 16, y - cy - 14) < 8) continue; el('rect', { x: x - 2, y: y - 1.5, width: 4, height: 3, fill: '#c4473a', stroke: '#6d2219', 'stroke-width': .35, transform: `rotate(${a * 180 / Math.PI + 90} ${x} ${y})` }, gp); }
+    for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283, x = cx + Math.cos(a) * 32.5, y = cy + Math.sin(a) * 32.5; el('circle', { cx: x, cy: y, r: 1.2, fill: '#ffb347' }, gp); }
+    for (const a of [.9, 2.3, 3.9, 5.4]) { const x = cx + Math.cos(a) * 11, y = cy + Math.sin(a) * 11; el('rect', { x: x - .9, y: y - .3, width: 1.8, height: .6, fill: '#5d4a3a', transform: `rotate(${a * 180 / Math.PI + 90} ${x} ${y})` }, gp); }
+    for (const a of [1.6, 4.7]) el('circle', { cx: cx + Math.cos(a) * 9, cy: cy + Math.sin(a) * 9, r: 1.6, fill: '#e07a3a' }, gp);
+    key('종탑 광장', '큰 트리 (높이 20m)', '금·빨강 두 색 장식', cx, cy, 5); key('종탑 광장', '종탑 (4층)', '해 질 녘·자정에 울림', cx, cy - 38, 5); key('종탑 광장', '회전목마', '', cx + 16, cy + 14, 5); key('종탑 광장', '장터 오두막 11채', '아몬드·생강빵·장갑·장난감·촛불·음료…', cx - 23.5, cy + 3, 5); key('종탑 광장', '모닥불과 통나무 의자', '', cx - 6, cy + 12, 6);
+  }
+
+  // 등불 골목
+  const alley = rowsAlong(ST.alley.pts, { half: 2, set: .2, depth: 9, minW: 5.5, maxW: 8, roof: ROOF.alley, gap: .15 });
+  { const sq = pointAt(ST.alley.pts, .52); el('circle', { cx: sq[0], cy: sq[1] + 1, r: 7, fill: '#d6dde6', stroke: '#9eacbf', 'stroke-width': .6 }, gB); key('등불 골목', '합창단 작은 광장', '저녁 캐럴', sq[0], sq[1] + 1, 6); }
+  along(ST.alley.pts, 12, (x, y, ux, uy) => el('circle', { cx: x - uy * 1.6, cy: y + ux * 1.6, r: .9, fill: '#ffb347' }, gB));
+  [['서점', '문 열면 종이 딸랑'], ['찻집', '김 서린 창'], ['오르골 가게', ''], ['빵집', '생강빵 굽는 냄새'], ['털실 가게', '장갑을 떠 주는 주인']].forEach(([n, d], i) => { const h = alley[3 + i * 5]; if (h) key('등불 골목', n, d, h.x, h.y, 7); });
+
+  // 마켓 거리
+  const market = rowsAlong(ST.market.pts.slice(0, 5), { half: 4, set: 2.5, depth: 11, minW: 7, maxW: 10, roof: ROOF.market });
+  along(ST.market.pts, 14, (x, y, ux, uy) => { for (const s of [-1, 1]) el('circle', { cx: x - uy * s * 5.4, cy: y + ux * s * 5.4, r: 1, fill: '#ffb347' }, gB); });
+  for (const k of ['lane1', 'lane2', 'lane3', 'lane4', 'lane5']) { rowsAlong(ST[k].pts, { half: ST[k].w / 2, set: .2, depth: 8, minW: 5, maxW: 7.5, roof: ROOF.alley, gap: .15 }); along(ST[k].pts, 14, (x, y, ux, uy) => el('circle', { cx: x - uy * 1.4, cy: y + ux * 1.4, r: .8, fill: '#ffb347' }, gB)); }
+  for (const k of ['cE1', 'cE2', 'cW1', 'cW2']) rowsAlong(ST[k].pts, { half: ST[k].w / 2, set: .3, depth: 9, minW: 5, maxW: 7, roof: ROOF.canal, gap: .1 });
+  rowsAlong(ST.hb2.pts, { half: ST.hb2.w / 2, set: .3, depth: 9, minW: 6, maxW: 8, roof: ROOF.harbor, gap: .3 });
+  // 집 사이 작은 정원·우물
+  { const w = pointAt(ST.lane4.pts, .5); el('circle', { cx: w[0] + 6, cy: w[1], r: 1.6, fill: '#8c96a3', stroke: '#33435a', 'stroke-width': .4 }, gB); key('등불 골목', '골목 우물', '', w[0] + 6, w[1], 7); }
+  if (market[2]) key('마켓 거리', '여관 “눈송이”', '', market[2].x, market[2].y, 6);
+
+  // 다리 길·호숫길
+  rowsAlong(ST.entry.pts.slice(2), { half: 3, set: 1.5, depth: 10, minW: 7, maxW: 10, roof: ROOF.entry, gap: 2 });
+  const lakeRow = rowsAlong(ST.lake.pts.slice(0, 2), { half: 3, set: 1.5, depth: 9, minW: 6, maxW: 8, roof: ROOF.lake, gap: 1 });
+  if (lakeRow[1]) key('얼음 호수', '스케이트 대여소', '', lakeRow[1].x, lakeRow[1].y, 6);
+
+  // 운하 동네 (둑길 바깥으로 집, 물에 바로 면한 쪽은 계단)
+  const canalHouses = [...rowsAlong(ST.canalE.pts, { sides: [1], half: 1.5, set: .2, depth: 10, minW: 5, maxW: 7, roof: ROOF.canal, gap: .1 }), ...rowsAlong(ST.canalW.pts, { sides: [-1], half: 1.5, set: .2, depth: 10, minW: 5, maxW: 7, roof: ROOF.canal, gap: .1 })];
+  [.12, .28, .44, .6, .76].forEach((f, i) => { const [x, y, a] = pointAt(CANAL.slice(0, 7), f); el('rect', { x: x - 2.2, y: y - 9, width: 4.4, height: 18, fill: '#b8a58a', stroke: '#6e5f4b', 'stroke-width': .5, transform: `rotate(${a * 180 / Math.PI + 90} ${x} ${y})` }, gB); if (i === 2) key('운하 동네', '돌다리 5개 (리스·리본)', '', x, y, 6); });
+  { const [x, y] = pointAt(CANAL.slice(0, 7), .2); el('rect', { x: x - 1.6, y: y - 4, width: 3.2, height: 8, rx: 1.6, fill: '#8a6a4a', transform: `rotate(10 ${x} ${y})` }, gB); key('운하 동네', '나룻배 타는 곳', '뱃길 약 350m', x + 1, y, 7); }
+  along(ST.canalE.pts, 16, (x, y) => el('circle', { cx: x, cy: y, r: .9, fill: '#ffb347' }, gB)); along(ST.canalW.pts, 16, (x, y) => el('circle', { cx: x, cy: y, r: .9, fill: '#ffb347' }, gB));
+  [ST.market.pts[3]].forEach(([x, y]) => {});
+
+  // 항구
+  const harborRow = rowsAlong(ST.harbor.pts, { sides: [-1], half: 3.5, set: 2, depth: 10, minW: 6, maxW: 8, roof: ROOF.harbor, gap: .6 });
+  if (harborRow[4]) key('등대 항구', '책방', '크리스마스이브에 책 선물', harborRow[4].x, harborRow[4].y, 6);
+  if (harborRow[8]) key('등대 항구', '생선 가게', '북극곰 간식', harborRow[8].x, harborRow[8].y, 6);
+  { const a = [1870, 1262], b = [1902, 1410]; el('path', { d: path([a, b]), stroke: '#8b7355', 'stroke-width': 9, 'stroke-linecap': 'butt' }, gB); el('path', { d: path([a, b]), stroke: '#c8b08c', 'stroke-width': 7.5 }, gB); along([a, b], 10, (x, y) => el('circle', { cx: x + 4.5, cy: y, r: .8, fill: '#ffb347' }, gB)); el('circle', { cx: b[0], cy: b[1] + 4, r: 5, fill: '#f4f1ea', stroke: '#c0392b', 'stroke-width': 1.6 }, gB); key('등대 항구', '등대 (22m)', '', b[0], b[1] + 4, 5); key('등대 항구', '부두 (180m)', '눈 덮인 고깃배', 1886, 1330, 5);
+    for (const [x, y, r2] of [[1830, 1305, 7], [1845, 1318, 4]]) { el('circle', { cx: x, cy: y, r: r2 + 1.2, fill: '#8c96a3' }, gB); el('circle', { cx: x, cy: y, r: r2, fill: '#bfe3e0' }, gB); } key('등대 항구', '노천 온천', '눈송이가 김 속으로', 1830, 1305, 5);
+    for (const [x, y] of [[1858, 1300], [1915, 1350], [1925, 1300]]) el('path', { d: `M${x - 6} ${y}q6 -5 12 0q-6 4 -12 0z`, fill: '#7b5b4a' }, gB); }
+
+  // 북극곰 얼음 해안
+  { const cx = 2150, cy = 1262; el('path', { d: path([[2040, 1290], [2100, 1236], [2200, 1224], [2290, 1250], [2270, 1278], [2150, 1296]]) + 'Z', fill: '#f2f6fa', stroke: '#c3d6ea', 'stroke-width': .8 }, gB);
+    el('path', { d: path([[2100, 1232], [2112, 1255], [2130, 1275]]), fill: 'none', stroke: '#9cc0e0', 'stroke-width': 4, 'stroke-linecap': 'round' }, gB);
+    for (const [x, y, r2] of [[2185, 1250, 3.4], [2200, 1258, 2.6]]) { el('circle', { cx: x, cy: y, r: r2, fill: '#ffffff', stroke: '#8da3bd', 'stroke-width': .6 }, gB); el('rect', { x: x - .8, y: y + r2 - 1, width: 1.6, height: 1.8, fill: '#8da3bd' }, gB); }
+    for (const [x, y, s] of [[2150, 1270, 1], [2160, 1266, .7], [2232, 1262, 1], [2240, 1300, .9], [2210, 1340, .6]]) { el('ellipse', { cx: x, cy: y, rx: 2.4 * s, ry: 1.3 * s, fill: '#fffaf0', stroke: '#b9a98c', 'stroke-width': .4 }, gB); el('circle', { cx: x + 2.4 * s, cy: y, r: .8 * s, fill: '#fffaf0', stroke: '#b9a98c', 'stroke-width': .4 }, gB); }
+    label('북극곰 얼음 해안', cx + 30, cy - 46, 'zl', 22); key('북극곰 얼음 해안', '얼음 미끄럼틀', '곰들과 함께', 2112, 1255, 5); key('북극곰 얼음 해안', '이글루 2채', '안에 작은 모닥불', 2190, 1250, 5); key('북극곰 얼음 해안', '북극곰 가족 (4마리)', '생선을 주면 따라와요', 2150, 1270, 5); key('북극곰 얼음 해안', '유빙 바다', '엄마 곰의 자리', 2210, 1340, 3); }
+
+  // 산타 마을
+  { building(520, 598, 40, 24, -.18, '#b23a2e', { force: 1 }); key('산타 마을', '선물 공장 (40×24m)', '창 너머 장난감 만들기', 520, 598, 4);
+    building(585, 662, 16, 12, .5, '#c4473a', { force: 1 }); key('산타 마을', '산타 우체국', '편지 쓰기·답장', 585, 662, 5);
+    building(470, 688, 30, 12, .3, '#8a5a44', { force: 1 }); key('산타 마을', '순록 마구간 (6칸)', '먹이 주기·썰매 출발', 470, 688, 5);
+    el('rect', { x: 430, y: 700, width: 34, height: 22, fill: 'none', stroke: '#8a5a44', 'stroke-width': .6, 'stroke-dasharray': '2 1.5', transform: 'rotate(17 447 711)' }, gB); key('산타 마을', '순록 울타리 마당', '', 447, 712, 5);
+    [[455, 620], [470, 645], [560, 560], [600, 620], [545, 650]].forEach(([x, y], i) => building(x, y, 9, 8, R() * .6 - .3, '#d65a48', { force: 1, chimney: true }));
+    key('산타 마을', '산타들의 집 5채', '', 470, 645, 5);
+    const sp = { w: 3, pts: [[590, 672], [545, 650], [520, 615], [478, 560]] }; el('path', { d: path(sp.pts), fill: 'none', stroke: '#d8c8a4', 'stroke-width': 4.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gR); el('path', { d: path(sp.pts), fill: 'none', stroke: '#f1e3c2', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gR);
+    el('path', { d: path([[545, 650], [500, 660], [470, 688]]), fill: 'none', stroke: '#f1e3c2', 'stroke-width': 3, 'stroke-linecap': 'round' }, gR);
+    for (const [x, y] of [[560, 640], [505, 625], [470, 610]]) { el('path', { d: `M${x} ${y - 3}l2.2 5h-4.4z`, fill: '#3f6b50' }, gB); el('circle', { cx: x, cy: y - 3.4, r: .6, fill: '#ffd66b' }, gB); }
+    const { a, b } = RUNWAY; key('산타 마을', '썰매 활주로 (220m)', '자정 출발 장소', (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 3);
+    label('산타 마을', 520, 540, 'zl', 24); }
+
+  // 내 오두막
+  { building(758, 772, 9, 8, -.4, '#6e4637', { force: 1, chimney: true }); el('circle', { cx: 758, cy: 772, r: 14, fill: 'none', stroke: '#8a6a4a', 'stroke-width': .6, 'stroke-dasharray': '1.5 1.5' }, gB); key('내 오두막', '내 오두막', '벽난로·고양이·내 트리', 758, 772, 6); }
+
+  // 입구와 시작
+  { const [x, y] = [712, 1012]; el('rect', { x: x - 7, y: y - 2.5, width: 14, height: 5, fill: '#b8a58a', stroke: '#6e5f4b', 'stroke-width': .5, transform: `rotate(-24 ${x} ${y})` }, gB); key('마을 입구', '입구 다리', '등불 할머니·핫초코와 열쇠', x, y, 5); }
+  key('마을 입구', '시작: 숲속 등불길', '등불 10m 간격', 90, 1530, 2.5);
+  { const p = pointAt(PATHS.forest.pts, .86); key('마을 입구', '마을이 처음 보이는 모퉁이', '불빛이 한꺼번에', p[0] + 6, p[1] - 6, 3); }
+  along(PATHS.forest.pts, 10, (x, y, ux, uy) => el('circle', { cx: x - uy * 2.4, cy: y + ux * 2.4, r: .8, fill: '#ffb347' }, gB));
+
+  // 별빛 언덕
+  { const [x, y] = [1052, 436]; el('circle', { cx: x, cy: y, r: 22, fill: '#d6dde6', stroke: '#9eacbf', 'stroke-width': .6 }, gB); el('circle', { cx: x, cy: y, r: 3, fill: '#e07a3a' }, gB); for (let k = 0; k < 4; k++) { const a = k / 4 * 6.283 + .5; el('circle', { cx: x + Math.cos(a) * 15, cy: y + Math.sin(a) * 15, r: 3.6, fill: '#cfe7f2', stroke: '#5f86b0', 'stroke-width': .6 }, gB); } placed.push({ x, y, r: 22 });
+    key('별빛 언덕', '유리 지붕 오두막 4채', '누워서 오로라', x + 15, y - 6, 4); key('별빛 언덕', '큰 모닥불·소원 등불', '광장보다 90m 높음', x, y, 4); label('별빛 언덕', x, y - 34, 'zl', 22);
+    along(PATHS.star.pts, 14, (px, py, ux, uy) => el('circle', { cx: px - uy * 2.4, cy: py + ux * 2.4, r: .8, fill: '#ffb347' }, gB)); }
+
+  // 예배당
+  { building(1330, 1003, 11, 20, .35, '#9a8f86', { force: 1 }); el('rect', { x: 1326.5, y: 989, width: 7, height: 7, fill: '#8a8078', stroke: '#33435a', 'stroke-width': .4, transform: 'rotate(20 1330 1003)' }, gB); key('얼음 호수', '언덕 위 예배당', '촛불·고요한 밤', 1330, 1003, 5); }
+  key('얼음 호수', '얼음 호수 스케이트장 (150×70m)', '전구 둘레', LAKE.x, LAKE.y, 3);
+  { const sled = [[1250, 980], [1290, 950]]; el('path', { d: path(sled), stroke: '#ffffff', 'stroke-width': 10, 'stroke-linecap': 'round' }, gB); }
+
+  // 스키장 시설
+  { el('line', { x1: BASE[0], y1: BASE[1], x2: PEAK[0], y2: PEAK[1], stroke: '#33435a', 'stroke-width': 1, 'stroke-dasharray': '4 2' }, gB); along([BASE, PEAK], 55, (x, y) => el('rect', { x: x - 1, y: y - 1, width: 2, height: 2, fill: '#33435a' }, gB));
+    building(PEAK[0] - 2, PEAK[1] - 10, 14, 9, .2, '#8a5a44', { force: 1, chimney: true }); building(BASE[0] - 18, BASE[1] + 6, 20, 12, 0, '#a0523d', { force: 1, chimney: true });
+    key('스키 산', '리프트 (높이 차 180m)', '', (BASE[0] + PEAK[0]) / 2, (BASE[1] + PEAK[1]) / 2, 2.5); key('스키 산', '정상 산장', '오로라가 머리 위로', PEAK[0] - 2, PEAK[1] - 10, 4); key('스키 산', '베이스 산장·장비 대여', '', BASE[0] - 18, BASE[1] + 6, 4);
+    RUNS.forEach((r, i) => { const p = pointAt(r.pts, .45); key('스키 산', r.name, ['초보', '중급', '숲 사이로'][i], p[0], p[1], 2.5); });
+    el('path', { d: path([[1880, 700], [1905, 740]]), stroke: '#ffffff', 'stroke-width': 14, 'stroke-linecap': 'round' }, gB); key('스키 산', '눈썰매 언덕', '아이들', 1892, 720, 5);
+    label('스키 산', 2140, 300, 'zl', 24); }
+
+  // 자정 썰매 비행 경로
+  { const gF = g(), o = RUNWAY.b; [[700, 120], [1300, 60], [2300, 120], [60, 80], [900, 0]].forEach(([x, y], i) => el('path', { d: `M${o[0]} ${o[1]} Q${(o[0] + x) / 2 + (i % 2 ? 160 : -120)} ${(o[1] + y) / 2 - 80} ${x} ${y}`, fill: 'none', stroke: '#2fa37a', 'stroke-width': 2, 'stroke-dasharray': '1.5 6', 'stroke-linecap': 'round', opacity: .9 }, gF));
+    el('path', { d: `M${o[0]} ${o[1]} C 900 300 1400 500 ${PLAZA[0]} ${PLAZA[1] - 60} S 1500 350 2300 120`, fill: 'none', stroke: '#2fa37a', 'stroke-width': 2, 'stroke-dasharray': '1.5 6', opacity: .55 }, gF); }
+
+  // 동네 이름
+  label('종탑 광장', PLAZA[0], PLAZA[1] - 60, 'zl', 26); label('등불 골목', 960, 900, 'zl', 22); label('운하 동네', 1585, 640, 'zl', 22); label('등대 항구', 1760, 1200, 'zl', 22); label('얼음 호수', LAKE.x, LAKE.y + 60, 'zl', 20); label('자작나무 숲', 300, 1300, 'zl', 24); label('순록 썰매 길', 230, 1010, 'zl', 16);
+  label('얼음 바다', 1600, 1530, 'zl', 22);
+
+  // 단면선 A-A'
+  el('line', { x1: 1180, y1: 380, x2: 1180, y2: 1560, stroke: '#c0392b', 'stroke-width': 1, 'stroke-dasharray': '10 5', opacity: .7 });
+  el('text', { x: 1186, y: 396, 'font-size': 14, fill: '#c0392b', 'font-weight': 700 }).textContent = 'A'; el('text', { x: 1186, y: 1556, 'font-size': 14, fill: '#c0392b', 'font-weight': 700 }).textContent = 'A′';
+  svg.appendChild(gL);
+
+  // ---------- 범례 목록 ----------
+  const groups = {}; KEY.forEach(k => (groups[k.group] = groups[k.group] || []).push(k));
+  const list = document.getElementById('keyList');
+  Object.entries(groups).forEach(([gname, ks]) => { const d = document.createElement('div'); d.className = 'keyGroup'; d.innerHTML = `<h4></h4><ol></ol>`; d.querySelector('h4').textContent = gname; ks.forEach(k => { const li = document.createElement('li'); li.innerHTML = `<b></b><span></span>`; li.querySelector('b').textContent = k.n; li.querySelector('span').textContent = k.name; if (k.note) { const s = document.createElement('small'); s.textContent = ' · ' + k.note; li.querySelector('span').appendChild(s); } li.tabIndex = 0; li.onclick = li.onkeydown = e => { if (e.type === 'keydown' && e.key !== 'Enter') return; const w = 2400 / (k.z * 4); go({ x: k.x - w / 2, y: k.y - w * .33, w, h: w * .66 }); document.getElementById('planView').scrollIntoView({ behavior: 'smooth', block: 'center' }); }; d.querySelector('ol').appendChild(li); }); list.appendChild(d); });
+
+  // ---------- 확대·이동 ----------
+  const view = document.getElementById('planView');
+  let vb = { x: 0, y: 0, w: 2400, h: 1600 };
+  const fit = v => { const r = view.clientWidth / view.clientHeight; let { x, y, w, h } = v; if (w / h > r) { const nh = w / r; y -= (nh - h) / 2; h = nh; } else { const nw = h * r; x -= (nw - w) / 2; w = nw; } w = Math.max(60, Math.min(4200, w)); h = w / r; return { x, y, w, h }; };
+  const apply = () => { svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`); const mpp = vb.w / view.clientWidth, nice = [5, 10, 20, 50, 100, 200, 500, 1000]; let m = nice.find(n => n / mpp >= 60) || 1000; document.getElementById('scaleBar').style.width = (m / mpp) + 'px'; document.getElementById('scaleTxt').textContent = m + ' m'; svg.classList.toggle('z2', vb.w < 950); svg.classList.toggle('z3', vb.w < 380); svg.classList.toggle('far', mpp > 3); for (const q of PINS) q.p.setAttribute('transform', `translate(${q.x} ${q.y}) scale(${mpp.toFixed(4)})`); };
+  let anim = null;
+  const go = (t, now) => { t = fit(t); if (now || matchMedia('(prefers-reduced-motion: reduce)').matches) { vb = t; apply(); return; } const s = { ...vb }, t0 = performance.now(); cancelAnimationFrame(anim); const step = () => { const k = Math.min(1, (performance.now() - t0) / 450), e = 1 - Math.pow(1 - k, 3); vb = { x: s.x + (t.x - s.x) * e, y: s.y + (t.y - s.y) * e, w: s.w + (t.w - s.w) * e, h: s.h + (t.h - s.h) * e }; apply(); if (k < 1) anim = requestAnimationFrame(step); }; step(); };
+  const toSvg = (cx, cy) => { const r = view.getBoundingClientRect(); return [vb.x + (cx - r.left) / r.width * vb.w, vb.y + (cy - r.top) / r.height * vb.h]; };
+  const zoomAt = (f, cx, cy) => { const [px, py] = toSvg(cx, cy); const w = Math.max(60, Math.min(4200, vb.w * f)), k = w / vb.w; vb = { x: px - (px - vb.x) * k, y: py - (py - vb.y) * k, w, h: vb.h * k }; apply(); };
+  view.addEventListener('wheel', e => { e.preventDefault(); cancelAnimationFrame(anim); zoomAt(Math.exp(e.deltaY * .0015), e.clientX, e.clientY); }, { passive: false });
+  const ptrs = new Map(); let last = null;
+  view.addEventListener('pointerdown', e => { view.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); cancelAnimationFrame(anim); last = null; });
+  view.addEventListener('pointermove', e => { if (!ptrs.has(e.pointerId)) return; const prev = ptrs.get(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ptrs.size === 1) { const r = view.getBoundingClientRect(); vb.x -= (e.clientX - prev[0]) / r.width * vb.w; vb.y -= (e.clientY - prev[1]) / r.height * vb.h; apply(); }
+    else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]), mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; if (last) { zoomAt(last.d / d, mx, my); const r = view.getBoundingClientRect(); vb.x -= (mx - last.mx) / r.width * vb.w; vb.y -= (my - last.my) / r.height * vb.h; apply(); } last = { d, mx, my }; } });
+  const up = e => { ptrs.delete(e.pointerId); last = null; };
+  view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
+  document.getElementById('zIn').onclick = () => { const r = view.getBoundingClientRect(); zoomAt(.6, r.left + r.width / 2, r.top + r.height / 2); };
+  document.getElementById('zOut').onclick = () => { const r = view.getBoundingClientRect(); zoomAt(1.6, r.left + r.width / 2, r.top + r.height / 2); };
+  document.getElementById('zAll').onclick = () => go({ x: 0, y: 0, w: 2400, h: 1600 });
+  const ZONES = [['전체', 0, 0, 2400, 1600], ['종탑 광장', 1090, 740, 180, 160], ['등불 골목', 760, 760, 420, 160], ['운하 동네', 1420, 560, 320, 560], ['등대 항구', 1580, 1080, 380, 360], ['북극곰 해안', 2020, 1180, 320, 230], ['산타 마을', 400, 380, 280, 380], ['별빛 언덕', 960, 380, 260, 440], ['스키 산', 1820, 240, 400, 560], ['얼음 호수', 1080, 960, 300, 200], ['숲속 등불길', 40, 960, 720, 600]];
+  const chips = document.getElementById('zoneChips'); ZONES.forEach(([n, x, y, w, h]) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => go({ x, y, w, h }); chips.appendChild(b); });
+  new ResizeObserver(() => { vb = fit(vb); apply(); }).observe(view);
+  if (view.clientWidth < 600) vb = { x: 840, y: 560, w: 800, h: 520 };
+  vb = fit(vb); apply();
+
+  // ---------- 단면도 ----------
+  const sec = document.getElementById('section'), sel = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); sec.appendChild(e); return e; };
+  const prof = [[380, 52], [436, 90], [520, 70], [600, 45], [700, 18], [790, 2], [820, 0], [930, 0], [1020, -1], [1028, -3], [1100, -3], [1110, -1], [1260, 2], [1380, 1], [1500, -4], [1560, -6]];
+  const X = y => 40 + (y - 380) / (1560 - 380) * 920, Y = h => 170 - h * 1.4;
+  sel('rect', { x: 0, y: 0, width: 1000, height: 230, fill: 'transparent' });
+  for (const h of [0, 30, 60, 90]) { sel('line', { x1: 40, y1: Y(h), x2: 960, y2: Y(h), stroke: 'rgba(159,178,201,.22)', 'stroke-width': 1 }); sel('text', { x: 6, y: Y(h) + 4, 'font-size': 11, fill: '#9fb2c9', 'font-family': 'IBM Plex Mono, monospace' }).textContent = (h ? '+' : '') + h + 'm'; }
+  sel('path', { d: 'M' + prof.map(([y, h]) => X(y) + ',' + Y(h)).join('L') + `L${X(1560)},220L${X(380)},220Z`, fill: '#2a3d5e' });
+  sel('path', { d: 'M' + prof.map(([y, h]) => X(y) + ',' + Y(h)).join('L'), fill: 'none', stroke: '#eaf0f7', 'stroke-width': 2 });
+  sel('rect', { x: X(1020), y: Y(-1), width: X(1110) - X(1020), height: 4, fill: '#9cc0e0' });
+  sel('rect', { x: X(1500), y: Y(-4), width: X(1560) - X(1500), height: 12, fill: '#9cc0e0' });
+  sel('path', { d: `M${X(820)} ${Y(0)}l-4 -16h8z M${X(820)} ${Y(0) - 30}l-6 14h12z`, fill: '#3f6b50' });
+  sel('rect', { x: X(782) - 4, y: Y(0) - 34, width: 8, height: 34, fill: '#9a8f86' });
+  [[436, '별빛 언덕 +90m'], [600, '숲길'], [790, '종탑'], [820, '큰 트리'], [880, '마켓 거리'], [1065, '얼음 호수'], [1330, '부둣길 쪽'], [1540, '얼음 바다']].forEach(([y, t], i) => { const h = prof.reduce((a, p) => Math.abs(p[0] - y) < Math.abs(a[0] - y) ? p : a)[1]; sel('line', { x1: X(y), y1: Y(h) - 6, x2: X(y), y2: 20 + (i % 2) * 16, stroke: 'rgba(234,240,247,.35)', 'stroke-width': 1 }); sel('text', { x: X(y), y: 16 + (i % 2) * 16, 'font-size': 12, fill: '#eaf0f7', 'text-anchor': 'middle', 'font-family': 'Noto Sans KR, sans-serif' }).textContent = t; });
+  sel('text', { x: 44, y: 214, 'font-size': 11, fill: '#9fb2c9', 'font-family': 'IBM Plex Mono, monospace' }).textContent = "A  (북)";
+  sel('text', { x: 956, y: 214, 'font-size': 11, fill: '#9fb2c9', 'text-anchor': 'end', 'font-family': 'IBM Plex Mono, monospace' }).textContent = "(남)  A′";
+  sel('text', { x: 500, y: 214, 'font-size': 11, fill: '#9fb2c9', 'text-anchor': 'middle', 'font-family': 'Noto Sans KR, sans-serif' }).textContent = '높이는 1.4배 과장 · 가로 1,180m';
+})();
+</script>

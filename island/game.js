@@ -443,7 +443,7 @@
   function updateSky(dt) {
     tDay = (tDay + dt / DAY_SECONDS) % 1;
     // 크리스마스 마을(할그림스키르캬 주변)은 한겨울 아이슬란드처럼 늘 푸르스름한 해 질 녘
-    { const hp = ISL.P.hallgrim, px = state.inside ? state.inside.outside.x : player.x, pz = state.inside ? state.inside.outside.z : player.z, target = hp ? 1 - ISL.sstep(190, 300, Math.hypot(px - hp.x, pz - hp.z)) : 0; xmasK += (target - xmasK) * Math.min(1, dt * .8); }
+    { const hp = ISL.P.hallgrim, px = state.mode === 'title' && titleShot ? titleShot.f[0] : state.inside ? state.inside.outside.x : player.x, pz = state.mode === 'title' && titleShot ? titleShot.f[1] : state.inside ? state.inside.outside.z : player.z, target = hp ? 1 - ISL.sstep(190, 300, Math.hypot(px - hp.x, pz - hp.z)) : 0; xmasK += (target - xmasK) * Math.min(1, dt * .8); }
     let dd = .772 - tDay; if (dd > .5) dd -= 1; if (dd < -.5) dd += 1; const tEff = (tDay + dd * xmasK + 1) % 1;
     const a = (tEff - .25) * Math.PI * 2;
     const sun = ISL.U.uSun.value.set(Math.cos(a) * .85, Math.sin(a), -.38).normalize();
@@ -737,7 +737,32 @@
     const w = $('wheel'); w.innerHTML = '';
     ISL.EMOTES.forEach((e, i) => { const b = document.createElement('button'); b.innerHTML = `<span>${e.icon}</span><em>${MOBILE ? '' : (i + 1) + '. '}${e.name}</em>`; b.onclick = () => { doEmote(e.id); toggleWheel(false); }; w.appendChild(b); });
   }
+  // ---------- 시작 화면: 다섯 도시를 천천히 날아가며 보여주는 영화 같은 장면 ----------
+  const SHOTS = [
+    { name: '레이캬비크', sub: '눈 내리는 크리스마스 저녁', a: [40, 17, -258], b: [40, 11, -294], look: [40, 21, -385], f: [40, -330], t: .45, i: 0 },
+    { name: '교토', sub: '야사카 탑과 벚꽃 골목', a: [128, 30, 420], b: [158, 22, 452], look: [222, 0, 498], f: [222, 520], t: .3, i: 1, rel: 1, lookUp: 26 },
+    { name: '파리', sub: '노을 지는 샹드마르스', a: [-55, 34, 335], b: [-98, 26, 292], look: [-150, 105, 150], f: [-150, 260], t: .7, i: 2 },
+    { name: '리스본', sub: '알파마 언덕의 붉은 지붕', a: [-248, 72, 525], b: [-290, 56, 498], look: [-340, 14, 420], f: [-330, 440], t: .62, i: 3 },
+    { name: '스위스', sub: '레만 호수와 시옹 성', a: [292, 16, 96], b: [312, 11, 80], look: [380, 0, 54], f: [330, 40], t: .4, i: 4, rel: 1, lookUp: 9 },
+  ];
+  let titleShot = null, shotT = 0, shotK = -1; const SHOT_LEN = 10, tmpL = new THREE.Vector3();
+  function titleCam(dt) {
+    shotT += dt;
+    if (shotK < 0 || shotT > SHOT_LEN) {
+      shotK = (shotK + 1) % SHOTS.length; shotT = 0; titleShot = SHOTS[shotK]; tDay = titleShot.t; envDirty = true;
+      xmasK = titleShot.i === 0 ? 1 : 0;
+      const cap = $('tCap'); if (cap) { cap.innerHTML = `<b>${titleShot.name}</b><span>${titleShot.sub}</span>`; cap.classList.remove('in'); void cap.offsetWidth; cap.classList.add('in'); }
+      document.querySelectorAll('#tPlaces i').forEach((el, k) => el.classList.toggle('on', k === shotK));
+    }
+    const s = titleShot, k = shotT / SHOT_LEN, e = k * k * (3 - 2 * k);
+    camera.position.set(s.a[0] + (s.b[0] - s.a[0]) * e, s.a[1] + (s.b[1] - s.a[1]) * e, s.a[2] + (s.b[2] - s.a[2]) * e);
+    const gy = Math.max(ISL.H(camera.position.x, camera.position.z), s.rel ? (ISL.waterAt(camera.position.x, camera.position.z).level || 0) : -1e9);
+    if (s.rel) camera.position.y += gy; camera.position.y = Math.max(camera.position.y, gy + 4);
+    camera.lookAt(tmpL.set(s.look[0], s.rel ? Math.max(ISL.H(s.look[0], s.look[2]), ISL.waterAt(s.look[0], s.look[2]).level || 0) + s.lookUp : s.look[1], s.look[2]));
+    const veil = $('tVeil'); if (veil) veil.style.opacity = Math.max(1 - shotT / .9, (shotT - (SHOT_LEN - .9)) / .9, 0).toFixed(3);
+  }
   function startGame() {
+    const veil = $('tVeil'); if (veil) veil.style.opacity = 0; xmasK = 0; envDirty = true;
     A.init(); A.chime([0, 4, 7, 12], .07);
     $('title').classList.remove('open'); state.mode = 'play'; document.body.classList.add('playing');
     if (MOBILE && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
@@ -760,7 +785,7 @@
     requestAnimationFrame(loop); govern();
     const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
     updateSky(dt);
-    if (state.mode === 'title') { titleA += dt * .04; camera.position.set(Math.sin(titleA) * 520, 260, Math.cos(titleA) * 520); camera.lookAt(0, 20, 0); }
+    if (state.mode === 'title') titleCam(dt);
     else {
       if (state.inside) { updatePlayerInside(dt); updateCamera(dt); updateInside(dt); }
       else { updatePlayer(dt); updateCamera(dt); updateWorld(dt); }
@@ -793,5 +818,6 @@
     document.querySelectorAll('#passport .tabs button').forEach(b => b.onclick = () => { ppTab = b.dataset.tab; renderPassport(); });
     boot().catch(err => { console.error(err); $('loadText').textContent = '앗, 불러오다 문제가 생겼어요: ' + err.message; });
   });
+  ISL.debugTitle = (k, t) => { shotK = k - 1; shotT = 1e9; titleCam(0); shotT = t; };
   ISL.debug = { xmas: v => { xmasK = v; envDirty = true; }, look: a => { state.freeCam = a; }, player, cam, state, S, setTime: t => { tDay = t; envDirty = true; }, teleport: (x, z) => { player.x = x; player.z = z; player.y = groundAt(x, z); cam.curDist = undefined; }, startGame, enterHouse, exitHouse, doEmote, interact, get camera() { return camera; } };
 })();

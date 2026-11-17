@@ -173,7 +173,7 @@
     // 이웃한 집끼리는 벽을 맞대므로, 다른 것(명소·기존 건물)과 겹치는지는 도시 벽을 세우기 전에 미리 판정
     for (const D of districts) for (const b of D.b) { b.solid = ISL.world.solidAt(b.cx, H(b.cx, b.cz) + 1.5, b.cz); for (const [x, z] of b.p) if (ISL.world.solidAt(x, H(x, z) + 1.5, z)) b.solid = true; }
     for (const D of districts) buildDistrict(D);
-    const t = document.getElementById('title'); if (t && !document.getElementById('osmCredit')) { const d = document.createElement('div'); d.id = 'osmCredit'; d.textContent = '도시 지도 © OpenStreetMap contributors'; d.style.cssText = 'position:absolute;left:10px;bottom:8px;font-size:11px;opacity:.7;color:#fff'; t.appendChild(d); }
+    const t = null; if (t && !document.getElementById('osmCredit')) { const d = document.createElement('div'); d.id = 'osmCredit'; d.textContent = '도시 지도 © OpenStreetMap contributors'; d.style.cssText = 'position:absolute;left:10px;bottom:8px;font-size:11px;opacity:.7;color:#fff'; t.appendChild(d); }
   }
   // 지금 서 있는 실제 길 이름
   function streetAt(x, z) { let best = null, bd = 9; for (const D of districts) { if (x < D.box[0] || x > D.box[2] || z < D.box[1] || z > D.box[3]) continue; for (const r of D.r) { if (!r.name) continue; for (let i = 0; i < r.p.length - 1; i++) { const d = ISL.segDist(x, z, r.p[i][0], r.p[i][1], r.p[i + 1][0], r.p[i + 1][1]).d; if (d < bd) { bd = d; best = r.name; } } } } return best; }

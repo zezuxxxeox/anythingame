@@ -355,9 +355,9 @@ section { display: flex; flex-direction: column; gap: 20px; }
     <div class="zone">
       <div class="side"><div class="eyebrow">들뜨는 곳</div><h3>겨울 놀이공원</h3><div class="tag">대관람차와 빛의 터널</div></div>
       <div class="body">
-        <p>빛의 대로 남쪽 공원에 겨울에만 여는 놀이공원이 있어요. 지름 42m 대관람차가 가장 높은 불빛이고, 꼭대기에서 오로라와 마을 전체가 보여요.</p>
-        <ul><li>회전 그네, 나선 미끄럼탑, 전구 터널 산책길.</li><li>둥글게 둘러선 간식 오두막 10채: 츄러스, 군고구마, 코코아, 솜사탕.</li><li>풍선 파는 북극곰이 입구에 서 있어요.</li></ul>
-        <div class="dims"><span class="num">공원 약 190×170m</span><span class="num">대관람차 지름 42m</span></div>
+        <p>빛의 대로 끝에서 남쪽으로 펼쳐진, 마을에서 가장 크고 들뜬 곳이에요. 정문 세 곳(빛의 대로·호숫가 동네·항구 쪽)이 있고, 공원 둘레를 꼬마 기차가 돌아요. 지름 60m 대관람차가 마을에서 가장 높은 불빛이에요.</p>
+        <ul><li>정문에서 가운데 광장까지 전구 터널.</li><li>가운데 푸드코트 광장: 트리와 테이블, 간식 오두막 14채(츄러스·군고구마·코코아·솜사탕·와플).</li><li>대관람차, 산타 썰매 모양 열차가 달리는 눈썰매 롤러코스터, 순록·북극곰 목마가 있는 2층 회전목마, 회전 그네, 범퍼카 홀, 얼음 미끄럼탑.</li><li>가운데에 과자로 지은 집이 있는 생강빵 집 미로.</li><li>야외 무대와 관람석: 합창단 공연, 자정 카운트다운.</li><li>입구의 풍선 파는 북극곰, 놀이기구 줄에 선 사람들.</li></ul>
+        <div class="dims"><span class="num">공원 약 460×310m</span><span class="num">대관람차 지름 60m</span><span class="num">놀이기구 7종</span></div>
         <p class="feel">어린 시절 축제 밤의 설렘.</p>
       </div>
     </div>
@@ -516,18 +516,20 @@ section { display: flex; flex-direction: column; gap: 20px; }
   const SEA = [[1180, 1600], [1330, 1530], [1520, 1450], [1700, 1380], [1860, 1345], [2000, 1320], [2150, 1300], [2290, 1265], [2400, 1240], [2400, 1600]];
   const LAKE = { x: 1180, y: 1065, rx: 75, ry: 35 };
   const CANAL = [[-500, -500], [-499, -500]]; // (운하 동네는 없앰)
-  const FAIR = { x: 1560, y: 960 };
+  const FAIR = { x: 1720, y: 955 };
+  const FAIRPOLY = [[1484, 806], [1946, 794], [1962, 1112], [1486, 1124]];
+  const inPoly = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c; return c; };
   const STREAM = [[610, 520], [640, 660], [672, 800], [696, 930], [712, 1012], [770, 1078], [900, 1104], [1050, 1088], [1106, 1070]];
   const ST = {
     alley: { name: '등불 골목', w: 4, pts: [[1150, 826], [1100, 846], [1040, 853], [985, 872], [925, 874], [865, 862], [812, 842], [782, 806]] },
     market: { name: '빛의 대로', w: 14, pts: [[1210, 816], [1290, 799], [1380, 789], [1470, 781], [1560, 772]] },
     skiroad: { name: '스키장 길', w: 6, pts: [[1560, 772], [1650, 763], [1760, 760], [1880, 768], [1950, 772]] },
-    fairway: { name: '놀이공원 길', w: 6, pts: [[1470, 781], [1500, 850], [1530, 900]] },
-    fairgate: { name: '놀이공원 정문', w: 4, pts: [[1530, 900], [1545, 910]] },
+    fairway: { name: '놀이공원 길', w: 6, pts: [[1560, 772], [1588, 796]] },
     entry: { name: '다리 길', w: 6, pts: [[712, 1012], [800, 974], [900, 935], [1000, 902], [1085, 864], [1150, 834]] },
     lake: { name: '호숫길', w: 6, pts: [[1180, 851], [1180, 935], [1180, 1022]] },
     santa: { name: '산타 마을 길', w: 5, pts: [[782, 806], [720, 770], [650, 718], [590, 672]] },
-    harbor: { name: '부둣길', w: 7, pts: [[1530, 900], [1460, 950], [1470, 1050], [1560, 1078], [1610, 1112], [1690, 1180], [1780, 1232], [1870, 1262]] },
+    harbor: { name: '부둣길', w: 7, pts: [[1470, 781], [1462, 860], [1460, 960], [1462, 1060], [1474, 1140], [1560, 1168], [1690, 1190], [1780, 1232], [1870, 1262]] },
+    fairsouth: { name: '놀이공원 남문 길', w: 5, pts: [[1724, 1124], [1730, 1190]] },
     lane1: { name: '윗골목', w: 3.5, pts: [[1128, 806], [1066, 796], [1004, 806], [944, 824], [884, 826], [838, 818]] },
     lane2: { name: '빵집 골목', w: 3.5, pts: [[1100, 846], [1080, 890], [1046, 926], [998, 948], [950, 958]] },
     lane3: { name: '계단 골목', w: 3, pts: [[1040, 853], [1036, 826], [1028, 800], [1012, 768], [990, 744]] },
@@ -594,8 +596,26 @@ section { display: flex; flex-direction: column; gap: 20px; }
   const treeAt = (x, y, s, snowy) => { el('circle', { cx: x, cy: y, r: s, fill: snowy ? '#6f8c7d' : '#5d7a6b' }, gT); el('circle', { cx: x - s * .3, cy: y - s * .3, r: s * .45, fill: '#eef3f6', opacity: .8 }, gT); };
   for (let i = 0; i < 2600; i++) { const x = rr(0, 760), y = rr(380, 1600); if (y > 1540 && x < 140) continue; if (x > 420 && x < 660 && y > 380 && y < 720) continue; if (Math.hypot(x - 760, y - 790) < 50) continue; if (nearLine(x, y, 7)) continue; if (x > 600 && y < 600) continue; treeAt(x, y, rr(2, 3.5), 1); }
   for (let i = 0; i < 900; i++) { const x = rr(0, 1780), y = rr(0, 330); if (Math.hypot(x - 1060, y - 440) < 80) continue; if (nearLine(x, y, 6)) continue; if (R() < .45) continue; treeAt(x, y, rr(2, 3.2), 1); }
-  for (let i = 0; i < 520; i++) { const a = R() * 6.283, d = rr(70, 260), x = 1060 + Math.cos(a) * d * 1.15, y = 440 + Math.sin(a) * d * .7; if (y > 700 || nearLine(x, y, 6) || Math.hypot(x - PLAZA[0], y - PLAZA[1]) < 120) continue; treeAt(x, y, rr(2, 3.2), 1); }
+  for (let i = 0; i < 520; i++) { const a = R() * 6.283, d = rr(70, 260), x = 1060 + Math.cos(a) * d * 1.15, y = 440 + Math.sin(a) * d * .7; if (y > 700 || (y > 552 && x > 1150) || nearLine(x, y, 6) || Math.hypot(x - PLAZA[0], y - PLAZA[1]) < 120) continue; treeAt(x, y, rr(2, 3.2), 1); }
   for (let i = 0; i < 700; i++) { const x = rr(1820, 2400), y = rr(120, 760); if (Math.hypot(x - PEAK[0], y - PEAK[1]) < 60) continue; if (nearLine(x, y, 4)) continue; if (lineD(x, y, [PEAK, BASE]) < 8) continue; treeAt(x, y, rr(2, 3), 1); }
+
+  // ---- 사람 사는 동네: 구역마다 굽은 골목망을 깔고 길 양쪽에 집을 붙인다 ----
+  const HOODS = [];
+  const okArea = (x, y) => !inPoly(FAIRPOLY, x, y) && Math.hypot(x - PLAZA[0], y - PLAZA[1]) > 48 && ((x - LAKE.x) / (LAKE.rx + 20)) ** 2 + ((y - LAKE.y) / (LAKE.ry + 20)) ** 2 > 1 && Math.hypot(x - 1330, y - 1003) > 32 && lineD(x, y, STREAM) > 8;
+  const hood = (id, name, poly, ang, dv, du, wv, wu, roof, depth) => {
+    let cx = 0, cy = 0; poly.forEach(q => { cx += q[0]; cy += q[1]; }); cx /= poly.length; cy /= poly.length; let R = 0; poly.forEach(q => R = Math.max(R, Math.hypot(q[0] - cx, q[1] - cy)));
+    const ca = Math.cos(ang), sa = Math.sin(ang), W = (u, v) => [cx + u * ca - v * sa, cy + u * sa + v * ca], keys = [];
+    const trace = (fixed, along, w, wav, k) => { let seg = []; const flush = () => { if (seg.length > 1) { let L = 0; for (let i = 1; i < seg.length; i++) L += Math.hypot(seg[i][0] - seg[i - 1][0], seg[i][1] - seg[i - 1][1]); if (L > 28) { const key = id + k + '_' + keys.length; ST[key] = { name, w, pts: seg.filter((_, i) => i % 3 === 0 || i === seg.length - 1) }; keys.push(key); } } seg = []; };
+      for (let t = -R; t <= R; t += 4) { const off = fixed + Math.sin(t * .013 + fixed * .07) * wav; const [x, y] = along ? W(t, off) : W(off, t); if (inPoly(poly, x, y) && okArea(x, y)) seg.push([x, y]); else flush(); } flush(); };
+    for (let v = -R + dv / 2; v < R; v += dv) trace(v, true, wv, 13, 'v');
+    for (let u = -R + du / 2; u < R; u += du) trace(u, false, wu, 7, 'u');
+    HOODS.push({ id, name, keys, roof, depth: depth || 9, cx, cy, lab: LABS[id] }); };
+  const LABS = { lake: [1180, 1250], west: [900, 975], hill: [1470, 600], ski: [1770, 600], harb: [1600, 1300] };
+  hood('hill', '언덕 동네', [[1222, 560], [1730, 556], [1730, 732], [1222, 740]], -.06, 58, 64, 4.5, 3.5, 'hill');
+  hood('lake', '호숫가 동네', [[880, 1010], [1100, 990], [1260, 955], [1440, 960], [1440, 1260], [1150, 1290], [920, 1210]], .08, 52, 60, 4.5, 3.5, 'lakeside');
+  hood('west', '다리목 동네', [[770, 900], [900, 880], [1090, 920], [1060, 990], [870, 1010], [760, 1040]], -.3, 46, 58, 4, 3.5, 'alley', 8.5);
+  hood('ski', '산자락 마을', [[1640, 580], [1900, 590], [1900, 742], [1640, 742]], .02, 44, 50, 4, 3.5, 'chalet', 10);
+  hood('harb', '항구 마을', [[1490, 1180], [1760, 1170], [1860, 1250], [1700, 1300], [1500, 1290]], .35, 40, 52, 4, 3.5, 'harbor');
 
   // 길
   const gR = g();
@@ -611,8 +631,6 @@ section { display: flex; flex-direction: column; gap: 20px; }
 
   // ---------- 건물 ----------
   const placed = [], gB = g(), gL = g();
-  const FAIRPOLY = [[FAIR.x - 90, FAIR.y - 70], [FAIR.x + 80, FAIR.y - 80], [FAIR.x + 100, FAIR.y + 60], [FAIR.x - 60, FAIR.y + 90]];
-  const inPoly = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c; return c; };
   const blocked = (x, y, r) => { if (inPoly(FAIRPOLY, x, y)) return true; if (Math.hypot(x - PLAZA[0], y - PLAZA[1]) < 31 + r) return true; for (const p of placed) if (Math.hypot(x - p.x, y - p.y) < (p.r + r) * .82) return true; if (lineD(x, y, CANAL) < 3 + r * .7) return true; if (lineD(x, y, STREAM) < 2 + r * .7) return true; if (((x - LAKE.x) / (LAKE.rx + 14)) ** 2 + ((y - LAKE.y) / (LAKE.ry + 14)) ** 2 < 1) return true; for (const s of [...Object.values(ST), ...Object.values(PATHS)]) if (lineD(x, y, s.pts) < s.w / 2 + r * .62) return true; return false; };
   const building = (x, y, w, d, ang, fill, opt = {}) => {
     const r = Math.hypot(w, d) / 2; if (!opt.force && blocked(x, y, r)) return null; placed.push({ x, y, r });
@@ -622,7 +640,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
     if (opt.chimney) el('rect', { x: x + w * .22 - .5, y: y - d * .18 - .5, width: 1, height: 1, fill: '#7b5b4a', transform: tr }, gB);
     return { x, y };
   };
-  const ROOF = { avenue: ['#5b6676', '#6a5048', '#4f5a6a', '#7a5a4a'], alley: ['#7a4b3a', '#8a5a44', '#6e4637', '#93624a'], market: ['#b23a2e', '#c4473a', '#9e3328'], canal: ['#e6a49a', '#efd38a', '#a9cbe6', '#f0b98c', '#c9e0b8'], harbor: ['#c0392b', '#2e6f9e', '#e6b422', '#3e7c5a', '#8e5aa8', '#d9733a'], entry: ['#7a4b3a', '#6e4637'], lake: ['#8a5a44', '#7a4b3a'] };
+  const ROOF = { hill: ['#7a4b3a', '#5b6676', '#8a5a44', '#6e4637', '#9a6b4e'], lakeside: ['#c0392b', '#2e6f9e', '#e6b422', '#3e7c5a', '#f4f1ea', '#8e5aa8', '#d9733a'], chalet: ['#6b4226', '#5a3825', '#7a4b2a'], avenue: ['#5b6676', '#6a5048', '#4f5a6a', '#7a5a4a'], alley: ['#7a4b3a', '#8a5a44', '#6e4637', '#93624a'], market: ['#b23a2e', '#c4473a', '#9e3328'], canal: ['#e6a49a', '#efd38a', '#a9cbe6', '#f0b98c', '#c9e0b8'], harbor: ['#c0392b', '#2e6f9e', '#e6b422', '#3e7c5a', '#8e5aa8', '#d9733a'], entry: ['#7a4b3a', '#6e4637'], lake: ['#8a5a44', '#7a4b3a'] };
   const pick = a => a[Math.floor(R() * a.length)];
   const rowsAlong = (pts, o) => {
     const out = [];
@@ -682,20 +700,51 @@ section { display: flex; flex-direction: column; gap: 20px; }
   for (const k of ['bk1', 'bk2', 'cross1', 'cross2']) rowsAlong(ST[k].pts, { half: ST[k].w / 2, set: .2, depth: 8, minW: 5, maxW: 7, roof: ROOF.alley, gap: .15 });
 
   // 다리 길·호숫길
-  rowsAlong(ST.entry.pts.slice(2), { half: 3, set: 1.5, depth: 10, minW: 7, maxW: 10, roof: ROOF.entry, gap: 2 });
+  rowsAlong(ST.entry.pts, { half: 3, set: .4, depth: 10, minW: 7, maxW: 10, roof: ROOF.entry, gap: .3 });
   const lakeRow = rowsAlong(ST.lake.pts.slice(0, 2), { half: 3, set: 1.5, depth: 9, minW: 6, maxW: 8, roof: ROOF.lake, gap: 1 });
   if (lakeRow[1]) key('얼음 호수', '스케이트 대여소', '', lakeRow[1].x, lakeRow[1].y, 6);
 
-  // 겨울 놀이공원
-  { const { x, y } = FAIR; el('path', { d: path([[x - 90, y - 70], [x + 80, y - 80], [x + 100, y + 60], [x - 60, y + 90]]) + 'Z', fill: '#e8edf3', stroke: '#9eacbf', 'stroke-width': .8, 'stroke-dasharray': '3 2' }, gB);
-    el('circle', { cx: x + 40, cy: y - 20, r: 21, fill: 'none', stroke: '#c0392b', 'stroke-width': 2 }, gB); for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283; el('line', { x1: x + 40, y1: y - 20, x2: x + 40 + Math.cos(a) * 21, y2: y - 20 + Math.sin(a) * 21, stroke: '#c0392b', 'stroke-width': .4 }, gB); el('rect', { x: x + 40 + Math.cos(a) * 21 - 1.2, y: y - 20 + Math.sin(a) * 21 - 1.2, width: 2.4, height: 2.4, fill: '#ffd27a' }, gB); } placed.push({ x: x + 40, y: y - 20, r: 22 });
-    el('circle', { cx: x - 40, cy: y + 10, r: 8, fill: '#f2d6e0', stroke: '#b05d7d', 'stroke-width': .7 }, gB); placed.push({ x: x - 40, y: y + 10, r: 9 });
-    el('path', { d: `M${x - 10} ${y + 50}a14 14 0 1 1 1 0`, fill: 'none', stroke: '#2e6f9e', 'stroke-width': 3 }, gB);
-    for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283; building(x + Math.cos(a) * 62, y + Math.sin(a) * 48, 5, 4, a + Math.PI / 2, '#c4473a', { force: 1, ridge: false }); }
-    el('path', { d: path([[x - 80, y - 40], [x - 40, y - 50], [x, y - 55], [x + 40, y - 60]]), fill: 'none', stroke: '#ffd27a', 'stroke-width': 4, 'stroke-dasharray': '1 2', opacity: .8 }, gB);
-    key('겨울 놀이공원', '대관람차 (지름 42m)', '오로라와 마을을 내려다봄', x + 40, y - 20, 4); key('겨울 놀이공원', '회전 그네', '', x - 40, y + 10, 5); key('겨울 놀이공원', '나선 미끄럼탑', '', x - 10, y + 36, 5); key('겨울 놀이공원', '빛의 터널 산책길', '', x - 20, y - 52, 5); key('겨울 놀이공원', '간식 오두막 10채', '츄러스·군고구마·코코아', x + 62, y + 4, 5); label('겨울 놀이공원', x, y - 92, 'zl', 20); }
+  // 겨울 놀이공원 (약 460×310m)
+  { const gF2 = g(); gB.parentNode.insertBefore(gF2, gB); const P = FAIRPOLY;
+    el('path', { d: path(P) + 'Z', fill: '#eef1f6', stroke: '#9eacbf', 'stroke-width': 1.2 }, gF2);
+    const inset = P.map(([x, y]) => [x + (FAIR.x - x) * .045, y + (FAIR.y - y) * .07]);
+    el('path', { d: path(inset) + 'Z', fill: 'none', stroke: '#6e5f4b', 'stroke-width': 2.2 }, gF2); el('path', { d: path(inset) + 'Z', fill: 'none', stroke: '#c8b08c', 'stroke-width': 1, 'stroke-dasharray': '1 2' }, gF2);
+    const fp = (pts, w) => { el('path', { d: path(pts), fill: 'none', stroke: '#d8c8a4', 'stroke-width': w + 1.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gF2); el('path', { d: path(pts), fill: 'none', stroke: '#f6efe0', 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gF2); along(pts, 12, (x, y, ux, uy) => el('circle', { cx: x - uy * (w / 2 + .6), cy: y + ux * (w / 2 + .6), r: .8, fill: '#ffb347' }, gF2)); };
+    const C = [FAIR.x, FAIR.y];
+    fp([[1592, 800], [1620, 860], [1680, 920], C], 6); fp([[1490, 960], [1580, 958], [1660, 955], C], 6); fp([C, [1724, 1040], [1724, 1124]], 6); fp([C, [1800, 930], [1860, 900]], 5); fp([C, [1820, 1010], [1880, 1050]], 5); fp([[1620, 860], [1560, 920], [1560, 1040], [1640, 1080]], 4);
+    const T = (x, y, r) => { el('path', { d: `M${x} ${y - r}l${r * .6} ${r * 1.4}h${-r * 1.2}z`, fill: '#3f6b50' }, gB); el('circle', { cx: x, cy: y - r, r: .6, fill: '#ffd66b' }, gB); };
+    // 정문 세 곳
+    for (const [x, y, a] of [[1592, 803, .1], [1488, 960, 1.57], [1724, 1121, 0]]) { el('rect', { x: x - 8, y: y - 1.5, width: 16, height: 3, fill: '#c0392b', stroke: '#6d2219', 'stroke-width': .5, transform: `rotate(${a * 57.3} ${x} ${y})` }, gB); }
+    key('겨울 놀이공원', '정문 (빛의 대로 쪽)', '사탕 지팡이 기둥과 별 아치', 1592, 803, 4);
+    // 가운데 광장: 푸드코트
+    el('circle', { cx: C[0], cy: C[1], r: 30, fill: '#d6dde6', stroke: '#9eacbf', 'stroke-width': .6 }, gB); T(C[0], C[1], 4.5);
+    for (let k = 0; k < 14; k++) { const a = k / 14 * 6.283; building(C[0] + Math.cos(a) * 36, C[1] + Math.sin(a) * 36, 5, 4, a + 1.57, k % 2 ? '#c4473a' : '#e6b422', { force: 1, ridge: false }); }
+    for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283 + .3; el('circle', { cx: C[0] + Math.cos(a) * 18, cy: C[1] + Math.sin(a) * 18, r: 1.4, fill: '#8a6a4a' }, gB); }
+    placed.push({ x: C[0], y: C[1], r: 40 }); key('겨울 놀이공원', '푸드코트 광장', '간식 오두막 14채·트리·테이블', C[0] + 14, C[1] - 8, 3);
+    // 대관람차
+    { const x = 1852, y = 872, r = 30; el('circle', { cx: x, cy: y, r, fill: 'none', stroke: '#c0392b', 'stroke-width': 2.4 }, gB); el('circle', { cx: x, cy: y, r: r * .55, fill: 'none', stroke: '#c0392b', 'stroke-width': .8 }, gB); for (let k = 0; k < 24; k++) { const a = k / 24 * 6.283; el('line', { x1: x, y1: y, x2: x + Math.cos(a) * r, y2: y + Math.sin(a) * r, stroke: '#c0392b', 'stroke-width': .35 }, gB); el('rect', { x: x + Math.cos(a) * r - 1.5, y: y + Math.sin(a) * r - 1.5, width: 3, height: 3, rx: .8, fill: ['#ffd27a', '#e0645c', '#7fc8e8', '#9fe0b8'][k % 4] }, gB); } placed.push({ x, y, r: r + 4 }); key('겨울 놀이공원', '대관람차 (지름 60m)', '꼭대기에서 오로라와 마을 전체', x, y, 3); }
+    // 롤러코스터
+    { const pts = []; for (let i = 0; i <= 80; i++) { const t = i / 80 * 6.283; pts.push([1860 + Math.cos(t) * 62 + Math.sin(t * 3) * 10, 1040 + Math.sin(t) * 42 + Math.cos(t * 2) * 8]); } el('path', { d: path(pts) + 'Z', fill: 'none', stroke: '#6d2219', 'stroke-width': 3.2 }, gB); el('path', { d: path(pts) + 'Z', fill: 'none', stroke: '#e0645c', 'stroke-width': 1.6 }, gB); along(pts, 9, (x, y) => el('circle', { cx: x, cy: y, r: .7, fill: '#33435a' }, gB)); placed.push({ x: 1860, y: 1040, r: 66 }); building(1800, 1086, 14, 8, 0, '#2e6f9e', { force: 1 }); key('겨울 놀이공원', '눈썰매 롤러코스터', '산타 썰매 모양 열차', 1860, 1040, 3); }
+    // 2층 회전목마
+    { const x = 1648, y = 878; el('circle', { cx: x, cy: y, r: 13, fill: '#f2d6e0', stroke: '#b05d7d', 'stroke-width': 1 }, gB); for (let k = 0; k < 12; k++) { const a = k / 12 * 6.283; el('line', { x1: x, y1: y, x2: x + Math.cos(a) * 13, y2: y + Math.sin(a) * 13, stroke: '#b05d7d', 'stroke-width': .4 }, gB); } el('circle', { cx: x, cy: y, r: 2.5, fill: '#e6b422' }, gB); placed.push({ x, y, r: 15 }); key('겨울 놀이공원', '2층 회전목마', '순록·북극곰 목마', x, y, 4); }
+    // 회전 그네
+    { const x = 1568, y = 888; el('circle', { cx: x, cy: y, r: 11, fill: 'none', stroke: '#2e6f9e', 'stroke-width': 1.2, 'stroke-dasharray': '2 2' }, gB); el('circle', { cx: x, cy: y, r: 2, fill: '#2e6f9e' }, gB); placed.push({ x, y, r: 12 }); key('겨울 놀이공원', '회전 그네', '', x, y, 5); }
+    // 범퍼카 홀
+    { building(1626, 1030, 34, 22, 0, '#5b6676', { force: 1 }); key('겨울 놀이공원', '범퍼카 홀', '', 1626, 1030, 5); }
+    // 생강빵 집 미로
+    { const x0 = 1520, y0 = 990, n = 8, s = 6; el('rect', { x: x0, y: y0, width: n * s, height: n * s, fill: '#f3e3c8', stroke: '#8a5a3a', 'stroke-width': .8 }, gB); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (R() < .45) el('line', R() < .5 ? { x1: x0 + i * s, y1: y0 + j * s, x2: x0 + i * s + s, y2: y0 + j * s, stroke: '#8a5a3a', 'stroke-width': 1 } : { x1: x0 + i * s, y1: y0 + j * s, x2: x0 + i * s, y2: y0 + j * s + s, stroke: '#8a5a3a', 'stroke-width': 1 }, gB); building(x0 + n * s / 2, y0 + n * s / 2, 8, 8, 0, '#a0522d', { force: 1 }); placed.push({ x: x0 + 24, y: y0 + 24, r: 32 }); key('겨울 놀이공원', '생강빵 집 미로', '가운데에 과자로 지은 집', x0 + 24, y0 + 24, 4); }
+    // 얼음 미끄럼탑 · 공연 무대
+    { const x = 1540, y = 1080; el('path', { d: `M${x} ${y - 12}a12 12 0 1 1 -1 0`, fill: 'none', stroke: '#7fc8e8', 'stroke-width': 3 }, gB); el('circle', { cx: x, cy: y, r: 3, fill: '#e8f4fb', stroke: '#5f86b0', 'stroke-width': .6 }, gB); placed.push({ x, y, r: 15 }); key('겨울 놀이공원', '얼음 미끄럼탑', '', x, y, 5); }
+    { building(1760, 846, 24, 10, 0, '#6a5048', { force: 1 }); for (let r2 = 0; r2 < 4; r2++) el('path', { d: `M${1744} ${862 + r2 * 4}h32`, stroke: '#8a6a4a', 'stroke-width': 1.4 }, gB); placed.push({ x: 1760, y: 862, r: 16 }); key('겨울 놀이공원', '야외 무대와 관람석', '합창단 공연·자정 카운트다운', 1760, 846, 4); }
+    // 빛의 터널
+    { const pts = [[1600, 818], [1630, 870], [1690, 920]]; el('path', { d: path(pts), fill: 'none', stroke: '#ffd27a', 'stroke-width': 9, opacity: .35 }, gB); along(pts, 4, (x, y, ux, uy) => { for (const s2 of [-1, 1]) el('circle', { cx: x - uy * s2 * 4.2, cy: y + ux * s2 * 4.2, r: .7, fill: '#ffd27a' }, gB); }); key('겨울 놀이공원', '빛의 터널', '정문에서 광장까지 전구 터널', 1630, 870, 5); }
+    // 둘레 미니 기차
+    { const tr = P.map(([x, y]) => [x + (FAIR.x - x) * .08, y + (FAIR.y - y) * .12]); tr.push(tr[0]); el('path', { d: path(tr), fill: 'none', stroke: '#33435a', 'stroke-width': 1.4 }, gB); along(tr, 3, (x, y, ux, uy) => el('line', { x1: x - uy * 1.4, y1: y + ux * 1.4, x2: x + uy * 1.4, y2: y - ux * 1.4, stroke: '#7b5b4a', 'stroke-width': .4 }, gB)); key('겨울 놀이공원', '꼬마 기차', '공원 둘레 한 바퀴', tr[1][0], tr[1][1], 3); }
+    // 공원 안 나무
+    for (let k = 0; k < 70; k++) { const x = rr(1500, 1940), y = rr(812, 1110); if (!inPoly(P, x, y) || placed.some(q => Math.hypot(q.x - x, q.y - y) < q.r + 3)) continue; T(x, y, rr(2, 3)); placed.push({ x, y, r: 3 }); }
+    label('겨울 놀이공원', FAIR.x, 780, 'zl', 22); }
   // 항구
-  const harborRow = rowsAlong(ST.harbor.pts.slice(4), { sides: [-1], half: 3.5, set: 2, depth: 10, minW: 6, maxW: 8, roof: ROOF.harbor, gap: .6 });
+  const harborRow = rowsAlong(ST.harbor.pts.slice(5), { sides: [-1], half: 3.5, set: 2, depth: 10, minW: 6, maxW: 8, roof: ROOF.harbor, gap: .6 });
   if (harborRow[4]) key('등대 항구', '책방', '크리스마스이브에 책 선물', harborRow[4].x, harborRow[4].y, 6);
   if (harborRow[8]) key('등대 항구', '생선 가게', '북극곰 간식', harborRow[8].x, harborRow[8].y, 6);
   { const a = [1870, 1262], b = [1902, 1410]; el('path', { d: path([a, b]), stroke: '#8b7355', 'stroke-width': 9, 'stroke-linecap': 'butt' }, gB); el('path', { d: path([a, b]), stroke: '#c8b08c', 'stroke-width': 7.5 }, gB); along([a, b], 10, (x, y) => el('circle', { cx: x + 4.5, cy: y, r: .8, fill: '#ffb347' }, gB)); el('circle', { cx: b[0], cy: b[1] + 4, r: 5, fill: '#f4f1ea', stroke: '#c0392b', 'stroke-width': 1.6 }, gB); key('등대 항구', '등대 (22m)', '', b[0], b[1] + 4, 5); key('등대 항구', '부두 (180m)', '눈 덮인 고깃배', 1886, 1330, 5);
@@ -708,7 +757,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
   bear(LAKE.x - 30, LAKE.y + 6, 1, '스케이트 강사 곰', '손잡고 함께 타요'); bear(LAKE.x - 20, LAKE.y - 8, .7); bear(LAKE.x + 22, LAKE.y + 10, .7);
   bear(530, 640, 1, '선물 포장 곰', '산타 공장에서 일해요');
   bear(1886, 1300, 1, '낚시하는 곰', '부두 끝에서'); bear(1210, 870, .7, '눈사람 만드는 아기곰들', '호숫길 공원'); bear(1218, 876, .65);
-  bear(FAIR.x + 10, FAIR.y + 20, 1, '풍선 파는 곰', '놀이공원'); bear(1900, 715, .8, '썰매 타는 곰 형제', '눈썰매 언덕'); bear(1906, 724, .7);
+  bear(1600, 822, 1, '풍선 파는 곰', '놀이공원 정문'); bear(1900, 715, .8, '썰매 타는 곰 형제', '눈썰매 언덕'); bear(1906, 724, .7);
   bear(990, 950, .9, '군밤 굽는 곰', '빵집 골목 모퉁이');
   // 산타 마을
   { building(520, 598, 40, 24, -.18, '#b23a2e', { force: 1 }); key('산타 마을', '선물 공장 (40×24m)', '창 너머 장난감 만들기', 520, 598, 4);
@@ -754,10 +803,15 @@ section { display: flex; flex-direction: column; gap: 20px; }
   { const gF = g(), o = RUNWAY.b; [[700, 120], [1300, 60], [2300, 120], [60, 80], [900, 0]].forEach(([x, y], i) => el('path', { d: `M${o[0]} ${o[1]} Q${(o[0] + x) / 2 + (i % 2 ? 160 : -120)} ${(o[1] + y) / 2 - 80} ${x} ${y}`, fill: 'none', stroke: '#2fa37a', 'stroke-width': 2, 'stroke-dasharray': '1.5 6', 'stroke-linecap': 'round', opacity: .9 }, gF));
     el('path', { d: `M${o[0]} ${o[1]} C 900 300 1400 500 ${PLAZA[0]} ${PLAZA[1] - 60} S 1500 350 2300 120`, fill: 'none', stroke: '#2fa37a', 'stroke-width': 2, 'stroke-dasharray': '1.5 6', opacity: .55 }, gF); }
 
+  // 새 동네 집들
+  for (const H2 of HOODS) { for (const k of H2.keys) { const s = ST[k]; rowsAlong(s.pts, { half: s.w / 2, set: .3, depth: H2.depth, minW: H2.roof === 'chalet' ? 9 : 6, maxW: H2.roof === 'chalet' ? 12 : 9, roof: ROOF[H2.roof], gap: H2.roof === 'chalet' ? 3 : .2 }); along(s.pts, 14, (x, y, ux, uy) => el('circle', { cx: x - uy * (s.w / 2 + .6), cy: y + ux * (s.w / 2 + .6), r: .8, fill: '#ffb347' }, gB)); }
+    label(H2.name, H2.lab ? H2.lab[0] : H2.cx, H2.lab ? H2.lab[1] : H2.cy, 'zl', 20); }
+  // 길 모퉁이 작은 쉼터 (트리·벤치)
+  for (const H2 of HOODS) for (const k of H2.keys) { const s = ST[k]; if (k.indexOf('v') < 0) continue; const m = pointAt(s.pts, .5); if (blocked(m[0] + 8, m[1] + 8, 4)) continue; el('circle', { cx: m[0] + 8, cy: m[1] + 8, r: 4, fill: '#d6dde6', stroke: '#9eacbf', 'stroke-width': .5 }, gB); el('path', { d: `M${m[0] + 8} ${m[1] + 5.5}l2 4.5h-4z`, fill: '#3f6b50' }, gB); placed.push({ x: m[0] + 8, y: m[1] + 8, r: 4.5 }); }
   // 블록 안쪽 채우기: 집 뒤 마당의 나무, 장작 헛간, 텃밭 울타리, 눈사람
   { const houses = placed.slice(); const gY = g(); gB.parentNode.insertBefore(gY, gB);
     const near = (x, y) => { for (const q of houses) if (q.r < 12 && Math.abs(q.x - x) < 16 && Math.abs(q.y - y) < 16 && Math.hypot(q.x - x, q.y - y) < q.r + 9) return true; return false; };
-    for (let y = 680; y < 1300; y += 5) for (let x = 740; x < 1960; x += 5) { const jx = x + rr(-2, 2), jy = y + rr(-2, 2); if (!near(jx, jy) || blocked(jx, jy, 2.2)) continue; const t = R();
+    for (let y = 540; y < 1310; y += 5) for (let x = 740; x < 1960; x += 5) { const jx = x + rr(-2, 2), jy = y + rr(-2, 2); if (!near(jx, jy) || blocked(jx, jy, 2.2)) continue; const t = R();
       if (t < .3) { el('circle', { cx: jx, cy: jy, r: rr(1.6, 2.6), fill: '#6f8c7d' }, gY); el('circle', { cx: jx - .6, cy: jy - .6, r: 1, fill: '#eef3f6', opacity: .8 }, gY); placed.push({ x: jx, y: jy, r: 2.2 }); }
       else if (t < .38) { building(jx, jy, 3, 2.4, rr(0, 3.14), '#8a6a4a', { force: 1, ridge: false }); }
       else if (t < .43) { el('rect', { x: jx - 2.5, y: jy - 2, width: 5, height: 4, fill: '#eef2f6', stroke: '#9b8a70', 'stroke-width': .35, 'stroke-dasharray': '.8 .5' }, gY); placed.push({ x: jx, y: jy, r: 3 }); }
@@ -796,7 +850,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
   document.getElementById('zIn').onclick = () => { const r = view.getBoundingClientRect(); zoomAt(.6, r.left + r.width / 2, r.top + r.height / 2); };
   document.getElementById('zOut').onclick = () => { const r = view.getBoundingClientRect(); zoomAt(1.6, r.left + r.width / 2, r.top + r.height / 2); };
   document.getElementById('zAll').onclick = () => go({ x: 0, y: 0, w: 2400, h: 1600 });
-  const ZONES = [['전체', 0, 0, 2400, 1600], ['종탑 광장', 1090, 740, 180, 160], ['등불 골목', 760, 740, 440, 240], ['빛의 대로', 1200, 700, 400, 180], ['겨울 놀이공원', 1440, 840, 260, 240], ['등대 항구', 1580, 1080, 380, 260], ['산타 마을', 400, 380, 280, 380], ['별빛 언덕', 960, 380, 260, 440], ['스키 산', 1820, 240, 400, 560], ['얼음 호수', 1080, 960, 300, 200], ['숲속 등불길', 40, 960, 720, 600]];
+  const ZONES = [['전체', 0, 0, 2400, 1600], ['종탑 광장', 1090, 740, 180, 160], ['등불 골목', 760, 740, 440, 240], ['빛의 대로', 1200, 700, 400, 180], ['겨울 놀이공원', 1470, 770, 510, 380], ['언덕 동네', 1200, 540, 560, 230], ['호숫가 동네', 860, 930, 620, 380], ['산자락 마을', 1620, 560, 310, 210], ['항구 마을', 1470, 1120, 440, 220], ['등대 항구', 1580, 1080, 380, 260], ['산타 마을', 400, 380, 280, 380], ['별빛 언덕', 960, 380, 260, 440], ['스키 산', 1820, 240, 400, 560], ['얼음 호수', 1080, 960, 300, 200], ['숲속 등불길', 40, 960, 720, 600]];
   const chips = document.getElementById('zoneChips'); ZONES.forEach(([n, x, y, w, h]) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => go({ x, y, w, h }); chips.appendChild(b); });
   new ResizeObserver(() => { vb = fit(vb); apply(); }).observe(view);
   if (view.clientWidth < 600) vb = { x: 840, y: 560, w: 800, h: 520 };

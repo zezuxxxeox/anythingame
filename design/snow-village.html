@@ -122,6 +122,27 @@ section { display: flex; flex-direction: column; gap: 20px; }
 .keyGroup li:hover { color:var(--lamp); }
 .keyGroup li b { font-family:var(--mono); font-size:12px; color:var(--night); background:var(--snow); border-radius:99px; text-align:center; padding:1px 0; }
 .keyGroup li small { color:var(--frost); }
+
+.xsGrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px; }
+.xs { margin:0; background:var(--dusk); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.xs figcaption { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.xs figcaption b { font-family:var(--display); font-size:18px; }
+.xs svg { width:100%; height:auto; display:block; border-radius:8px; background:#0b1427; }
+.xs ul { margin:0; padding-left:1.1em; font-size:14px; line-height:1.7; color:var(--frost); }
+.xs li::marker { color:var(--lamp); }
+.ruleTable table { width:100%; border-collapse:collapse; font-size:14px; min-width:560px; }
+.ruleTable th, .ruleTable td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.ruleTable th { font-family:var(--mono); font-size:12px; letter-spacing:.12em; color:var(--frost); font-weight:500; }
+.ruleTable td:first-child { color:var(--lamp); white-space:nowrap; }
+
+.refGroup { display:flex; flex-direction:column; gap:10px; padding-top:16px; border-top:1px solid var(--line); }
+.takes { margin:0; padding-left:1.1em; display:flex; flex-direction:column; gap:3px; font-size:15px; }
+.takes li::marker { color:var(--lamp); }
+.refGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px; }
+.refGrid figure { margin:0; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.refGrid img { width:100%; height:auto; aspect-ratio:3/2; object-fit:cover; border-radius:8px; display:block; background:var(--dusk); }
+.refGrid figcaption { font-size:13px; line-height:1.45; }
+.refGrid small { display:block; color:var(--frost); font-size:11px; margin-top:2px; overflow-wrap:anywhere; }
 @media (max-width: 680px) {
   .zone { grid-template-columns: 1fr; }
   .sky { grid-template-columns: 1fr 1fr; }
@@ -143,6 +164,67 @@ section { display: flex; flex-direction: column; gap: 20px; }
   <p class="muted">걸어서 끝에서 끝까지 약 25분 · 가로 2.4km × 세로 1.6km · 산이 뒤를 감싸고 앞은 얼음 바다로 열린 분지</p>
 </header>
 
+<section id="refs">
+  <h2>참고한 크리스마스 풍경</h2>
+  <p class="muted">실제 크리스마스 사진 46장을 모아 보고, 사진에서 본 것을 마을의 어디에 어떻게 가져올지 정했어요. 사진을 누르면 원본 페이지로 가요.</p>
+  <div class="refGroup"><h3>얼음섬의 작은 수도</h3><ul class="takes"><li>하얀 교회 정면 앞에 전구를 촘촘히 감은 키 큰 트리 → 종탑 광장의 첫인상</li><li>바닥에 늘어놓은 촛불 → 자정에 예배당 가는 언덕길</li><li>푸른 저녁빛 속 창불 켜진 색색의 집 → 등대 항구의 집들</li></ul><div class="refGrid">
+    <figure><a href="https://www.flickr.com/photos/8058853@N06/3078663810" target="_blank" rel="noopener"><img src="refs/r01.jpg" alt="눈 덮인 하얀 교회 앞, 전구를 촘촘히 감은 키 큰 트리" loading="lazy" width="600" height="400"></a><figcaption>눈 덮인 하얀 교회 앞, 전구를 촘촘히 감은 키 큰 트리<small>사진: Helgi Halldórsson/Freddi · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/78506020@N00/7758512484" target="_blank" rel="noopener"><img src="refs/r02.jpg" alt="바닥에 늘어놓은 촛불 길" loading="lazy" width="600" height="400"></a><figcaption>바닥에 늘어놓은 촛불 길<small>사진: briansuda · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/81635051@N00/39115284321" target="_blank" rel="noopener"><img src="refs/r04.jpg" alt="푸른 저녁, 창마다 불 켜진 골함석 집" loading="lazy" width="600" height="400"></a><figcaption>푸른 저녁, 창마다 불 켜진 골함석 집<small>사진: Photocapy · CC BY-SA 2.0</small></figcaption></figure>
+  </div></div>
+  <div class="refGroup"><h3>북쪽 끝 숲과 산타의 고향</h3><ul class="takes"><li>빨간 썰매와 순록, 통나무 오두막 앞 썰매 → 산타 마을 마구간 앞 풍경</li><li>유리 이글루 위 오로라 → 별빛 언덕의 유리 오두막</li><li>허스키 개썰매 → 숲길에 개썰매 타기 추가</li><li>눈이 두껍게 얼어붙은 나무에 주황 조명 → 숲속 등불길의 나무 모습</li></ul><div class="refGrid">
+    <figure><a href="https://www.flickr.com/photos/51986662@N05/6260325799" target="_blank" rel="noopener"><img src="refs/r07.jpg" alt="빨간 썰매와 순록" loading="lazy" width="600" height="400"></a><figcaption>빨간 썰매와 순록<small>사진: USFWS Mountain Prairie · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/48706019@N08/5725564408" target="_blank" rel="noopener"><img src="refs/r08.jpg" alt="통나무 오두막 앞에 매인 순록 썰매" loading="lazy" width="600" height="400"></a><figcaption>통나무 오두막 앞에 매인 순록 썰매<small>사진: RukaKuusamo.com · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/33377695@N07/14007107296" target="_blank" rel="noopener"><img src="refs/r09.jpg" alt="유리 이글루 위 오로라" loading="lazy" width="600" height="400"></a><figcaption>유리 이글루 위 오로라<small>사진: kelvinlls · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/33377695@N07/14027037371" target="_blank" rel="noopener"><img src="refs/r10.jpg" alt="숲 위로 번지는 초록 오로라" loading="lazy" width="600" height="400"></a><figcaption>숲 위로 번지는 초록 오로라<small>사진: kelvinlls · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/23008698@N08/2241262759" target="_blank" rel="noopener"><img src="refs/r11.jpg" alt="허스키들" loading="lazy" width="600" height="400"></a><figcaption>허스키들<small>사진: Ritmó · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/10039026@N03/803076475" target="_blank" rel="noopener"><img src="refs/r14.jpg" alt="눈밭을 달리는 개썰매" loading="lazy" width="600" height="400"></a><figcaption>눈밭을 달리는 개썰매<small>사진: Paul Lowry · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/19935963@N00/5347091750" target="_blank" rel="noopener"><img src="refs/r75.jpg" alt="눈이 두껍게 얼어붙은 나무에 주황 조명" loading="lazy" width="600" height="400"></a><figcaption>눈이 두껍게 얼어붙은 나무에 주황 조명<small>사진: timo_w2s · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/19935963@N00/6977397933" target="_blank" rel="noopener"><img src="refs/r77.jpg" alt="오로라 아래 불 켜진 숲" loading="lazy" width="600" height="400"></a><figcaption>오로라 아래 불 켜진 숲<small>사진: timo_w2s · CC BY-SA 2.0</small></figcaption></figure>
+  </div></div>
+  <div class="refGroup"><h3>빛나는 대도시의 크리스마스</h3><ul class="takes"><li>유리 지붕 시장 홀에 매달린 거대한 구슬 → 광장 옆에 「유리 지붕 마켓 홀」 신설</li><li>대로 위 천사 날개 조명이 겹겹이 → 빛의 대로 아치를 날개 모양으로</li><li>건물 윤곽을 전구로 두른 백화점, 미니어처 마을 쇼윈도 → 빛의 대로 백화점</li><li>작은 트리가 줄지어 선 빨간 아케이드 → 대로와 뒷골목을 잇는 지붕 덮인 아케이드 신설</li><li>별과 혜성 조명 캐노피 → 대로 뒷골목 위</li></ul><div class="refGrid">
+    <figure><a href="https://www.flickr.com/photos/8176740@N05/16286208401" target="_blank" rel="noopener"><img src="refs/r19.jpg" alt="유리 지붕 시장 홀에 매달린 거대한 빨강·은색 구슬" loading="lazy" width="600" height="400"></a><figcaption>유리 지붕 시장 홀에 매달린 거대한 빨강·은색 구슬<small>사진: garryknight · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/110671496@N06/15647970511" target="_blank" rel="noopener"><img src="refs/r25.jpg" alt="구슬 아래로 오가는 사람들" loading="lazy" width="600" height="400"></a><figcaption>구슬 아래로 오가는 사람들<small>사진: Jonathan Rolande · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/7831824@N04/52543072669" target="_blank" rel="noopener"><img src="refs/r20.jpg" alt="광장의 큰 트리" loading="lazy" width="600" height="400"></a><figcaption>광장의 큰 트리<small>사진: Bex.Walton · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/36989019@N08/23659022771" target="_blank" rel="noopener"><img src="refs/r22.jpg" alt="석조 건물 사이의 트리" loading="lazy" width="600" height="400"></a><figcaption>석조 건물 사이의 트리<small>사진: Loco Steve · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/8176740@N05/8349670583" target="_blank" rel="noopener"><img src="refs/r23.jpg" alt="2층 회랑이 있는 시장 홀 안 카페" loading="lazy" width="600" height="400"></a><figcaption>2층 회랑이 있는 시장 홀 안 카페<small>사진: garryknight · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/26782864@N00/30906211963" target="_blank" rel="noopener"><img src="refs/r27.jpg" alt="곡선으로 휘어진 대로 위 천사 날개 조명" loading="lazy" width="600" height="400"></a><figcaption>곡선으로 휘어진 대로 위 천사 날개 조명<small>사진: wwarby · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/111267815@N06/30897231023" target="_blank" rel="noopener"><img src="refs/r31.jpg" alt="날개 조명이 겹겹이 이어지는 빛 터널" loading="lazy" width="600" height="400"></a><figcaption>날개 조명이 겹겹이 이어지는 빛 터널<small>사진: mreillyphoto · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/57868312@N00/51751380184" target="_blank" rel="noopener"><img src="refs/r33.jpg" alt="해 질 녘 날개 조명과 빨간 버스" loading="lazy" width="600" height="400"></a><figcaption>해 질 녘 날개 조명과 빨간 버스<small>사진: Matt From London · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/111267815@N06/31707067435" target="_blank" rel="noopener"><img src="refs/r34.jpg" alt="정면에서 본 날개 조명" loading="lazy" width="600" height="400"></a><figcaption>정면에서 본 날개 조명<small>사진: mreillyphoto · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/12836528@N00/5276992365" target="_blank" rel="noopener"><img src="refs/r36.jpg" alt="미니어처 크리스마스 마을 진열" loading="lazy" width="600" height="400"></a><figcaption>미니어처 크리스마스 마을 진열<small>사진: kevin dooley · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/39415781@N06/6438795173" target="_blank" rel="noopener"><img src="refs/r37.jpg" alt="별과 혜성 모양 조명 캐노피" loading="lazy" width="600" height="400"></a><figcaption>별과 혜성 모양 조명 캐노피<small>사진: ell brown · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/53196512@N07/6701947051" target="_blank" rel="noopener"><img src="refs/r38.jpg" alt="회전목마" loading="lazy" width="600" height="400"></a><figcaption>회전목마<small>사진: flatworldsedge · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/79865753@N00/2145825691" target="_blank" rel="noopener"><img src="refs/r39.jpg" alt="작은 트리가 줄지어 선 빨간 아케이드" loading="lazy" width="600" height="400"></a><figcaption>작은 트리가 줄지어 선 빨간 아케이드<small>사진: Kathleen Tyler Conklin · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56658705@N00/4224228007" target="_blank" rel="noopener"><img src="refs/r42.jpg" alt="건물 윤곽을 전구로 두른 백화점" loading="lazy" width="600" height="400"></a><figcaption>건물 윤곽을 전구로 두른 백화점<small>사진: The Wolf · CC BY 2.0</small></figcaption></figure>
+  </div></div>
+  <div class="refGroup"><h3>오래된 골목</h3><ul class="takes"><li>가게마다 리스와 화환, 사람들로 붐비는 좁은 골목 → 등불 골목의 기준</li><li>위층이 튀어나온 목조 건물 → 등불 골목 건물 형태</li></ul><div class="refGrid">
+    <figure><a href="https://www.flickr.com/photos/91873384@N04/53713692397" target="_blank" rel="noopener"><img src="refs/r46.jpg" alt="가게마다 리스와 화환을 단 좁은 골목" loading="lazy" width="600" height="400"></a><figcaption>가게마다 리스와 화환을 단 좁은 골목<small>사진: dalecruse · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/91873384@N04/53742721579" target="_blank" rel="noopener"><img src="refs/r49.jpg" alt="튀어나온 목조 2층" loading="lazy" width="600" height="400"></a><figcaption>튀어나온 목조 2층<small>사진: dalecruse · CC BY 2.0</small></figcaption></figure>
+  </div></div>
+  <div class="refGroup"><h3>크리스마스 장터</h3><ul class="takes"><li>첨탑 달린 시청 앞 큰 트리와 오두막 장터 → 종탑 광장 배치</li><li>빨간 테두리와 눈 쌓인 지붕의 나무 오두막, 지붕 위 리스·인형 장식 → 장터 오두막 디자인</li><li>광장 위를 덮는 전구 줄 그물 → 광장 하늘</li><li>꽃상자와 장식으로 덮인 반목조 집, 골목 위 별 장식 → 등불 골목 정면 장식</li><li>금빛·빨강 구슬, 천사 인형, 호두까기 인형, 생강빵 → 장터 진열품</li></ul><div class="refGrid">
+    <figure><a href="https://www.flickr.com/photos/36093266@N06/5270414555" target="_blank" rel="noopener"><img src="refs/r58.jpg" alt="첨탑 시청 앞 트리와 오두막 장터" loading="lazy" width="600" height="400"></a><figcaption>첨탑 시청 앞 트리와 오두막 장터<small>사진: Ari Helminen · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/36093266@N06/5270397517" target="_blank" rel="noopener"><img src="refs/r59.jpg" alt="눈 덮인 장터 오두막" loading="lazy" width="600" height="400"></a><figcaption>눈 덮인 장터 오두막<small>사진: Ari Helminen · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/126392958@N03/49228638088" target="_blank" rel="noopener"><img src="refs/r60.jpg" alt="계단 박공 건물 앞 트리와 인파" loading="lazy" width="600" height="400"></a><figcaption>계단 박공 건물 앞 트리와 인파<small>사진: kooikkari · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/43881438@N00/51706706473" target="_blank" rel="noopener"><img src="refs/r61.jpg" alt="트리와 빨간 오두막" loading="lazy" width="600" height="400"></a><figcaption>트리와 빨간 오두막<small>사진: Vicky Brock · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/43881438@N00/51706431081" target="_blank" rel="noopener"><img src="refs/r62.jpg" alt="전구 줄이 가득한 광장" loading="lazy" width="600" height="400"></a><figcaption>전구 줄이 가득한 광장<small>사진: Vicky Brock · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/43881438@N00/51705638242" target="_blank" rel="noopener"><img src="refs/r64.jpg" alt="회전목마와 시청 첨탑" loading="lazy" width="600" height="400"></a><figcaption>회전목마와 시청 첨탑<small>사진: Vicky Brock · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/43881438@N00/51707317790" target="_blank" rel="noopener"><img src="refs/r65.jpg" alt="밤의 시청과 트리" loading="lazy" width="600" height="400"></a><figcaption>밤의 시청과 트리<small>사진: Vicky Brock · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56580533@N02/5228724124" target="_blank" rel="noopener"><img src="refs/r66.jpg" alt="꽃상자와 장식으로 덮인 반목조 집" loading="lazy" width="600" height="400"></a><figcaption>꽃상자와 장식으로 덮인 반목조 집<small>사진: Office de Tourisme de Colmar · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56580533@N02/5228093195" target="_blank" rel="noopener"><img src="refs/r67.jpg" alt="눈길 양옆으로 이어진 지붕 덮인 장터" loading="lazy" width="600" height="400"></a><figcaption>눈길 양옆으로 이어진 지붕 덮인 장터<small>사진: Office de Tourisme de Colmar · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56580533@N02/5228035525" target="_blank" rel="noopener"><img src="refs/r68.jpg" alt="성당 앞 장터" loading="lazy" width="600" height="400"></a><figcaption>성당 앞 장터<small>사진: Office de Tourisme de Colmar · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56580533@N02/5228128747" target="_blank" rel="noopener"><img src="refs/r70.jpg" alt="하얀 트리와 장터" loading="lazy" width="600" height="400"></a><figcaption>하얀 트리와 장터<small>사진: Office de Tourisme de Colmar · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56580533@N02/5228635378" target="_blank" rel="noopener"><img src="refs/r71.jpg" alt="오래된 교회 앞 오두막" loading="lazy" width="600" height="400"></a><figcaption>오래된 교회 앞 오두막<small>사진: Office de Tourisme de Colmar · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56580533@N02/5228701072" target="_blank" rel="noopener"><img src="refs/r72.jpg" alt="눈 쌓인 지붕의 장터" loading="lazy" width="600" height="400"></a><figcaption>눈 쌓인 지붕의 장터<small>사진: Office de Tourisme de Colmar · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/56580533@N02/5228697954" target="_blank" rel="noopener"><img src="refs/r73.jpg" alt="골목 위를 가로지르는 별 장식" loading="lazy" width="600" height="400"></a><figcaption>골목 위를 가로지르는 별 장식<small>사진: Office de Tourisme de Colmar · CC BY 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/34192854@N00/3183855813" target="_blank" rel="noopener"><img src="refs/r52.jpg" alt="금빛 장식 구슬 가게" loading="lazy" width="600" height="400"></a><figcaption>금빛 장식 구슬 가게<small>사진: charley1965 · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/34192854@N00/3183854843" target="_blank" rel="noopener"><img src="refs/r53.jpg" alt="빨간 구슬과 종 장식" loading="lazy" width="600" height="400"></a><figcaption>빨간 구슬과 종 장식<small>사진: charley1965 · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/34192854@N00/3184718090" target="_blank" rel="noopener"><img src="refs/r54.jpg" alt="천사·산타 인형 진열" loading="lazy" width="600" height="400"></a><figcaption>천사·산타 인형 진열<small>사진: charley1965 · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/34192854@N00/3183863859" target="_blank" rel="noopener"><img src="refs/r55.jpg" alt="호두까기 인형들" loading="lazy" width="600" height="400"></a><figcaption>호두까기 인형들<small>사진: charley1965 · CC BY-SA 2.0</small></figcaption></figure>
+    <figure><a href="https://www.flickr.com/photos/34192854@N00/3183857869" target="_blank" rel="noopener"><img src="refs/r56.jpg" alt="생강빵" loading="lazy" width="600" height="400"></a><figcaption>생강빵<small>사진: charley1965 · CC BY-SA 2.0</small></figcaption></figure>
+  </div></div>
+</section>
+
 <section>
   <h2>배치 평면도</h2>
   <p class="muted">위가 북쪽, 1칸 = 100m인 실제 축척 평면도예요. 손가락으로 벌리거나 휠을 굴려 확대하면 건물 하나하나와 이름, 가로등, 벤치, 나무까지 보여요. 아래 동네 버튼을 누르면 그곳으로 바로 이동해요.</p>
@@ -161,7 +243,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
       <span><i class="sw" style="background:#f1e3c2"></i>숲길·산책로</span>
       <span><i class="sw dash" style="border-color:#d9822b"></i>순록 썰매 길</span>
       <span><i class="sw dot" style="border-color:#2fa37a"></i>자정 썰매 비행</span>
-      <span><i class="sw" style="background:#9cc0e0"></i>물 (바다·운하·호수·개울)</span>
+      <span><i class="sw" style="background:#9cc0e0"></i>물 (바다·호수·개울)</span>
       <span><i class="sw" style="background:#fff;border:1.5px solid #c5d3e3"></i>스키 슬로프</span>
       <span><i class="sw round" style="background:#ffb347"></i>가로등</span>
       <span><i class="sw" style="background:transparent;border-top:1.5px solid #8da3bd;height:0;margin-top:6px"></i>등고선 (광장 기준 높이)</span>
@@ -170,6 +252,34 @@ section { display: flex; flex-direction: column; gap: 20px; }
   <div class="keyGrid" id="keyList"></div>
   <h3 style="margin-top:12px">단면도 A–A′ (북 → 남)</h3>
   <div class="mapScroll"><svg id="section" viewBox="0 0 1000 230" style="width:100%;min-width:620px;display:block;background:var(--dusk);border-radius:14px"></svg></div>
+</section>
+
+<section>
+  <h2>거리 설계 기준</h2>
+  <p class="muted">길마다 폭, 건물 높이, 가로등·나무·장식이 놓이는 자리를 정해 두고 그대로 지어요. 아래 그림은 길을 가로로 자른 단면이에요(사람 키 1.74m 기준).</p>
+  <div class="xsGrid">
+    <figure class="xs"><figcaption><b>빛의 대로</b><span class="num">폭 14m · 4~5층</span></figcaption><svg id="xs1" viewBox="0 0 420 230"></svg>
+      <ul><li>차도 8m(썰매·마차), 양쪽 보도 3m, 연석 높이 15cm</li><li>가스등 높이 4.5m, 20m 간격, 보도 바깥 끝</li><li>빛 아치: 20m마다 건물 3층 높이(약 9m)에서 길을 가로지름</li><li>전구 감은 작은 나무: 10m 간격, 가스등 사이</li><li>1층은 모두 가게 쇼윈도, 위층 창마다 촛대</li></ul></figure>
+    <figure class="xs"><figcaption><b>등불 골목</b><span class="num">폭 3~4m · 3~4층</span></figcaption><svg id="xs2" viewBox="0 0 420 230"></svg>
+      <ul><li>보도 없이 돌바닥 하나, 가운데로 살짝 오목(배수)</li><li>벽 등불: 높이 3m, 12m 간격, 양쪽 벽에 엇갈려</li><li>위층이 60cm씩 튀어나옴, 지붕 처마끼리 1m 남짓</li><li>골목 위를 가로지르는 전구 줄: 6m 간격, 높이 5m</li><li>문마다 리스, 창틀마다 눈과 촛대</li></ul></figure>
+    <figure class="xs"><figcaption><b>종탑 광장</b><span class="num">지름 60m</span></figcaption><svg id="xs3" viewBox="0 0 420 230"></svg>
+      <ul><li>가운데 트리 20m, 바닥은 둥근 돌 동심원 무늬</li><li>장터 오두막: 트리에서 23m 둘레에 3×4m, 지붕 빨강</li><li>가스등 16개: 광장 가장자리 둘레</li><li>트리 꼭대기에서 가장자리 가스등까지 전구 줄 16가닥</li><li>벤치 4개, 모닥불 2곳(지름 1.5m)</li></ul></figure>
+    <figure class="xs"><figcaption><b>숲속 등불길</b><span class="num">폭 2.6m</span></figcaption><svg id="xs4" viewBox="0 0 420 230"></svg>
+      <ul><li>다져진 눈길, 양옆에 눈둑 높이 60cm</li><li>나뭇가지에 건 작은 등불: 높이 2.5m, 10m 간격, 한쪽만</li><li>자작나무와 전나무가 길에서 2m 이상 떨어져 섬</li><li>200m마다 쉼터(벤치와 등불 기둥)</li></ul></figure>
+  </div>
+  <div class="ruleTable mapScroll"><table>
+    <thead><tr><th>요소</th><th>규격</th><th>놓는 자리</th></tr></thead>
+    <tbody>
+      <tr><td>가스등</td><td>높이 4.5m, 주황빛 2,700K</td><td>큰길 20m · 골목 12m 간격, 교차로 네 귀퉁이에 꼭</td></tr>
+      <tr><td>벽 등불</td><td>높이 3m, 작은 유리 상자</td><td>골목 양쪽 벽에 엇갈려, 문 옆에는 반드시 하나</td></tr>
+      <tr><td>전구 줄</td><td>따뜻한 흰색 위주, 빨강·초록은 광장만</td><td>골목 위 6m · 큰길은 빛 아치 20m · 처마 끝 한 줄</td></tr>
+      <tr><td>크리스마스 트리</td><td>광장 20m · 골목 작은 광장 4m · 집 앞 1.5m</td><td>광장 가운데, 골목 광장 가운데, 가게 문 양옆 화분</td></tr>
+      <tr><td>리스</td><td>지름 50cm, 빨간 리본</td><td>모든 현관문 가운데 높이 1.6m</td></tr>
+      <tr><td>벤치</td><td>길이 1.7m, 위에 눈</td><td>30걸음(약 25m)마다 하나, 가로등 밑</td></tr>
+      <tr><td>바닥</td><td>큰길·광장 둥근 돌, 골목 납작 돌, 숲길 다진 눈</td><td>사람이 다닌 가운데는 눈이 녹아 돌이 비침, 가장자리는 눈둑</td></tr>
+      <tr><td>집 뒤 마당</td><td>작은 전나무, 장작 헛간, 눈사람, 낮은 나무 울타리</td><td>블록 안쪽을 비우지 않고 채움</td></tr>
+      <tr><td>창문</td><td>높이 1.4~1.8m, 흰 창틀</td><td>창 안쪽은 늘 불이 켜져 있고, 셋 중 하나에 촛대나 별 장식</td></tr>
+    </tbody></table></div>
 </section>
 
 <section>
@@ -188,8 +298,8 @@ section { display: flex; flex-direction: column; gap: 20px; }
   <h2>꼭 들어가는 것</h2>
   <div class="must">
     <div><b>오로라</b><small>하늘 어디서나 보이고 깊은 밤에 가장 강해요. 초록에서 분홍, 보라로 번져요.</small></div>
-    <div><b>북극곰</b><small>얼음 해안 놀이터에 살아요. 미끄럼틀을 타고, 새끼들은 눈싸움. 생선을 주면 따라와요.</small></div>
-    <div><b>크리스마스 마켓</b><small>광장의 큰 장터 12채와 골목·운하·항구의 작은 장터들.</small></div>
+    <div><b>북극곰</b><small>마을 주민이에요. 장터에서 코코아를 팔고, 호수에서 스케이트를 가르치고, 공원에서 눈사람을 만들어요.</small></div>
+    <div><b>크리스마스 마켓</b><small>광장의 큰 장터, 빛의 대로 가게들, 놀이공원 간식 오두막, 항구 생선 장터.</small></div>
     <div><b>늘 켜진 조명</b><small>낮이 없는 마을. 하늘은 푸른 저녁과 깊은 밤 사이만 오가요.</small></div>
     <div><b>산타들</b><small>여러 산타가 함께 사는 산타 마을. 저마다 맡은 일과 성격이 달라요.</small></div>
     <div><b>순록</b><small>이름 있는 순록 여섯 마리. 먹이 주기, 쓰다듬기, 썰매 끌기.</small></div>
@@ -233,12 +343,22 @@ section { display: flex; flex-direction: column; gap: 20px; }
     </div>
 
     <div class="zone">
-      <div class="side"><div class="eyebrow">물 위의 불빛</div><h3>운하 동네</h3><div class="tag">색색의 반목조 집과 돌다리</div></div>
+      <div class="side"><div class="eyebrow">마을의 큰길</div><h3>빛의 대로</h3><div class="tag">광장에서 동쪽으로 뻗은 14m 대로</div></div>
       <div class="body">
-        <p>얼지 않은 좁은 운하 양쪽에 분홍·노랑·하늘색 반목조 집이 늘어서 있어요. 물에 창불이 흔들리며 비치고, 다섯 개의 돌다리 난간마다 리스와 리본이 걸려 있어요.</p>
-        <ul><li>노 젓는 작은 배를 타고 집들 사이를 지나요. 다리 밑을 지날 때 위에서 사람들이 손을 흔들어요.</li><li>창가에 놓인 인형, 문 위의 겨울 꽃장식, 물가 계단에 앉은 연인들.</li></ul>
-        <div class="dims"><span class="num">운하 폭 6m</span><span class="num">다리 5개</span><span class="num">뱃길 약 350m</span></div>
-        <p class="feel">천천히 흘러가며 남의 창을 구경하는 즐거움.</p>
+        <p>광장에서 스키 산 쪽으로 350m 뻗은 큰길이에요. 가운데 차도 8m(썰매와 마차가 다님), 양옆 보도 3m. 4~5층 석조 건물이 벽을 맞대고 줄지어 서 있고, 1층은 전부 불 켜진 가게예요.</p>
+        <ul><li>머리 위로 20m마다 천사 날개 모양 조명이 길을 가로질러 겹겹이 걸려 있어서, 걸으면 빛 터널 속을 걷는 느낌이에요.</li><li>광장 쪽 입구에 유리 지붕 마켓 홀: 천장에 사람 키만 한 빨강·은색 구슬이 매달려 있어요.</li><li>대로 중간에서 뒷골목으로 빠지는 빨간 아케이드: 지붕 덮인 통로 양옆에 작은 트리가 줄지어 서 있어요.</li><li>백화점은 건물 윤곽 전체를 전구로 두르고, 쇼윈도에는 움직이는 미니어처 마을이 있어요.</li><li>보도 가장자리 10m마다 전구를 감은 작은 나무, 20m마다 가스등.</li><li>백화점 쇼윈도(움직이는 인형 장식), 극장, 여관, 장난감 가게, 모자 가게, 초콜릿 가게.</li><li>대로 뒤로 뒷골목 두 줄과 이어 주는 좁은 골목 두 개.</li></ul>
+        <div class="dims"><span class="num">길이 350m</span><span class="num">폭 14m</span><span class="num">건물 4~5층</span><span class="num">빛 아치 20m 간격</span></div>
+        <p class="feel">고개를 들면 빛이 쏟아지는 길.</p>
+      </div>
+    </div>
+
+    <div class="zone">
+      <div class="side"><div class="eyebrow">들뜨는 곳</div><h3>겨울 놀이공원</h3><div class="tag">대관람차와 빛의 터널</div></div>
+      <div class="body">
+        <p>빛의 대로 남쪽 공원에 겨울에만 여는 놀이공원이 있어요. 지름 42m 대관람차가 가장 높은 불빛이고, 꼭대기에서 오로라와 마을 전체가 보여요.</p>
+        <ul><li>회전 그네, 나선 미끄럼탑, 전구 터널 산책길.</li><li>둥글게 둘러선 간식 오두막 10채: 츄러스, 군고구마, 코코아, 솜사탕.</li><li>풍선 파는 북극곰이 입구에 서 있어요.</li></ul>
+        <div class="dims"><span class="num">공원 약 190×170m</span><span class="num">대관람차 지름 42m</span></div>
+        <p class="feel">어린 시절 축제 밤의 설렘.</p>
       </div>
     </div>
 
@@ -263,12 +383,11 @@ section { display: flex; flex-direction: column; gap: 20px; }
     </div>
 
     <div class="zone">
-      <div class="side"><div class="eyebrow">하얀 놀이터</div><h3>북극곰 얼음 해안</h3><div class="tag">유빙과 이글루, 얼음 미끄럼틀</div></div>
+      <div class="side"><div class="eyebrow">하얀 이웃들</div><h3>북극곰 주민</h3><div class="tag">마을 곳곳에서 일하고 노는 곰들</div></div>
       <div class="body">
-        <p>마을 바깥 얼음 바닷가에 북극곰 가족이 살아요. 얼음 언덕으로 만든 미끄럼틀을 타고, 새끼 곰들은 눈을 굴리며 놀고, 엄마 곰은 유빙 위에서 바다를 바라봐요.</p>
-        <ul><li>가까이 가면 다가와서 머리를 부비고, 생선을 주면 졸졸 따라와요.</li><li>함께 미끄럼틀을 탈 수 있고, 이글루 안에는 작은 모닥불과 쉼터가 있어요.</li></ul>
-        <div class="dims"><span class="num">해안 약 300m</span><span class="num">북극곰 4마리</span><span class="num">유빙 수십 개</span></div>
-        <p class="feel">크고 하얗고 폭신한 친구들.</p>
+        <p>북극곰은 따로 떨어진 구역에 사는 게 아니라 사람들과 섞여 사는 마을 주민이에요. 말을 걸면 대답하고, 각자 맡은 일이 있어요.</p>
+        <ul><li>광장 장터의 코코아 장수 곰, 호수의 스케이트 강사 곰, 산타 공장의 선물 포장 곰.</li><li>부두 끝에서 낚시하는 곰, 놀이공원 입구에서 풍선 파는 곰, 빵집 골목 모퉁이에서 군밤 굽는 곰.</li><li>공원에서 눈사람을 만드는 아기곰들, 눈썰매 언덕의 곰 형제.</li></ul>
+        <p class="feel">크고 하얗고 다정한 이웃들.</p>
       </div>
     </div>
 
@@ -369,9 +488,9 @@ section { display: flex; flex-direction: column; gap: 20px; }
   <ol class="steps">
     <li><div><b>첫 장면과 마을의 심장.</b> 숲속 등불길 → 언덕 위에서 마을 불빛이 펼쳐지는 순간 → 입구 다리 → 종탑 광장과 큰 마켓. 처음 10분이 마음을 움직이는지부터 맞춰요.</div></li>
     <li><div><b>산타 마을과 순록.</b> 산타들, 마구간, 우체국, 순록 썰매 숲길.</div></li>
-    <li><div><b>북극곰 얼음 해안.</b> 곰 가족, 미끄럼틀, 이글루, 유빙.</div></li>
+    <li><div><b>빛의 대로와 겨울 놀이공원.</b> 빛 아치, 쇼윈도, 대관람차, 북극곰 주민들.</div></li>
     <li><div><b>하늘.</b> 스키 산, 하늘 썰매, 별빛 언덕의 오로라, 자정 산타 출발.</div></li>
-    <li><div><b>나머지 동네.</b> 등불 골목, 운하 동네, 등대 항구, 얼음 호수와 예배당, 내 오두막.</div></li>
+    <li><div><b>나머지 동네.</b> 등불 골목, 등대 항구, 얼음 호수와 예배당, 내 오두막.</div></li>
     <li><div><b>살아 있는 마을.</b> 주민들의 사연과 하루 일과, 거리의 사람들, 장소별 소리와 음악.</div></li>
   </ol>
   <p class="muted">단계마다 보여드리고, 마음에 안 드는 부분은 그 자리에서 고친 뒤 다음으로 넘어가요.</p>
@@ -396,28 +515,30 @@ section { display: flex; flex-direction: column; gap: 20px; }
   const PLAZA = [1180, 820];
   const SEA = [[1180, 1600], [1330, 1530], [1520, 1450], [1700, 1380], [1860, 1345], [2000, 1320], [2150, 1300], [2290, 1265], [2400, 1240], [2400, 1600]];
   const LAKE = { x: 1180, y: 1065, rx: 75, ry: 35 };
-  const CANAL = [[1520, 470], [1508, 590], [1494, 700], [1494, 790], [1515, 900], [1555, 1000], [1606, 1095], [1660, 1185], [1700, 1290], [1730, 1420]];
+  const CANAL = [[-500, -500], [-499, -500]]; // (운하 동네는 없앰)
+  const FAIR = { x: 1560, y: 960 };
   const STREAM = [[610, 520], [640, 660], [672, 800], [696, 930], [712, 1012], [770, 1078], [900, 1104], [1050, 1088], [1106, 1070]];
   const ST = {
     alley: { name: '등불 골목', w: 4, pts: [[1150, 826], [1100, 846], [1040, 853], [985, 872], [925, 874], [865, 862], [812, 842], [782, 806]] },
-    market: { name: '마켓 거리', w: 8, pts: [[1210, 816], [1290, 799], [1380, 789], [1470, 781], [1560, 772], [1650, 763], [1760, 760], [1880, 768], [1950, 772]] },
+    market: { name: '빛의 대로', w: 14, pts: [[1210, 816], [1290, 799], [1380, 789], [1470, 781], [1560, 772]] },
+    skiroad: { name: '스키장 길', w: 6, pts: [[1560, 772], [1650, 763], [1760, 760], [1880, 768], [1950, 772]] },
+    fairway: { name: '놀이공원 길', w: 6, pts: [[1470, 781], [1500, 850], [1530, 900]] },
+    fairgate: { name: '놀이공원 정문', w: 4, pts: [[1530, 900], [1545, 910]] },
     entry: { name: '다리 길', w: 6, pts: [[712, 1012], [800, 974], [900, 935], [1000, 902], [1085, 864], [1150, 834]] },
     lake: { name: '호숫길', w: 6, pts: [[1180, 851], [1180, 935], [1180, 1022]] },
     santa: { name: '산타 마을 길', w: 5, pts: [[782, 806], [720, 770], [650, 718], [590, 672]] },
-    harbor: { name: '부둣길', w: 7, pts: [[1610, 1112], [1690, 1180], [1780, 1232], [1870, 1262]] },
-    bear: { name: '얼음 해안길', w: 3.5, pts: [[1870, 1262], [1960, 1278], [2050, 1268], [2140, 1250]] },
+    harbor: { name: '부둣길', w: 7, pts: [[1530, 900], [1460, 950], [1470, 1050], [1560, 1078], [1610, 1112], [1690, 1180], [1780, 1232], [1870, 1262]] },
     lane1: { name: '윗골목', w: 3.5, pts: [[1128, 806], [1066, 796], [1004, 806], [944, 824], [884, 826], [838, 818]] },
     lane2: { name: '빵집 골목', w: 3.5, pts: [[1100, 846], [1080, 890], [1046, 926], [998, 948], [950, 958]] },
     lane3: { name: '계단 골목', w: 3, pts: [[1040, 853], [1036, 826], [1028, 800], [1012, 768], [990, 744]] },
     lane4: { name: '우물 골목', w: 3, pts: [[925, 874], [930, 912], [950, 956]] },
     lane5: { name: '언덕 골목', w: 3, pts: [[865, 862], [870, 826], [884, 826]] },
-    cE1: { name: '운하 동쪽 골목', w: 3.5, pts: [[1508, 650], [1570, 640], [1640, 652]] },
-    cE2: { name: '꽃창문 골목', w: 3.5, pts: [[1528, 930], [1590, 916], [1660, 930]] },
-    cW1: { name: '운하 서쪽 골목', w: 3.5, pts: [[1488, 650], [1430, 666], [1380, 700]] },
-    cW2: { name: '물레방아 골목', w: 3.5, pts: [[1500, 870], [1440, 880], [1380, 900]] },
     hb2: { name: '항구 뒷골목', w: 3.5, pts: [[1650, 1150], [1730, 1146], [1810, 1170], [1860, 1200]] },
-    canalE: { name: '운하 동쪽 둑길', w: 3, pts: offset(CANAL.slice(0, 7), 6.5) },
-    canalW: { name: '운하 서쪽 둑길', w: 3, pts: offset(CANAL.slice(0, 7), -6.5) },
+    bk1: { name: '대로 뒷골목 북', w: 3.5, pts: [[1290, 770], [1380, 758], [1470, 750], [1530, 744]] },
+    bk2: { name: '대로 뒷골목 남', w: 3.5, pts: [[1300, 832], [1390, 824], [1440, 822]] },
+    cross1: { name: '종 골목', w: 3.5, pts: [[1380, 789], [1384, 758]] },
+    cross2: { name: '장갑 골목', w: 3.5, pts: [[1390, 824], [1386, 796]] },
+    shore: { name: '해안 산책로', w: 3, pts: [[1870, 1262], [1960, 1278], [2050, 1268], [2140, 1250], [2260, 1235]] },
   };
   const PATHS = {
     forest: { name: '숲속 등불길', w: 2.6, pts: [[90, 1530], [170, 1470], [250, 1420], [330, 1370], [420, 1310], [500, 1240], [570, 1170], [630, 1100], [690, 1040], [712, 1012]] },
@@ -458,8 +579,6 @@ section { display: flex; flex-direction: column; gap: 20px; }
   el('path', { d: path(SEA.slice(0, 9)), fill: 'none', stroke: '#eef5fb', 'stroke-width': 5, opacity: .9 }, gW);
   for (let i = 0; i < 70; i++) { const x = rr(1900, 2380), y = rr(1300, 1590); if (y < 1240 + (2400 - x) * .25 + 70) continue; const s = rr(4, 16), pts = []; for (let k = 0; k < 6; k++) { const a = k / 6 * 6.283 + rr(-.3, .3); pts.push([x + Math.cos(a) * s * rr(.6, 1.1), y + Math.sin(a) * s * rr(.5, .9)]); } el('path', { d: path(pts) + 'Z', fill: '#f4f8fc', stroke: '#c3d6ea', 'stroke-width': .6 }, gW); }
   el('path', { d: path(STREAM), fill: 'none', stroke: '#9cc0e0', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gW);
-  el('path', { d: path(CANAL), fill: 'none', stroke: '#8c96a3', 'stroke-width': 8.5, 'stroke-linejoin': 'round' }, gW);
-  el('path', { d: path(CANAL), fill: 'none', stroke: '#9cc0e0', 'stroke-width': 6, 'stroke-linejoin': 'round' }, gW);
   el('ellipse', { cx: LAKE.x, cy: LAKE.y, rx: LAKE.rx + 2, ry: LAKE.ry + 2, fill: '#8c96a3' }, gW);
   el('ellipse', { cx: LAKE.x, cy: LAKE.y, rx: LAKE.rx, ry: LAKE.ry, fill: '#cfe2f2' }, gW);
   el('ellipse', { cx: LAKE.x, cy: LAKE.y, rx: LAKE.rx - 8, ry: LAKE.ry - 6, fill: 'none', stroke: '#ffb347', 'stroke-width': 1.2, 'stroke-dasharray': '1.5 3' }, gW);
@@ -470,7 +589,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
   RUNS.forEach(r => { el('path', { d: path(r.pts), fill: 'none', stroke: '#c5d3e3', 'stroke-width': r.w + 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gS); el('path', { d: path(r.pts), fill: 'none', stroke: '#ffffff', 'stroke-width': r.w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, gS); along(r.pts, 24, (x, y, ux, uy) => { for (const s of [-1, 1]) el('circle', { cx: x - uy * s * (r.w / 2 + 2), cy: y + ux * s * (r.w / 2 + 2), r: 1, fill: '#ffb347' }, gS); }); });
 
   // 숲 (나무 한 그루 = 점 하나, 실제 수관 지름 4~7m)
-  const gT = g(), avoidLines = [PATHS.forest.pts, SLED, STREAM, ST.santa.pts, ST.entry.pts, PATHS.star.pts, CANAL, ...RUNS.map(r => r.pts)];
+  const gT = g(), avoidLines = [PATHS.forest.pts, SLED, STREAM, ST.santa.pts, ST.entry.pts, PATHS.star.pts, ...RUNS.map(r => r.pts)];
   const nearLine = (x, y, d) => avoidLines.some(L => lineD(x, y, L) < d);
   const treeAt = (x, y, s, snowy) => { el('circle', { cx: x, cy: y, r: s, fill: snowy ? '#6f8c7d' : '#5d7a6b' }, gT); el('circle', { cx: x - s * .3, cy: y - s * .3, r: s * .45, fill: '#eef3f6', opacity: .8 }, gT); };
   for (let i = 0; i < 2600; i++) { const x = rr(0, 760), y = rr(380, 1600); if (y > 1540 && x < 140) continue; if (x > 420 && x < 660 && y > 380 && y < 720) continue; if (Math.hypot(x - 760, y - 790) < 50) continue; if (nearLine(x, y, 7)) continue; if (x > 600 && y < 600) continue; treeAt(x, y, rr(2, 3.5), 1); }
@@ -492,7 +611,9 @@ section { display: flex; flex-direction: column; gap: 20px; }
 
   // ---------- 건물 ----------
   const placed = [], gB = g(), gL = g();
-  const blocked = (x, y, r) => { if (Math.hypot(x - PLAZA[0], y - PLAZA[1]) < 31 + r) return true; for (const p of placed) if (Math.hypot(x - p.x, y - p.y) < (p.r + r) * .82) return true; if (lineD(x, y, CANAL) < 3 + r * .7) return true; if (lineD(x, y, STREAM) < 2 + r * .7) return true; if (((x - LAKE.x) / (LAKE.rx + 14)) ** 2 + ((y - LAKE.y) / (LAKE.ry + 14)) ** 2 < 1) return true; for (const s of [...Object.values(ST), ...Object.values(PATHS)]) if (lineD(x, y, s.pts) < s.w / 2 + r * .62) return true; return false; };
+  const FAIRPOLY = [[FAIR.x - 90, FAIR.y - 70], [FAIR.x + 80, FAIR.y - 80], [FAIR.x + 100, FAIR.y + 60], [FAIR.x - 60, FAIR.y + 90]];
+  const inPoly = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c; return c; };
+  const blocked = (x, y, r) => { if (inPoly(FAIRPOLY, x, y)) return true; if (Math.hypot(x - PLAZA[0], y - PLAZA[1]) < 31 + r) return true; for (const p of placed) if (Math.hypot(x - p.x, y - p.y) < (p.r + r) * .82) return true; if (lineD(x, y, CANAL) < 3 + r * .7) return true; if (lineD(x, y, STREAM) < 2 + r * .7) return true; if (((x - LAKE.x) / (LAKE.rx + 14)) ** 2 + ((y - LAKE.y) / (LAKE.ry + 14)) ** 2 < 1) return true; for (const s of [...Object.values(ST), ...Object.values(PATHS)]) if (lineD(x, y, s.pts) < s.w / 2 + r * .62) return true; return false; };
   const building = (x, y, w, d, ang, fill, opt = {}) => {
     const r = Math.hypot(w, d) / 2; if (!opt.force && blocked(x, y, r)) return null; placed.push({ x, y, r });
     const tr = `rotate(${ang * 180 / Math.PI} ${x} ${y})`;
@@ -501,7 +622,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
     if (opt.chimney) el('rect', { x: x + w * .22 - .5, y: y - d * .18 - .5, width: 1, height: 1, fill: '#7b5b4a', transform: tr }, gB);
     return { x, y };
   };
-  const ROOF = { alley: ['#7a4b3a', '#8a5a44', '#6e4637', '#93624a'], market: ['#b23a2e', '#c4473a', '#9e3328'], canal: ['#e6a49a', '#efd38a', '#a9cbe6', '#f0b98c', '#c9e0b8'], harbor: ['#c0392b', '#2e6f9e', '#e6b422', '#3e7c5a', '#8e5aa8', '#d9733a'], entry: ['#7a4b3a', '#6e4637'], lake: ['#8a5a44', '#7a4b3a'] };
+  const ROOF = { avenue: ['#5b6676', '#6a5048', '#4f5a6a', '#7a5a4a'], alley: ['#7a4b3a', '#8a5a44', '#6e4637', '#93624a'], market: ['#b23a2e', '#c4473a', '#9e3328'], canal: ['#e6a49a', '#efd38a', '#a9cbe6', '#f0b98c', '#c9e0b8'], harbor: ['#c0392b', '#2e6f9e', '#e6b422', '#3e7c5a', '#8e5aa8', '#d9733a'], entry: ['#7a4b3a', '#6e4637'], lake: ['#8a5a44', '#7a4b3a'] };
   const pick = a => a[Math.floor(R() * a.length)];
   const rowsAlong = (pts, o) => {
     const out = [];
@@ -543,42 +664,52 @@ section { display: flex; flex-direction: column; gap: 20px; }
   [['서점', '문 열면 종이 딸랑'], ['찻집', '김 서린 창'], ['오르골 가게', ''], ['빵집', '생강빵 굽는 냄새'], ['털실 가게', '장갑을 떠 주는 주인']].forEach(([n, d], i) => { const h = alley[3 + i * 5]; if (h) key('등불 골목', n, d, h.x, h.y, 7); });
 
   // 마켓 거리
-  const market = rowsAlong(ST.market.pts.slice(0, 5), { half: 4, set: 2.5, depth: 11, minW: 7, maxW: 10, roof: ROOF.market });
-  along(ST.market.pts, 14, (x, y, ux, uy) => { for (const s of [-1, 1]) el('circle', { cx: x - uy * s * 5.4, cy: y + ux * s * 5.4, r: 1, fill: '#ffb347' }, gB); });
+  // 유리 지붕 마켓 홀 (거대 구슬이 매달린 홀) · 빨간 아케이드
+  { const [x, y, a] = pointAt(ST.market.pts, .13); const nx = Math.sin(a), ny = -Math.cos(a), cx = x + nx * 20, cy = y + ny * 20; building(cx, cy, 40, 20, a, '#b9d3e6', { force: 1 }); for (let k = -3; k <= 3; k++) el('circle', { cx: cx + Math.cos(a) * k * 5, cy: cy + Math.sin(a) * k * 5, r: 1.6, fill: k % 2 ? '#c0392b' : '#d8dde4', stroke: '#6d2219', 'stroke-width': .3 }, gB); key('빛의 대로', '유리 지붕 마켓 홀', '천장에 거대한 빨강·은 구슬', cx, cy, 5); }
+  { const [x, y, a] = pointAt(ST.market.pts, .42); const nx = Math.sin(a), ny = -Math.cos(a), cx = x + nx * 21, cy = y + ny * 21; building(cx, cy, 6, 28, a, '#a8322a', { force: 1, ridge: false }); for (let k = -3; k <= 3; k++) el('circle', { cx: cx + nx * k * 3.6, cy: cy + ny * k * 3.6, r: .9, fill: '#3f6b50' }, gB); key('빛의 대로', '빨간 아케이드', '지붕 덮인 통로, 작은 트리가 줄지어', cx, cy, 6); }
+  const market = rowsAlong(ST.market.pts, { half: 7, set: .3, depth: 14, minW: 10, maxW: 15, roof: ROOF.avenue, gap: 0 });
+  el('path', { d: path(ST.market.pts), fill: 'none', stroke: '#cdd5df', 'stroke-width': 8, 'stroke-linecap': 'round' }, gR);
+  along(ST.market.pts, 20, (x, y, ux, uy) => { const a = [x - uy * 6.2, y + ux * 6.2], b = [x + uy * 6.2, y - ux * 6.2]; el('path', { d: `M${a[0]} ${a[1]}Q${x + ux * 3} ${y + uy * 3} ${b[0]} ${b[1]}`, fill: 'none', stroke: '#ffd27a', 'stroke-width': .9, opacity: .9 }, gB); for (const s of [-1, 1]) el('path', { d: `M${x} ${y}q${ux * 4 - uy * s * 2.5} ${uy * 4 + ux * s * 2.5} ${-uy * s * 5} ${ux * s * 5}`, fill: 'none', stroke: '#fff1c4', 'stroke-width': .7 }, gB); for (const s of [-1, 1]) el('circle', { cx: x - uy * s * 6.2, cy: y + ux * s * 6.2, r: 1.1, fill: '#ffb347' }, gB); });
+  along(ST.market.pts, 10, (x, y, ux, uy) => { for (const s of [-1, 1]) el('circle', { cx: x + ux * 5 - uy * s * 5.2, cy: y + uy * 5 + ux * s * 5.2, r: 1.5, fill: '#5d7a6b' }, gB); });
   for (const k of ['lane1', 'lane2', 'lane3', 'lane4', 'lane5']) { rowsAlong(ST[k].pts, { half: ST[k].w / 2, set: .2, depth: 8, minW: 5, maxW: 7.5, roof: ROOF.alley, gap: .15 }); along(ST[k].pts, 14, (x, y, ux, uy) => el('circle', { cx: x - uy * 1.4, cy: y + ux * 1.4, r: .8, fill: '#ffb347' }, gB)); }
-  for (const k of ['cE1', 'cE2', 'cW1', 'cW2']) rowsAlong(ST[k].pts, { half: ST[k].w / 2, set: .3, depth: 9, minW: 5, maxW: 7, roof: ROOF.canal, gap: .1 });
   rowsAlong(ST.hb2.pts, { half: ST.hb2.w / 2, set: .3, depth: 9, minW: 6, maxW: 8, roof: ROOF.harbor, gap: .3 });
   // 집 사이 작은 정원·우물
   { const w = pointAt(ST.lane4.pts, .5); el('circle', { cx: w[0] + 6, cy: w[1], r: 1.6, fill: '#8c96a3', stroke: '#33435a', 'stroke-width': .4 }, gB); key('등불 골목', '골목 우물', '', w[0] + 6, w[1], 7); }
-  if (market[2]) key('마켓 거리', '여관 “눈송이”', '', market[2].x, market[2].y, 6);
+  if (market[2]) key('빛의 대로', '여관 “눈송이”', '', market[2].x, market[2].y, 6);
+  if (market[5]) key('빛의 대로', '백화점 쇼윈도', '움직이는 인형 장식', market[5].x, market[5].y, 6);
+  if (market[9]) key('빛의 대로', '극장', '크리스마스 연극', market[9].x, market[9].y, 6);
+  { const p = pointAt(ST.market.pts, .5); key('빛의 대로', '머리 위 천사 날개 조명', '20m마다 길을 가로질러', p[0], p[1], 5); }
+  for (const k of ['bk1', 'bk2', 'cross1', 'cross2']) rowsAlong(ST[k].pts, { half: ST[k].w / 2, set: .2, depth: 8, minW: 5, maxW: 7, roof: ROOF.alley, gap: .15 });
 
   // 다리 길·호숫길
   rowsAlong(ST.entry.pts.slice(2), { half: 3, set: 1.5, depth: 10, minW: 7, maxW: 10, roof: ROOF.entry, gap: 2 });
   const lakeRow = rowsAlong(ST.lake.pts.slice(0, 2), { half: 3, set: 1.5, depth: 9, minW: 6, maxW: 8, roof: ROOF.lake, gap: 1 });
   if (lakeRow[1]) key('얼음 호수', '스케이트 대여소', '', lakeRow[1].x, lakeRow[1].y, 6);
 
-  // 운하 동네 (둑길 바깥으로 집, 물에 바로 면한 쪽은 계단)
-  const canalHouses = [...rowsAlong(ST.canalE.pts, { sides: [1], half: 1.5, set: .2, depth: 10, minW: 5, maxW: 7, roof: ROOF.canal, gap: .1 }), ...rowsAlong(ST.canalW.pts, { sides: [-1], half: 1.5, set: .2, depth: 10, minW: 5, maxW: 7, roof: ROOF.canal, gap: .1 })];
-  [.12, .28, .44, .6, .76].forEach((f, i) => { const [x, y, a] = pointAt(CANAL.slice(0, 7), f); el('rect', { x: x - 2.2, y: y - 9, width: 4.4, height: 18, fill: '#b8a58a', stroke: '#6e5f4b', 'stroke-width': .5, transform: `rotate(${a * 180 / Math.PI + 90} ${x} ${y})` }, gB); if (i === 2) key('운하 동네', '돌다리 5개 (리스·리본)', '', x, y, 6); });
-  { const [x, y] = pointAt(CANAL.slice(0, 7), .2); el('rect', { x: x - 1.6, y: y - 4, width: 3.2, height: 8, rx: 1.6, fill: '#8a6a4a', transform: `rotate(10 ${x} ${y})` }, gB); key('운하 동네', '나룻배 타는 곳', '뱃길 약 350m', x + 1, y, 7); }
-  along(ST.canalE.pts, 16, (x, y) => el('circle', { cx: x, cy: y, r: .9, fill: '#ffb347' }, gB)); along(ST.canalW.pts, 16, (x, y) => el('circle', { cx: x, cy: y, r: .9, fill: '#ffb347' }, gB));
-  [ST.market.pts[3]].forEach(([x, y]) => {});
-
+  // 겨울 놀이공원
+  { const { x, y } = FAIR; el('path', { d: path([[x - 90, y - 70], [x + 80, y - 80], [x + 100, y + 60], [x - 60, y + 90]]) + 'Z', fill: '#e8edf3', stroke: '#9eacbf', 'stroke-width': .8, 'stroke-dasharray': '3 2' }, gB);
+    el('circle', { cx: x + 40, cy: y - 20, r: 21, fill: 'none', stroke: '#c0392b', 'stroke-width': 2 }, gB); for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283; el('line', { x1: x + 40, y1: y - 20, x2: x + 40 + Math.cos(a) * 21, y2: y - 20 + Math.sin(a) * 21, stroke: '#c0392b', 'stroke-width': .4 }, gB); el('rect', { x: x + 40 + Math.cos(a) * 21 - 1.2, y: y - 20 + Math.sin(a) * 21 - 1.2, width: 2.4, height: 2.4, fill: '#ffd27a' }, gB); } placed.push({ x: x + 40, y: y - 20, r: 22 });
+    el('circle', { cx: x - 40, cy: y + 10, r: 8, fill: '#f2d6e0', stroke: '#b05d7d', 'stroke-width': .7 }, gB); placed.push({ x: x - 40, y: y + 10, r: 9 });
+    el('path', { d: `M${x - 10} ${y + 50}a14 14 0 1 1 1 0`, fill: 'none', stroke: '#2e6f9e', 'stroke-width': 3 }, gB);
+    for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283; building(x + Math.cos(a) * 62, y + Math.sin(a) * 48, 5, 4, a + Math.PI / 2, '#c4473a', { force: 1, ridge: false }); }
+    el('path', { d: path([[x - 80, y - 40], [x - 40, y - 50], [x, y - 55], [x + 40, y - 60]]), fill: 'none', stroke: '#ffd27a', 'stroke-width': 4, 'stroke-dasharray': '1 2', opacity: .8 }, gB);
+    key('겨울 놀이공원', '대관람차 (지름 42m)', '오로라와 마을을 내려다봄', x + 40, y - 20, 4); key('겨울 놀이공원', '회전 그네', '', x - 40, y + 10, 5); key('겨울 놀이공원', '나선 미끄럼탑', '', x - 10, y + 36, 5); key('겨울 놀이공원', '빛의 터널 산책길', '', x - 20, y - 52, 5); key('겨울 놀이공원', '간식 오두막 10채', '츄러스·군고구마·코코아', x + 62, y + 4, 5); label('겨울 놀이공원', x, y - 92, 'zl', 20); }
   // 항구
-  const harborRow = rowsAlong(ST.harbor.pts, { sides: [-1], half: 3.5, set: 2, depth: 10, minW: 6, maxW: 8, roof: ROOF.harbor, gap: .6 });
+  const harborRow = rowsAlong(ST.harbor.pts.slice(4), { sides: [-1], half: 3.5, set: 2, depth: 10, minW: 6, maxW: 8, roof: ROOF.harbor, gap: .6 });
   if (harborRow[4]) key('등대 항구', '책방', '크리스마스이브에 책 선물', harborRow[4].x, harborRow[4].y, 6);
   if (harborRow[8]) key('등대 항구', '생선 가게', '북극곰 간식', harborRow[8].x, harborRow[8].y, 6);
   { const a = [1870, 1262], b = [1902, 1410]; el('path', { d: path([a, b]), stroke: '#8b7355', 'stroke-width': 9, 'stroke-linecap': 'butt' }, gB); el('path', { d: path([a, b]), stroke: '#c8b08c', 'stroke-width': 7.5 }, gB); along([a, b], 10, (x, y) => el('circle', { cx: x + 4.5, cy: y, r: .8, fill: '#ffb347' }, gB)); el('circle', { cx: b[0], cy: b[1] + 4, r: 5, fill: '#f4f1ea', stroke: '#c0392b', 'stroke-width': 1.6 }, gB); key('등대 항구', '등대 (22m)', '', b[0], b[1] + 4, 5); key('등대 항구', '부두 (180m)', '눈 덮인 고깃배', 1886, 1330, 5);
     for (const [x, y, r2] of [[1830, 1305, 7], [1845, 1318, 4]]) { el('circle', { cx: x, cy: y, r: r2 + 1.2, fill: '#8c96a3' }, gB); el('circle', { cx: x, cy: y, r: r2, fill: '#bfe3e0' }, gB); } key('등대 항구', '노천 온천', '눈송이가 김 속으로', 1830, 1305, 5);
     for (const [x, y] of [[1858, 1300], [1915, 1350], [1925, 1300]]) el('path', { d: `M${x - 6} ${y}q6 -5 12 0q-6 4 -12 0z`, fill: '#7b5b4a' }, gB); }
 
-  // 북극곰 얼음 해안
-  { const cx = 2150, cy = 1262; el('path', { d: path([[2040, 1290], [2100, 1236], [2200, 1224], [2290, 1250], [2270, 1278], [2150, 1296]]) + 'Z', fill: '#f2f6fa', stroke: '#c3d6ea', 'stroke-width': .8 }, gB);
-    el('path', { d: path([[2100, 1232], [2112, 1255], [2130, 1275]]), fill: 'none', stroke: '#9cc0e0', 'stroke-width': 4, 'stroke-linecap': 'round' }, gB);
-    for (const [x, y, r2] of [[2185, 1250, 3.4], [2200, 1258, 2.6]]) { el('circle', { cx: x, cy: y, r: r2, fill: '#ffffff', stroke: '#8da3bd', 'stroke-width': .6 }, gB); el('rect', { x: x - .8, y: y + r2 - 1, width: 1.6, height: 1.8, fill: '#8da3bd' }, gB); }
-    for (const [x, y, s] of [[2150, 1270, 1], [2160, 1266, .7], [2232, 1262, 1], [2240, 1300, .9], [2210, 1340, .6]]) { el('ellipse', { cx: x, cy: y, rx: 2.4 * s, ry: 1.3 * s, fill: '#fffaf0', stroke: '#b9a98c', 'stroke-width': .4 }, gB); el('circle', { cx: x + 2.4 * s, cy: y, r: .8 * s, fill: '#fffaf0', stroke: '#b9a98c', 'stroke-width': .4 }, gB); }
-    label('북극곰 얼음 해안', cx + 30, cy - 46, 'zl', 22); key('북극곰 얼음 해안', '얼음 미끄럼틀', '곰들과 함께', 2112, 1255, 5); key('북극곰 얼음 해안', '이글루 2채', '안에 작은 모닥불', 2190, 1250, 5); key('북극곰 얼음 해안', '북극곰 가족 (4마리)', '생선을 주면 따라와요', 2150, 1270, 5); key('북극곰 얼음 해안', '유빙 바다', '엄마 곰의 자리', 2210, 1340, 3); }
-
+  // 북극곰 주민: 따로 사는 곳이 아니라 마을 곳곳에서 일하고 노는 NPC
+  const bear = (x, y, s, name, note) => { el('ellipse', { cx: x, cy: y, rx: 2.4 * s, ry: 1.4 * s, fill: '#fffaf0', stroke: '#9c8c70', 'stroke-width': .5 }, gB); el('circle', { cx: x + 2.4 * s, cy: y - .3 * s, r: .95 * s, fill: '#fffaf0', stroke: '#9c8c70', 'stroke-width': .5 }, gB); if (name) key('북극곰 주민', name, note, x, y, 6); };
+  bear(PLAZA[0] - 18, PLAZA[1] + 16, 1, '코코아 장수 곰', '광장 장터의 따뜻한 음료');
+  bear(LAKE.x - 30, LAKE.y + 6, 1, '스케이트 강사 곰', '손잡고 함께 타요'); bear(LAKE.x - 20, LAKE.y - 8, .7); bear(LAKE.x + 22, LAKE.y + 10, .7);
+  bear(530, 640, 1, '선물 포장 곰', '산타 공장에서 일해요');
+  bear(1886, 1300, 1, '낚시하는 곰', '부두 끝에서'); bear(1210, 870, .7, '눈사람 만드는 아기곰들', '호숫길 공원'); bear(1218, 876, .65);
+  bear(FAIR.x + 10, FAIR.y + 20, 1, '풍선 파는 곰', '놀이공원'); bear(1900, 715, .8, '썰매 타는 곰 형제', '눈썰매 언덕'); bear(1906, 724, .7);
+  bear(990, 950, .9, '군밤 굽는 곰', '빵집 골목 모퉁이');
   // 산타 마을
   { building(520, 598, 40, 24, -.18, '#b23a2e', { force: 1 }); key('산타 마을', '선물 공장 (40×24m)', '창 너머 장난감 만들기', 520, 598, 4);
     building(585, 662, 16, 12, .5, '#c4473a', { force: 1 }); key('산타 마을', '산타 우체국', '편지 쓰기·답장', 585, 662, 5);
@@ -623,8 +754,16 @@ section { display: flex; flex-direction: column; gap: 20px; }
   { const gF = g(), o = RUNWAY.b; [[700, 120], [1300, 60], [2300, 120], [60, 80], [900, 0]].forEach(([x, y], i) => el('path', { d: `M${o[0]} ${o[1]} Q${(o[0] + x) / 2 + (i % 2 ? 160 : -120)} ${(o[1] + y) / 2 - 80} ${x} ${y}`, fill: 'none', stroke: '#2fa37a', 'stroke-width': 2, 'stroke-dasharray': '1.5 6', 'stroke-linecap': 'round', opacity: .9 }, gF));
     el('path', { d: `M${o[0]} ${o[1]} C 900 300 1400 500 ${PLAZA[0]} ${PLAZA[1] - 60} S 1500 350 2300 120`, fill: 'none', stroke: '#2fa37a', 'stroke-width': 2, 'stroke-dasharray': '1.5 6', opacity: .55 }, gF); }
 
+  // 블록 안쪽 채우기: 집 뒤 마당의 나무, 장작 헛간, 텃밭 울타리, 눈사람
+  { const houses = placed.slice(); const gY = g(); gB.parentNode.insertBefore(gY, gB);
+    const near = (x, y) => { for (const q of houses) if (q.r < 12 && Math.abs(q.x - x) < 16 && Math.abs(q.y - y) < 16 && Math.hypot(q.x - x, q.y - y) < q.r + 9) return true; return false; };
+    for (let y = 680; y < 1300; y += 5) for (let x = 740; x < 1960; x += 5) { const jx = x + rr(-2, 2), jy = y + rr(-2, 2); if (!near(jx, jy) || blocked(jx, jy, 2.2)) continue; const t = R();
+      if (t < .3) { el('circle', { cx: jx, cy: jy, r: rr(1.6, 2.6), fill: '#6f8c7d' }, gY); el('circle', { cx: jx - .6, cy: jy - .6, r: 1, fill: '#eef3f6', opacity: .8 }, gY); placed.push({ x: jx, y: jy, r: 2.2 }); }
+      else if (t < .38) { building(jx, jy, 3, 2.4, rr(0, 3.14), '#8a6a4a', { force: 1, ridge: false }); }
+      else if (t < .43) { el('rect', { x: jx - 2.5, y: jy - 2, width: 5, height: 4, fill: '#eef2f6', stroke: '#9b8a70', 'stroke-width': .35, 'stroke-dasharray': '.8 .5' }, gY); placed.push({ x: jx, y: jy, r: 3 }); }
+      else if (t < .45) { el('circle', { cx: jx, cy: jy, r: .9, fill: '#fff', stroke: '#9eacbf', 'stroke-width': .3 }, gY); el('circle', { cx: jx, cy: jy - 1.1, r: .6, fill: '#fff', stroke: '#9eacbf', 'stroke-width': .3 }, gY); placed.push({ x: jx, y: jy, r: 1.2 }); } } }
   // 동네 이름
-  label('종탑 광장', PLAZA[0], PLAZA[1] - 60, 'zl', 26); label('등불 골목', 960, 900, 'zl', 22); label('운하 동네', 1585, 640, 'zl', 22); label('등대 항구', 1760, 1200, 'zl', 22); label('얼음 호수', LAKE.x, LAKE.y + 60, 'zl', 20); label('자작나무 숲', 300, 1300, 'zl', 24); label('순록 썰매 길', 230, 1010, 'zl', 16);
+  label('종탑 광장', PLAZA[0], PLAZA[1] - 60, 'zl', 26); label('등불 골목', 960, 900, 'zl', 22); label('빛의 대로', 1390, 735, 'zl', 22); label('등대 항구', 1760, 1200, 'zl', 22); label('해안 산책로', 2100, 1225, 'zl', 16); label('얼음 호수', LAKE.x, LAKE.y + 60, 'zl', 20); label('자작나무 숲', 300, 1300, 'zl', 24); label('순록 썰매 길', 230, 1010, 'zl', 16);
   label('얼음 바다', 1600, 1530, 'zl', 22);
 
   // 단면선 A-A'
@@ -657,11 +796,33 @@ section { display: flex; flex-direction: column; gap: 20px; }
   document.getElementById('zIn').onclick = () => { const r = view.getBoundingClientRect(); zoomAt(.6, r.left + r.width / 2, r.top + r.height / 2); };
   document.getElementById('zOut').onclick = () => { const r = view.getBoundingClientRect(); zoomAt(1.6, r.left + r.width / 2, r.top + r.height / 2); };
   document.getElementById('zAll').onclick = () => go({ x: 0, y: 0, w: 2400, h: 1600 });
-  const ZONES = [['전체', 0, 0, 2400, 1600], ['종탑 광장', 1090, 740, 180, 160], ['등불 골목', 760, 760, 420, 160], ['운하 동네', 1420, 560, 320, 560], ['등대 항구', 1580, 1080, 380, 360], ['북극곰 해안', 2020, 1180, 320, 230], ['산타 마을', 400, 380, 280, 380], ['별빛 언덕', 960, 380, 260, 440], ['스키 산', 1820, 240, 400, 560], ['얼음 호수', 1080, 960, 300, 200], ['숲속 등불길', 40, 960, 720, 600]];
+  const ZONES = [['전체', 0, 0, 2400, 1600], ['종탑 광장', 1090, 740, 180, 160], ['등불 골목', 760, 740, 440, 240], ['빛의 대로', 1200, 700, 400, 180], ['겨울 놀이공원', 1440, 840, 260, 240], ['등대 항구', 1580, 1080, 380, 260], ['산타 마을', 400, 380, 280, 380], ['별빛 언덕', 960, 380, 260, 440], ['스키 산', 1820, 240, 400, 560], ['얼음 호수', 1080, 960, 300, 200], ['숲속 등불길', 40, 960, 720, 600]];
   const chips = document.getElementById('zoneChips'); ZONES.forEach(([n, x, y, w, h]) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => go({ x, y, w, h }); chips.appendChild(b); });
   new ResizeObserver(() => { vb = fit(vb); apply(); }).observe(view);
   if (view.clientWidth < 600) vb = { x: 840, y: 560, w: 800, h: 520 };
   vb = fit(vb); apply();
+
+
+  // ---------- 거리 단면도 ----------
+  const XS = (id, o) => { const s = document.getElementById(id); if (!s) return; const E = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); s.appendChild(e); return e; };
+    const W = 420, Hh = 230, gy = 190, total = o.total, k = Math.min((W - 40) / total, 150 / o.maxH), x0 = (W - total * k) / 2, X = m => x0 + m * k, Y = m => gy - m * k;
+    E('rect', { x: 0, y: 0, width: W, height: Hh, fill: '#0b1427' });
+    for (let i = 0; i < 40; i++) E('circle', { cx: (i * 97) % W, cy: (i * 53) % 120, r: .8, fill: '#c9d6ea', opacity: .5 });
+    E('rect', { x: 0, y: gy, width: W, height: Hh - gy, fill: '#dfe7f1' });
+    (o.bld || []).forEach(([a, b, hh, col]) => { E('rect', { x: X(a), y: Y(hh), width: (b - a) * k, height: hh * k, fill: col, stroke: '#0b1427', 'stroke-width': 1 }); const fl = o.floor || 3; for (let f = 0; f < Math.floor(hh / fl); f++) { const wy = Y(f * fl + 1.1), ww = Math.min(1.1, (b - a) * .3) * k; E('rect', { x: X((a + b) / 2) - ww / 2, y: wy - 1.4 * k, width: ww, height: 1.4 * k, fill: f === 0 && o.shop ? '#ffcf88' : '#ffbf6b', opacity: f === 0 && o.shop ? .95 : .85 }); } const roofX = X(a), roofW = (b - a) * k; E('path', { d: `M${roofX - 2} ${Y(hh)} L${roofX + roofW / 2} ${Y(hh + (o.roof || 2.5))} L${roofX + roofW + 2} ${Y(hh)}Z`, fill: '#e9eef5' }); });
+    (o.walk || []).forEach(([a, b]) => E('rect', { x: X(a), y: gy - .15 * k, width: (b - a) * k, height: .15 * k + 2, fill: '#b9c4d2' }));
+    (o.snow || []).forEach(([a, b, hh]) => E('path', { d: `M${X(a)} ${gy} Q${X((a + b) / 2)} ${Y(hh) - 4} ${X(b)} ${gy}Z`, fill: '#ffffff' }));
+    (o.trees || []).forEach(([m, hh, lit]) => { E('path', { d: `M${X(m)} ${Y(hh)} L${X(m) + hh * k * .28} ${gy - 2} L${X(m) - hh * k * .28} ${gy - 2}Z`, fill: '#3f6b50' }); if (lit) for (let i = 0; i < 9; i++) E('circle', { cx: X(m) + (i % 3 - 1) * hh * k * .12 * (1 + i / 9), cy: Y(hh * (.2 + i * .08)), r: 1.4, fill: '#ffd27a' }); });
+    (o.lamps || []).forEach(([m, hh, side]) => { E('line', { x1: X(m), y1: gy, x2: X(m), y2: Y(hh), stroke: '#1a1a1a', 'stroke-width': 1.6 }); const lx = X(m) + (side || 0) * 6; E('circle', { cx: lx, cy: Y(hh), r: 3, fill: '#ffbf6b' }); E('circle', { cx: lx, cy: Y(hh), r: 10, fill: '#ffbf6b', opacity: .18 }); });
+    (o.arch || []).forEach(([a, b, hh, sag]) => { E('path', { d: `M${X(a)} ${Y(hh)} Q${X((a + b) / 2)} ${Y(hh - sag)} ${X(b)} ${Y(hh)}`, fill: 'none', stroke: '#ffd27a', 'stroke-width': 1.2, 'stroke-dasharray': '1 3' }); });
+    (o.people || []).forEach(m => { E('rect', { x: X(m) - .22 * k, y: Y(1.74), width: .44 * k, height: 1.74 * k, rx: .2 * k, fill: '#e0645c' }); E('circle', { cx: X(m), cy: Y(1.74) - .14 * k, r: .14 * k, fill: '#f1d2b6' }); });
+    (o.dims || []).forEach(([a, b, t]) => { E('line', { x1: X(a), y1: gy + 16, x2: X(b), y2: gy + 16, stroke: '#4a5b75', 'stroke-width': 1 }); for (const m of [a, b]) E('line', { x1: X(m), y1: gy + 11, x2: X(m), y2: gy + 21, stroke: '#4a5b75', 'stroke-width': 1 }); E('text', { x: X((a + b) / 2), y: gy + 32, 'font-size': 11, 'text-anchor': 'middle', fill: '#26344d', 'font-family': 'IBM Plex Mono, monospace' }).textContent = t; });
+  };
+  XS('xs1', { total: 30, maxH: 18, floor: 3.2, shop: 1, roof: 3, bld: [[0, 8, 15.5, '#5b6676'], [22, 30, 14, '#6a5048']], walk: [[8, 11], [19, 22]], lamps: [[11.2, 4.5, -1], [18.8, 4.5, 1]], arch: [[8, 22, 9, 1.5]], trees: [[10.3, 2.4, 1], [19.7, 2.4, 1]], snow: [[7.4, 8.2, .5], [21.8, 22.6, .5]], people: [9.4, 14.5, 20.6], dims: [[8, 11, '3m'], [11, 19, '차도 8m'], [19, 22, '3m']] });
+  XS('xs2', { total: 16, maxH: 13, floor: 2.8, roof: 2.6, bld: [[0, 6, 11, '#7a4b3a'], [9.8, 16, 10, '#8a5a44']], lamps: [[6.05, 3, 1], [9.75, 3, -1]], arch: [[6.6, 9.2, 5, .6]], people: [7.4, 8.6], snow: [[5.7, 6.4, .35], [9.4, 10.1, .35]], dims: [[6, 9.8, '골목 3.8m']] });
+  XS('xs3', { total: 70, maxH: 24, floor: 3, bld: [[0, 4, 12, '#9a8f86'], [66, 70, 10, '#5b6676']], trees: [[35, 20, 1]], lamps: [[5, 4.5, 1], [65, 4.5, -1]], arch: [[5.5, 35, 4.5, -10], [35, 64.5, 4.5, -10]], people: [14, 22, 48, 56], snow: [[4, 6, .4], [64, 66, .4]], dims: [[5, 65, '광장 지름 60m']], bld2: [] });
+  { const s = document.getElementById('xs3'); }
+  XS('xs4', { total: 14, maxH: 12, trees: [[1.5, 10, 0], [3.2, 7, 0], [11.2, 9, 0], [12.8, 11, 0]], lamps: [[4.4, 2.5, 1]], snow: [[4.4, 5.6, .6], [8.2, 9.4, .6]], people: [6.9], dims: [[5.6, 8.2, '2.6m']] });
 
   // ---------- 단면도 ----------
   const sec = document.getElementById('section'), sel = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); sec.appendChild(e); return e; };

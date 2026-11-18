@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>눈의 마을</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#eef3fa; --lamp:#ffc477; --panel:rgba(12,20,38,.62); --line:rgba(255,255,255,.18); color-scheme:dark; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#070d1b; color:var(--ink); font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif; -webkit-user-select:none; user-select:none; }
+  canvas#c { display:block; width:100vw; height:100vh; touch-action:none; }
+  #load { position:fixed; inset:0; display:grid; place-items:center; background:#070d1b; z-index:50; transition:opacity 1s; }
+  #load.done { opacity:0; pointer-events:none; }
+  #load div { text-align:center; } #load b { font-family:"Gowun Batang",serif; font-size:34px; letter-spacing:.14em; display:block; margin-bottom:14px; }
+  #bar { width:220px; height:4px; background:rgba(255,255,255,.12); border-radius:9px; overflow:hidden; margin:0 auto; } #bar i { display:block; height:100%; width:0; background:var(--lamp); transition:width .3s; }
+  #title { position:fixed; inset:0; z-index:40; display:none; flex-direction:column; align-items:center; justify-content:space-between; text-align:center;
+    padding:max(9vh, env(safe-area-inset-top)) 16px max(7vh, env(safe-area-inset-bottom)); background:linear-gradient(180deg, rgba(5,9,20,.55), rgba(5,9,20,0) 36%, rgba(5,9,20,0) 62%, rgba(5,9,20,.7)); }
+  #title.open { display:flex; }
+  #title h1 { margin:0; font-family:"Gowun Batang",serif; font-size:clamp(44px,10vw,88px); letter-spacing:.16em; padding-left:.16em; text-shadow:0 0 40px rgba(255,220,170,.35); }
+  #title p { margin:10px 0 0; opacity:.85; letter-spacing:.05em; }
+  #title button { font:inherit; font-size:18px; letter-spacing:.2em; padding:15px 46px 15px calc(46px + .2em); border-radius:99px; color:#fff; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); cursor:pointer; }
+  #title small { display:block; margin-top:14px; opacity:.6; font-size:12.5px; line-height:1.7; }
+  .hud { position:fixed; z-index:20; display:none; }
+  body.play .hud { display:flex; }
+  #tl { top:max(12px, env(safe-area-inset-top)); left:max(12px, env(safe-area-inset-left)); flex-direction:column; gap:6px; }
+  .chip { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:6px 11px; font-size:13.5px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #where { font-family:"Gowun Batang",serif; font-size:15px; }
+  #tr { top:max(12px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right)); gap:6px; }
+  .btn { font:inherit; font-size:13.5px; color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:7px 12px; cursor:pointer; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #mob { right:max(16px, env(safe-area-inset-right)); bottom:max(22px, env(safe-area-inset-bottom)); gap:12px; }
+  #mob .btn { width:64px; height:64px; border-radius:50%; padding:0; font-size:14px; }
+  #stick { position:fixed; z-index:19; width:110px; height:110px; margin:-55px 0 0 -55px; border-radius:50%; border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.06); display:none; pointer-events:none; }
+  #stick i { position:absolute; left:50%; top:50%; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:50%; background:rgba(255,255,255,.35); }
+  #poi { position:fixed; left:50%; bottom:max(26px, env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:20; font-family:"Gowun Batang",serif; font-size:15px; opacity:0; transition:opacity .8s; text-shadow:0 1px 8px #000; pointer-events:none; text-align:center; }
+  #poi small { display:block; font-family:system-ui,sans-serif; font-size:12px; opacity:.75; }
+  #map { position:fixed; inset:0; z-index:30; display:none; place-items:center; background:rgba(4,8,18,.82); }
+  #map.open { display:grid; }
+  #map canvas { max-width:94vw; max-height:84vh; border-radius:14px; box-shadow:0 10px 50px rgba(0,0,0,.5); }
+  #map p { position:absolute; bottom:max(16px, env(safe-area-inset-bottom)); left:0; right:0; text-align:center; font-size:12px; opacity:.7; margin:0; }
+  #fade { position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:35; transition:opacity 1.2s; }
+  @media (pointer:fine) { #mob { display:none !important; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="load"><div><b>눈의 마을</b><div id="bar"><i></i></div><p id="loadTxt" style="opacity:.7;font-size:13px">마을을 짓는 중…</p></div></div>
+<div id="title">
+  <div><h1>눈의 마을</h1><p>해가 뜨지 않는 크리스마스 마을</p></div>
+  <div><button id="start">들어가기</button><small>컴퓨터: WASD 걷기 · Shift 달리기 · Space 점프 · 마우스 드래그 시점 · M 지도<br>폰: 왼쪽 화면 드래그로 걷기 · 오른쪽 드래그로 시점</small></div>
+</div>
+<div class="hud" id="tl"><div class="chip" id="where">숲속 등불길</div><div class="chip" id="clock">16:00</div></div>
+<div class="hud" id="tr"><button class="btn" id="mapBtn">지도</button><button class="btn" id="sndBtn">소리 켜짐</button></div>
+<div class="hud" id="mob"><button class="btn" id="runBtn">달리기</button><button class="btn" id="jumpBtn">점프</button></div>
+<div id="stick"><i></i></div>
+<div id="poi"></div>
+<div id="map"><canvas id="mapc" width="1200" height="800"></canvas><p>화면을 누르면 닫혀요 · 주황 점이 나예요</p></div>
+<div id="fade"></div>
+<script src="vendor/three.min.js"></script>
+<script src="design/layout.js"></script>
+<script>window.ISL = window.ISL || {};</script>
+<script src="island/audio.js"></script>
+<script src="snow/game.js"></script>
+</body>
+</html>

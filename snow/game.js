@@ -513,6 +513,6 @@
     for (const t of treeTiles) t.im.visible = Math.hypot(t.x - camera.position.x, t.z - camera.position.z) < (MOBILE ? 520 : 760);
     renderer.render(scene, camera);
   }
-  window.SNOW = { player, cam, L, setT: t => { gameT = t * CYCLE; }, start: () => $('start').onclick(), renderer, scene, camera };
+  window.SNOW = { sleighs, player, cam, L, setT: t => { gameT = t * CYCLE; }, start: () => $('start').onclick(), renderer, scene, camera };
   boot();
 })();
